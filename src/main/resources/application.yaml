@@ -3,3 +3,6 @@ spring:
     name: user-service
   config:
     import: "configserver:http://localhost:8088"
+  data:
+    mongodb:
+      uri: mongodb://root:secret@localhost:27017/mydatabase?authSource=admin
