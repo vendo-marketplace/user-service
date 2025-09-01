@@ -1,6 +1,5 @@
 package com.vendo.user_service.security;
 
-import com.vendo.user_service.model.UserRole;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;

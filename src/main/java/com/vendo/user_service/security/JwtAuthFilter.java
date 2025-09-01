@@ -1,7 +1,7 @@
 package com.vendo.user_service.security;
 
 import com.vendo.user_service.model.User;
-import com.vendo.user_service.model.UserStatus;
+import com.vendo.user_service.common.type.UserStatus;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -17,9 +17,11 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
+import java.util.Arrays;
 
-import static com.vendo.user_service.security.AuthConstants.AUTHORIZATION_HEADER;
-import static com.vendo.user_service.security.AuthConstants.BEARER_PREFIX;
+import static com.vendo.user_service.common.constants.AuthConstants.AUTHORIZATION_HEADER;
+import static com.vendo.user_service.common.constants.AuthConstants.BEARER_PREFIX;
+import static com.vendo.user_service.security.SecurityConfig.PERMITTED_ROUTES;
 
 @Component
 @RequiredArgsConstructor
@@ -41,7 +43,12 @@ public class JwtAuthFilter extends OncePerRequestFilter {
         String jwtToken = getTokenFromRequest(request);
         UserDetails userDetails = validateUserAccessibility(jwtToken);
         addAuthenticationToContext(userDetails);
+    }
 
+    @Override
+    protected boolean shouldNotFilter(HttpServletRequest request) {
+        String servletPath = request.getServletPath();
+        return Arrays.asList(PERMITTED_ROUTES).contains(servletPath);
     }
 
     private String getTokenFromRequest(HttpServletRequest request) {
@@ -51,7 +58,7 @@ public class JwtAuthFilter extends OncePerRequestFilter {
             return authorization.substring(BEARER_PREFIX.length());
         }
 
-        return "";
+        throw new AccessDeniedException("Authorization failed");
     }
 
     private UserDetails validateUserAccessibility(String jwtToken) {

@@ -2,8 +2,8 @@ package com.vendo.user_service.service;
 
 import com.vendo.user_service.exception.WrongCredentialsException;
 import com.vendo.user_service.model.User;
-import com.vendo.user_service.model.UserRole;
-import com.vendo.user_service.model.UserStatus;
+import com.vendo.user_service.common.type.UserRole;
+import com.vendo.user_service.common.type.UserStatus;
 import com.vendo.user_service.security.JwtService;
 import com.vendo.user_service.web.dto.AuthRequest;
 import com.vendo.user_service.web.dto.AuthResponse;
@@ -46,7 +46,6 @@ public class AuthService {
                 .build();
     }
 
-    // refresh token
     public AuthResponse refresh() {
         return AuthResponse.builder().build();
     }

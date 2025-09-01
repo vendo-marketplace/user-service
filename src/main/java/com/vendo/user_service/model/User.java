@@ -1,5 +1,7 @@
 package com.vendo.user_service.model;
 
+import com.vendo.user_service.common.type.UserRole;
+import com.vendo.user_service.common.type.UserStatus;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;

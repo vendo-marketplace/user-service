@@ -1,4 +1,4 @@
-package com.vendo.user_service.model;
+package com.vendo.user_service.common.type;
 
 import org.springframework.security.core.GrantedAuthority;
 
