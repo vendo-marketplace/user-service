@@ -1,11 +1,5 @@
-server:
-  port: ${SERVER_PORT}
-
 spring:
   application:
     name: user-service
   config:
     import: "configserver:${CONFIG_SERVER_URL}"
-  data:
-    mongodb:
-      uri: "mongodb://${DB_USERNAME}:${DB_PASSWORD}@${DB_HOST}:${DB_PORT}/${DB_NAME}?authSource=admin"
