@@ -22,6 +22,8 @@ public class SecurityConfig {
     public static final String[] PERMITTED_ROUTES = new String[] {
             "/auth/sign-in",
             "/auth/sign-up",
+            "/auth",
+            "/auth/test"
     };
 
     @Bean
