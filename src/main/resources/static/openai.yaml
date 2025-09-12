@@ -1,0 +1,170 @@
+openapi: 3.0.3
+info:
+  title: User Service API
+  version: 1.0.0
+  description: API documentation for User Authentication Service
+  license:
+    name: Apache 2.0
+    url: https://springdoc.org
+
+servers:
+  - url: http://localhost:8040
+    description: Development server
+
+tags:
+  - name: Authentication
+    description: API for user authentication and registration
+
+paths:
+  /auth/sign-up:
+    post:
+      tags:
+        - Authentication
+      summary: Register new user
+      description: Creates a new user account with email and password
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AuthRequest'
+            examples:
+              validRequest:
+                summary: Valid registration request
+                value:
+                  email: "user@example.com"
+                  password: "Password123!"
+              invalidEmail:
+                summary: Invalid email format
+                value:
+                  email: "invalid-email"
+                  password: "Password123!"
+      responses:
+        '200':
+          description: User registered successfully
+        '400':
+          description: Invalid input data
+          content:
+            application/json:
+              examples:
+                invalidEmail:
+                  value:
+                    message: "Invalid email format"
+                invalidPassword:
+                  value:
+                    message: "Invalid password. Should include minimum 8 characters, 1 uppercase character, 1 lowercase character, 1 special symbol"
+        '409':
+          description: User already exists
+          content:
+            application/json:
+              example:
+                message: "User with this email already exists"
+
+  /auth/sign-in:
+    post:
+      tags:
+        - Authentication
+      summary: Authenticate user
+      description: Authenticates user and returns JWT tokens
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AuthRequest'
+            examples:
+              validCredentials:
+                summary: Valid login credentials
+                value:
+                  email: "user@example.com"
+                  password: "Password123!"
+      responses:
+        '200':
+          description: Authentication successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+              examples:
+                successResponse:
+                  value:
+                    access-token: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+                    refresh-token: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+        '401':
+          description: Invalid credentials
+          content:
+            application/json:
+              example:
+                message: "Invalid email or password"
+        '400':
+          description: Invalid input data
+          content:
+            application/json:
+              example:
+                message: "Invalid email format"
+
+  /auth/refresh-token:
+    post:
+      tags:
+        - Authentication
+      summary: Refresh access token
+      description: Generates new access token using refresh token
+      responses:
+        '200':
+          description: Token refreshed successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+        '401':
+          description: Invalid or expired refresh token
+          content:
+            application/json:
+              example:
+                message: "Invalid refresh token"
+
+components:
+  schemas:
+    AuthRequest:
+      type: object
+      required:
+        - email
+        - password
+      properties:
+        email:
+          type: string
+          format: email
+          pattern: "^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$"
+          example: "user@example.com"
+          description: User email address
+        password:
+          type: string
+          format: password
+          pattern: "^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[!@#$%^&*()_+\\-=\\[\\]{};':\"\\\\|,.<>/?]).{8,}$"
+          minLength: 8
+          example: "Password123!"
+          description: User password with minimum 8 characters, 1 uppercase, 1 lowercase, 1 digit and 1 special symbol
+      example:
+        email: "user@example.com"
+        password: "Password123!"
+
+    AuthResponse:
+      type: object
+      properties:
+        access-token:
+          type: string
+          example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+          description: JWT access token for authentication
+        refresh-token:
+          type: string
+          example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+          description: JWT refresh token for obtaining new access tokens
+      example:
+        access-token: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+        refresh-token: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT

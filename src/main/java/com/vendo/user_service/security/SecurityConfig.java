@@ -23,7 +23,10 @@ public class SecurityConfig {
             "/auth/sign-in",
             "/auth/sign-up",
             "/auth",
-            "/auth/test"
+            "/auth/test",
+            "/swagger-ui/**",
+            "/v3/api-docs/**",
+            "/openai.yaml"
     };
 
     @Bean

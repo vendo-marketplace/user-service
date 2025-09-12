@@ -3,3 +3,7 @@ spring:
     name: user-service
   config:
     import: "configserver:${CONFIG_SERVER_URL}"
+
+springdoc:
+  swagger-ui:
+    url: /openai.yaml

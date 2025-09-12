@@ -1,7 +1,7 @@
 package com.vendo.user_service.security;
 
-import com.vendo.user_service.model.User;
 import com.vendo.user_service.common.type.UserStatus;
+import com.vendo.user_service.model.User;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -14,10 +14,10 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.stereotype.Component;
+import org.springframework.util.AntPathMatcher;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
-import java.util.Arrays;
 
 import static com.vendo.user_service.common.constants.AuthConstants.AUTHORIZATION_HEADER;
 import static com.vendo.user_service.common.constants.AuthConstants.BEARER_PREFIX;
@@ -48,7 +48,15 @@ public class JwtAuthFilter extends OncePerRequestFilter {
     @Override
     protected boolean shouldNotFilter(HttpServletRequest request) {
         String servletPath = request.getServletPath();
-        return Arrays.asList(PERMITTED_ROUTES).contains(servletPath);
+
+        AntPathMatcher antPathMatcher = new AntPathMatcher();
+
+        for (String pattern : PERMITTED_ROUTES) {
+            if (antPathMatcher.match(pattern, servletPath)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private String getTokenFromRequest(HttpServletRequest request) {
