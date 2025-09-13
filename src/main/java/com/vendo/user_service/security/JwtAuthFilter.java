@@ -17,11 +17,9 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
-import java.util.Arrays;
 
 import static com.vendo.user_service.common.constants.AuthConstants.AUTHORIZATION_HEADER;
 import static com.vendo.user_service.common.constants.AuthConstants.BEARER_PREFIX;
-import static com.vendo.user_service.security.SecurityConfig.PERMITTED_ROUTES;
 
 @Component
 @RequiredArgsConstructor
@@ -30,6 +28,8 @@ public class JwtAuthFilter extends OncePerRequestFilter {
     private final JwtService jwtService;
 
     private final UserDetailsService userDetailsService;
+
+//    private final UserAntPathResolver userAntPathResolver;
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
@@ -45,11 +45,11 @@ public class JwtAuthFilter extends OncePerRequestFilter {
         addAuthenticationToContext(userDetails);
     }
 
-    @Override
-    protected boolean shouldNotFilter(HttpServletRequest request) {
-        String servletPath = request.getServletPath();
-        return Arrays.asList(PERMITTED_ROUTES).contains(servletPath);
-    }
+//    @Override
+//    protected boolean shouldNotFilter(HttpServletRequest request) {
+//        String servletPath = request.getServletPath();
+//        return userAntPathResolver.isPermittedPath(servletPath);
+//    }
 
     private String getTokenFromRequest(HttpServletRequest request) {
         String authorization = request.getHeader(AUTHORIZATION_HEADER);

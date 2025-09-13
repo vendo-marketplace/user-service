@@ -16,19 +16,18 @@ public class AuthController {
 
     private final AuthService authService;
 
-    @PostMapping("/sign-up")
-    void signUp(@RequestBody AuthRequest authRequest) {
-        authService.signUp(authRequest);
-    }
-
     @PostMapping("/sign-in")
     ResponseEntity<AuthResponse> signIn(@RequestBody AuthRequest authRequest) {
         return ResponseEntity.ok(authService.signIn(authRequest));
+    }
+
+    @PostMapping("/sign-up")
+    void signUp(@RequestBody AuthRequest authRequest) {
+        authService.signUp(authRequest);
     }
 
     @PostMapping("/refresh-token")
     ResponseEntity<AuthResponse> refresh() {
         return ResponseEntity.ok(authService.refresh());
     }
-
 }
