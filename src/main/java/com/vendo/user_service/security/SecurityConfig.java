@@ -10,9 +10,8 @@ import org.springframework.security.config.annotation.web.configurers.AbstractHt
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
-import org.springframework.util.AntPathMatcher;
 
-import java.util.List;
+import static com.vendo.user_service.security.UserAntPathResolver.PERMITTED_PATHS;
 
 @Configuration
 @EnableWebSecurity
@@ -22,20 +21,12 @@ public class SecurityConfig {
 
     private final JwtAuthFilter jwtAuthFilter;
 
-    private final AuthenticationAccessDeniedHandler authenticationAccessDeniedHandler;
-
-    private static final List<AntPathMatcher> PERMITTED_MATCHERS = List.of(
-            new AntPathMatcher("/auth/sign-in"),
-            new AntPathMatcher("/auth/sign-up")
-    );
-
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http.csrf(AbstractHttpConfigurer::disable)
                 .sessionManagement(sessionManager -> sessionManager.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-                .exceptionHandling(configurer -> configurer.accessDeniedHandler(authenticationAccessDeniedHandler))
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/auth/sign-up", "/auth/sign-in").permitAll()
+                        .requestMatchers(PERMITTED_PATHS).permitAll()
                         .anyRequest().authenticated()
                 )
                 .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
