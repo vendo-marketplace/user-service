@@ -13,7 +13,9 @@ public class UserAntPathResolver implements AntPathResolver {
 
     public static final String[] PERMITTED_PATHS = new String[] {
             "/auth/sign-in",
-            "/auth/sign-up"
+            "/auth/sign-up",
+            "/swagger-ui/**",
+            "/v3/api-docs/**",
     };
 
     @Override
