@@ -1,4 +1,4 @@
-package com.vendo.user_service.security;
+package com.vendo.user_service.security.token;
 
 import io.jsonwebtoken.*;
 import io.jsonwebtoken.security.Keys;

@@ -4,10 +4,14 @@ import com.vendo.user_service.exception.WrongCredentialsException;
 import com.vendo.user_service.model.User;
 import com.vendo.user_service.common.type.UserRole;
 import com.vendo.user_service.common.type.UserStatus;
-import com.vendo.user_service.security.JwtService;
+import com.vendo.user_service.security.token.JwtService;
+import com.vendo.user_service.security.token.JwtUserDetailsService;
+import com.vendo.user_service.security.token.TokenPayload;
 import com.vendo.user_service.web.dto.AuthRequest;
 import com.vendo.user_service.web.dto.AuthResponse;
+import com.vendo.user_service.web.dto.RefreshRequest;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -20,6 +24,8 @@ public class AuthService {
     private final JwtService jwtService;
 
     private final PasswordEncoder passwordEncoder;
+
+    private final JwtUserDetailsService jwtUserDetailsService;
 
     public void signUp(AuthRequest authRequest) {
         userService.throwIfUserExistsByEmail(authRequest.getEmail());
@@ -46,12 +52,17 @@ public class AuthService {
                 .build();
     }
 
-    // TODO refresh endpoint
-    public AuthResponse refresh() {
-        return AuthResponse.builder().build();
+    public AuthResponse refresh(RefreshRequest refreshRequest) {
+        UserDetails userDetails = jwtUserDetailsService.getUserDetailsIfTokenValidOrThrow(refreshRequest.getRefreshToken());
+        TokenPayload tokenPayload = jwtUserDetailsService.generateTokenPayload(userDetails);
+
+        return AuthResponse.builder()
+                .accessToken(tokenPayload.getAccessToken())
+                .refreshToken(tokenPayload.getRefreshToken())
+                .build();
     }
 
-    public void matchPasswordsOrThrow(String rawPassword, String encodedPassword) {
+    private void matchPasswordsOrThrow(String rawPassword, String encodedPassword) {
         boolean matches = passwordEncoder.matches(rawPassword, encodedPassword);
         if (!matches) {
             throw new WrongCredentialsException("Wrong credentials");

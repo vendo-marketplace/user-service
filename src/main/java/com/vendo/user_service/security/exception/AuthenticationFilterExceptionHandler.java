@@ -1,4 +1,4 @@
-package com.vendo.user_service.exception;
+package com.vendo.user_service.security.exception;
 
 import io.jsonwebtoken.ExpiredJwtException;
 import jakarta.servlet.http.HttpServletResponse;
