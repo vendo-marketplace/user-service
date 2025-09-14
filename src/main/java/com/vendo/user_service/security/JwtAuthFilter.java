@@ -1,5 +1,7 @@
 package com.vendo.user_service.security;
 
+import com.vendo.user_service.exception.AccessDeniedException;
+import com.vendo.user_service.exception.AuthenticationFilterExceptionHandler;
 import com.vendo.user_service.model.User;
 import com.vendo.user_service.common.type.UserStatus;
 import jakarta.servlet.FilterChain;
@@ -7,7 +9,8 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
-import org.springframework.security.access.AccessDeniedException;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -17,12 +20,11 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
-import java.util.Arrays;
 
 import static com.vendo.user_service.common.constants.AuthConstants.AUTHORIZATION_HEADER;
 import static com.vendo.user_service.common.constants.AuthConstants.BEARER_PREFIX;
-import static com.vendo.user_service.security.SecurityConfig.PERMITTED_ROUTES;
 
+@Slf4j
 @Component
 @RequiredArgsConstructor
 public class JwtAuthFilter extends OncePerRequestFilter {
@@ -31,24 +33,31 @@ public class JwtAuthFilter extends OncePerRequestFilter {
 
     private final UserDetailsService userDetailsService;
 
+    private final UserAntPathResolver userAntPathResolver;
+
+    private final AuthenticationFilterExceptionHandler authenticationFilterExceptionHandler;
+
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
-
         SecurityContext securityContext = SecurityContextHolder.getContext();
         if (securityContext.getAuthentication() != null) {
             filterChain.doFilter(request, response);
             return;
         }
 
-        String jwtToken = getTokenFromRequest(request);
-        UserDetails userDetails = validateUserAccessibility(jwtToken);
-        addAuthenticationToContext(userDetails);
+        try {
+            String jwtToken = getTokenFromRequest(request);
+            UserDetails userDetails = validateUserAccessibility(jwtToken);
+            addAuthenticationToContext(userDetails);
+        } catch (Exception e) {
+            authenticationFilterExceptionHandler.handle(e, response);
+        }
     }
 
     @Override
     protected boolean shouldNotFilter(HttpServletRequest request) {
         String servletPath = request.getServletPath();
-        return Arrays.asList(PERMITTED_ROUTES).contains(servletPath);
+        return userAntPathResolver.isPermittedPath(servletPath);
     }
 
     private String getTokenFromRequest(HttpServletRequest request) {
@@ -58,7 +67,7 @@ public class JwtAuthFilter extends OncePerRequestFilter {
             return authorization.substring(BEARER_PREFIX.length());
         }
 
-        throw new AccessDeniedException("Authorization failed");
+        throw new BadCredentialsException("Authorization failed");
     }
 
     private UserDetails validateUserAccessibility(String jwtToken) {
