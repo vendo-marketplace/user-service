@@ -113,6 +113,11 @@
 			<artifactId>mapstruct</artifactId>
 			<version>1.6.3</version>
 		</dependency>
+		<dependency>
+			<groupId>com.vendo.lib</groupId>
+			<artifactId>common</artifactId>
+			<version>1.0.2</version>
+		</dependency>
 	</dependencies>
 	<dependencyManagement>
 		<dependencies>

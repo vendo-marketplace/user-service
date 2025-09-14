@@ -46,6 +46,7 @@ public class AuthService {
                 .build();
     }
 
+    // TODO refresh endpoint
     public AuthResponse refresh() {
         return AuthResponse.builder().build();
     }
