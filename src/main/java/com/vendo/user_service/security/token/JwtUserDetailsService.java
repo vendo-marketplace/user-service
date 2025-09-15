@@ -38,6 +38,6 @@ public class JwtUserDetailsService {
             return userDetails;
         }
 
-        throw new BadCredentialsException("Token not valid!");
+        throw new BadCredentialsException("Token not valid");
     }
 }

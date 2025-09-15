@@ -5,6 +5,7 @@ import com.vendo.user_service.common.type.UserStatus;
 import com.vendo.user_service.model.User;
 
 public class UserDataBuilder {
+
     public static User.UserBuilder buildUserWithRequiredFields() {
         return User.builder()
                 .email("test@gmail.com")
