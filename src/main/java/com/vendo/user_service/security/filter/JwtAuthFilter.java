@@ -57,8 +57,8 @@ public class JwtAuthFilter extends OncePerRequestFilter {
 
     @Override
     protected boolean shouldNotFilter(HttpServletRequest request) {
-        String servletPath = request.getServletPath();
-        return userAntPathResolver.isPermittedPath(servletPath);
+        String requestURI = request.getRequestURI();
+        return userAntPathResolver.isPermittedPath(requestURI);
     }
 
     private String getTokenFromRequest(HttpServletRequest request) {

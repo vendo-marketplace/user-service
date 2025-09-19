@@ -1,0 +1,10 @@
+spring:
+  cloud:
+    config:
+      enabled: false
+  data:
+    mongodb:
+      uri: mongodb://root:secret@localhost:27017/mydatabase?authSource=admin
+eureka:
+  client:
+    enabled: false

@@ -27,18 +27,6 @@ public class AuthService {
 
     private final JwtUserDetailsService jwtUserDetailsService;
 
-    public void signUp(AuthRequest authRequest) {
-        userService.throwIfUserExistsByEmail(authRequest.getEmail());
-        String encodedPassword = passwordEncoder.encode(authRequest.getPassword());
-
-        userService.save(User.builder()
-                        .email(authRequest.getEmail())
-                        .role(UserRole.USER)
-                        .status(UserStatus.ACTIVE)
-                        .password(encodedPassword)
-                .build());
-    }
-
     public AuthResponse signIn(AuthRequest authRequest) {
         User user = userService.findByEmailOrThrow(authRequest.getEmail());
         matchPasswordsOrThrow(authRequest.getPassword(), user.getPassword());
@@ -50,6 +38,18 @@ public class AuthService {
                 .accessToken(accessToken)
                 .refreshToken(refreshToken)
                 .build();
+    }
+
+    public void signUp(AuthRequest authRequest) {
+        userService.throwIfUserExistsByEmail(authRequest.getEmail());
+        String encodedPassword = passwordEncoder.encode(authRequest.getPassword());
+
+        userService.save(User.builder()
+                        .email(authRequest.getEmail())
+                        .role(UserRole.USER)
+                        .status(UserStatus.ACTIVE)
+                        .password(encodedPassword)
+                .build());
     }
 
     public AuthResponse refresh(RefreshRequest refreshRequest) {
@@ -68,5 +68,4 @@ public class AuthService {
             throw new WrongCredentialsException("Wrong credentials");
         }
     }
-
 }
