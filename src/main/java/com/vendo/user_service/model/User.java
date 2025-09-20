@@ -21,7 +21,7 @@ public class User implements UserDetails {
     @Id
     private String id;
 
-    @NotBlank(message = "Email is required")
+    @NotNull(message = "Email is required")
     @Pattern(regexp = "^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$", message = "Invalid email")
     private String email;
 
@@ -31,7 +31,7 @@ public class User implements UserDetails {
     @NotNull(message = "Status is required")
     private UserStatus status;
 
-    @NotBlank(message = "Password is required")
+    @NotNull(message = "Password is required")
     @Pattern(regexp = "^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[!@#$%^&*()_+\\-=\\[\\]{};':\"\\\\|,.<>\\/?]).{8,}$", message = "Invalid password. Should include minimum 8 characters, 1 uppercase character, 1 lowercase character, 1 special symbol")
     private String password;
 

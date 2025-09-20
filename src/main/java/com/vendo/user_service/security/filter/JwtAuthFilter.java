@@ -1,16 +1,17 @@
-package com.vendo.user_service.security;
+package com.vendo.user_service.security.filter;
 
-import com.vendo.user_service.exception.AccessDeniedException;
-import com.vendo.user_service.exception.AuthenticationFilterExceptionHandler;
+import com.vendo.user_service.security.common.exception.AccessDeniedException;
+import com.vendo.user_service.security.common.exception.handler.AuthenticationFilterExceptionHandler;
 import com.vendo.user_service.model.User;
 import com.vendo.user_service.common.type.UserStatus;
+import com.vendo.user_service.security.common.util.JwtUtils;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.authentication.AuthenticationCredentialsNotFoundException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -29,7 +30,7 @@ import static com.vendo.user_service.common.constants.AuthConstants.BEARER_PREFI
 @RequiredArgsConstructor
 public class JwtAuthFilter extends OncePerRequestFilter {
 
-    private final JwtService jwtService;
+    private final JwtUtils jwtUtils;
 
     private final UserDetailsService userDetailsService;
 
@@ -56,8 +57,8 @@ public class JwtAuthFilter extends OncePerRequestFilter {
 
     @Override
     protected boolean shouldNotFilter(HttpServletRequest request) {
-        String servletPath = request.getServletPath();
-        return userAntPathResolver.isPermittedPath(servletPath);
+        String requestURI = request.getRequestURI();
+        return userAntPathResolver.isPermittedPath(requestURI);
     }
 
     private String getTokenFromRequest(HttpServletRequest request) {
@@ -67,11 +68,11 @@ public class JwtAuthFilter extends OncePerRequestFilter {
             return authorization.substring(BEARER_PREFIX.length());
         }
 
-        throw new BadCredentialsException("Authorization failed");
+        throw new AuthenticationCredentialsNotFoundException("Missing or invalid Authorization header");
     }
 
     private UserDetails validateUserAccessibility(String jwtToken) {
-        String email = jwtService.extractSubject(jwtToken);
+        String email = jwtUtils.extractSubject(jwtToken);
         UserDetails userDetails = userDetailsService.loadUserByUsername(email);
 
         if (userDetails instanceof User && ((User) userDetails).getStatus() == UserStatus.BLOCKED) {

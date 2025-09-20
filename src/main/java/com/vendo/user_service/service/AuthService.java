@@ -1,13 +1,18 @@
 package com.vendo.user_service.service;
 
-import com.vendo.user_service.exception.WrongCredentialsException;
 import com.vendo.user_service.model.User;
 import com.vendo.user_service.common.type.UserRole;
 import com.vendo.user_service.common.type.UserStatus;
-import com.vendo.user_service.security.JwtService;
+import com.vendo.user_service.security.common.exception.AccessDeniedException;
+import com.vendo.user_service.security.service.JwtService;
+import com.vendo.user_service.security.service.JwtUserDetailsService;
+import com.vendo.user_service.security.common.dto.TokenPayload;
 import com.vendo.user_service.web.dto.AuthRequest;
 import com.vendo.user_service.web.dto.AuthResponse;
+import com.vendo.user_service.web.dto.RefreshRequest;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -21,6 +26,23 @@ public class AuthService {
 
     private final PasswordEncoder passwordEncoder;
 
+    private final JwtUserDetailsService jwtUserDetailsService;
+
+    public AuthResponse signIn(AuthRequest authRequest) {
+        User user = userService.findByEmailOrThrow(authRequest.getEmail());
+
+        throwIfUserBlocked(user);
+        matchPasswordsOrThrow(authRequest.getPassword(), user.getPassword());
+
+        String accessToken = jwtService.generateAccessToken(user);
+        String refreshToken = jwtService.generateRefreshToken(user);
+
+        return AuthResponse.builder()
+                .accessToken(accessToken)
+                .refreshToken(refreshToken)
+                .build();
+    }
+
     public void signUp(AuthRequest authRequest) {
         userService.throwIfUserExistsByEmail(authRequest.getEmail());
         String encodedPassword = passwordEncoder.encode(authRequest.getPassword());
@@ -33,29 +55,26 @@ public class AuthService {
                 .build());
     }
 
-    public AuthResponse signIn(AuthRequest authRequest) {
-        User user = userService.findByEmailOrThrow(authRequest.getEmail());
-        matchPasswordsOrThrow(authRequest.getPassword(), user.getPassword());
-
-        String accessToken = jwtService.generateAccessToken(user);
-        String refreshToken = jwtService.generateRefreshToken(user);
+    public AuthResponse refresh(RefreshRequest refreshRequest) {
+        UserDetails userDetails = jwtUserDetailsService.getUserDetailsIfTokenValidOrThrow(refreshRequest.getRefreshToken());
+        TokenPayload tokenPayload = jwtUserDetailsService.generateTokenPayload(userDetails);
 
         return AuthResponse.builder()
-                .accessToken(accessToken)
-                .refreshToken(refreshToken)
+                .accessToken(tokenPayload.getAccessToken())
+                .refreshToken(tokenPayload.getRefreshToken())
                 .build();
     }
 
-    // TODO refresh endpoint
-    public AuthResponse refresh() {
-        return AuthResponse.builder().build();
-    }
-
-    public void matchPasswordsOrThrow(String rawPassword, String encodedPassword) {
+    private void matchPasswordsOrThrow(String rawPassword, String encodedPassword) {
         boolean matches = passwordEncoder.matches(rawPassword, encodedPassword);
         if (!matches) {
-            throw new WrongCredentialsException("Wrong credentials");
+            throw new BadCredentialsException("Wrong credentials");
         }
     }
 
+    private void throwIfUserBlocked(User user) {
+        if (user.getStatus() == UserStatus.BLOCKED) {
+            throw new AccessDeniedException("User is blocked");
+        }
+    }
 }

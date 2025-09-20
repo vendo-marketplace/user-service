@@ -3,6 +3,7 @@ package com.vendo.user_service.web.controller;
 import com.vendo.user_service.service.AuthService;
 import com.vendo.user_service.web.dto.AuthRequest;
 import com.vendo.user_service.web.dto.AuthResponse;
+import com.vendo.user_service.web.dto.RefreshRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -28,7 +29,7 @@ public class AuthController {
     }
 
     @PostMapping("/refresh")
-    ResponseEntity<AuthResponse> refresh() {
-        return ResponseEntity.ok(authService.refresh());
+    ResponseEntity<AuthResponse> refresh(@Valid @RequestBody RefreshRequest refreshRequest) {
+        return ResponseEntity.ok(authService.refresh(refreshRequest));
     }
 }
