@@ -1,0 +1,12 @@
+spring:
+  data:
+    mongodb:
+      uri: mongodb://root:secret@localhost:27017/mydatabase?authSource=admin
+security:
+  jwt:
+    secret-key: secretkeysecretkeysecretkeysecretkeysecretkeysecretkeysecretkeysecretkeysecretkey
+    access-expiration-time: 60000
+    refresh-expiration-time: 120000
+eureka:
+  client:
+    enabled: false

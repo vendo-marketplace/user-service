@@ -1,4 +1,4 @@
-package com.vendo.user_service.security;
+package com.vendo.user_service.security.filter;
 
 import com.vendo.security.AntPathResolver;
 import org.springframework.stereotype.Component;
@@ -12,8 +12,7 @@ public class UserAntPathResolver implements AntPathResolver {
     private static final AntPathMatcher antPathMatcher = new AntPathMatcher();
 
     public static final String[] PERMITTED_PATHS = new String[] {
-            "/auth/sign-in",
-            "/auth/sign-up",
+            "/auth/**",
             "/swagger-ui/**",
             "/v3/api-docs/**",
     };
