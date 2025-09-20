@@ -38,7 +38,7 @@ public class JwtService {
         return buildToken(userDetails, claims, jwtProperties.getRefreshExpirationTime());
     }
 
-    public String generateRefreshTokenWithExpiration(UserDetails userDetails, int expiration) {
+    public String generateTokenWithExpiration(UserDetails userDetails, int expiration) {
         List<String> roles = jwtUtils.getRoles(userDetails);
         return buildToken(userDetails, Map.of(ROLES_CLAIM, roles), expiration);
     }

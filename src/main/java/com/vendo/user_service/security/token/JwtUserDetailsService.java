@@ -1,7 +1,7 @@
 package com.vendo.user_service.security.token;
 
+import com.vendo.user_service.security.exception.InvalidTokenException;
 import lombok.RequiredArgsConstructor;
-import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.stereotype.Service;
@@ -39,6 +39,6 @@ public class JwtUserDetailsService {
             return userDetails;
         }
 
-        throw new BadCredentialsException("Token not valid");
+        throw new InvalidTokenException("Token not valid");
     }
 }

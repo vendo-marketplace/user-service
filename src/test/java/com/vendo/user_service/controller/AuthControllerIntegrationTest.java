@@ -205,7 +205,7 @@ class AuthControllerIntegrationTest {
     void refresh_shouldReturnForbidden_whenTokenIsNotValid() throws Exception {
         User user = UserDataBuilder.buildUserWithRequiredFields().build();
         userRepository.save(user);
-        String expiredRefreshToken = jwtService.generateRefreshTokenWithExpiration(user, 0);
+        String expiredRefreshToken = jwtService.generateTokenWithExpiration(user, 0);
         RefreshRequest refreshRequest = RefreshRequest.builder().refreshToken(expiredRefreshToken).build();
 
         MockHttpServletResponse response = mockMvc.perform(post("/auth/refresh")

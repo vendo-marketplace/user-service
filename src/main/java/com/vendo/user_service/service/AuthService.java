@@ -1,6 +1,5 @@
 package com.vendo.user_service.service;
 
-import com.vendo.user_service.exception.WrongCredentialsException;
 import com.vendo.user_service.model.User;
 import com.vendo.user_service.common.type.UserRole;
 import com.vendo.user_service.common.type.UserStatus;
@@ -12,6 +11,7 @@ import com.vendo.user_service.web.dto.AuthRequest;
 import com.vendo.user_service.web.dto.AuthResponse;
 import com.vendo.user_service.web.dto.RefreshRequest;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -68,7 +68,7 @@ public class AuthService {
     private void matchPasswordsOrThrow(String rawPassword, String encodedPassword) {
         boolean matches = passwordEncoder.matches(rawPassword, encodedPassword);
         if (!matches) {
-            throw new WrongCredentialsException("Wrong credentials");
+            throw new BadCredentialsException("Wrong credentials");
         }
     }
 

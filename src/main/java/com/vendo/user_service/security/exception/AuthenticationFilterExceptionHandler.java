@@ -1,10 +1,10 @@
 package com.vendo.user_service.security.exception;
 
-import io.jsonwebtoken.ExpiredJwtException;
+import io.jsonwebtoken.JwtException;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.http.HttpStatus;
-import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.core.AuthenticationException;
 import org.springframework.stereotype.Component;
 
 import java.io.IOException;
@@ -15,15 +15,22 @@ public class AuthenticationFilterExceptionHandler {
 
     public void handle(Exception e, HttpServletResponse response) {
 
-        if (e instanceof ExpiredJwtException || e instanceof BadCredentialsException) {
+        if (e instanceof AccessDeniedException) {
+            log.warn("AccessDeniedException: {}", e.getMessage());
+            writeExceptionResponse(e.getMessage(), HttpStatus.SC_FORBIDDEN, response);
+            return;
+        }
+
+        if (e instanceof AuthenticationException) {
+            log.warn("AuthenticationCredentialsNotFoundException: {}", e.getMessage());
             writeExceptionResponse(e.getMessage(), HttpStatus.SC_UNAUTHORIZED, response);
             return;
         }
 
-        if (e instanceof AccessDeniedException) {
-            writeExceptionResponse(e.getMessage(), HttpStatus.SC_FORBIDDEN, response);
+        if (e instanceof JwtException) {
+            log.warn("JwtException: {}", e.getMessage());
+            writeExceptionResponse("Token has expired or invalid", HttpStatus.SC_UNAUTHORIZED, response);
         }
-
     }
 
     private void writeExceptionResponse(Object responseTarget, int statusCode, HttpServletResponse response) {
