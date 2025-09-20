@@ -1,4 +1,4 @@
-package com.vendo.user_service.security;
+package com.vendo.user_service.security.service;
 
 import com.vendo.user_service.repository.UserRepository;
 import lombok.RequiredArgsConstructor;

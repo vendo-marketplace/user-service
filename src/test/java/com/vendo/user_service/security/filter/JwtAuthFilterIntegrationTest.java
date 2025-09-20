@@ -3,7 +3,7 @@ package com.vendo.user_service.security.filter;
 import com.vendo.user_service.builder.UserDataBuilder;
 import com.vendo.user_service.model.User;
 import com.vendo.user_service.repository.UserRepository;
-import com.vendo.user_service.security.token.JwtService;
+import com.vendo.user_service.security.service.JwtService;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -15,8 +15,6 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
-
-import javax.swing.*;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.springframework.http.HttpHeaders.AUTHORIZATION;

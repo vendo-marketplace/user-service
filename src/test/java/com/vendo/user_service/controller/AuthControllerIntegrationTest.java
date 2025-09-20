@@ -7,7 +7,7 @@ import com.vendo.user_service.common.type.UserRole;
 import com.vendo.user_service.common.type.UserStatus;
 import com.vendo.user_service.model.User;
 import com.vendo.user_service.repository.UserRepository;
-import com.vendo.user_service.security.token.JwtService;
+import com.vendo.user_service.security.service.JwtService;
 import com.vendo.user_service.web.dto.AuthRequest;
 import com.vendo.user_service.web.dto.AuthResponse;
 import com.vendo.user_service.web.dto.RefreshRequest;

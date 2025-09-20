@@ -1,4 +1,4 @@
-package com.vendo.user_service.exception;
+package com.vendo.user_service.common.exception.handler;
 
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;

@@ -1,5 +1,6 @@
-package com.vendo.user_service.security.token;
+package com.vendo.user_service.security.common.util;
 
+import com.vendo.user_service.security.common.config.JwtProperties;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;

@@ -2,11 +2,11 @@ package com.vendo.user_service.service;
 
 import com.vendo.user_service.builder.AuthRequestDataBuilder;
 import com.vendo.user_service.builder.UserDataBuilder;
-import com.vendo.user_service.exception.UserAlreadyExistsException;
+import com.vendo.user_service.common.exception.UserAlreadyExistsException;
 import com.vendo.user_service.model.User;
-import com.vendo.user_service.security.token.JwtService;
-import com.vendo.user_service.security.token.JwtUserDetailsService;
-import com.vendo.user_service.security.token.TokenPayload;
+import com.vendo.user_service.security.service.JwtService;
+import com.vendo.user_service.security.service.JwtUserDetailsService;
+import com.vendo.user_service.security.common.dto.TokenPayload;
 import com.vendo.user_service.web.dto.AuthRequest;
 import com.vendo.user_service.web.dto.RefreshRequest;
 import org.junit.jupiter.api.Test;

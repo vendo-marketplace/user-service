@@ -1,4 +1,4 @@
-package com.vendo.user_service.security.config;
+package com.vendo.user_service.security.common.config;
 
 import com.vendo.user_service.security.filter.JwtAuthFilter;
 import lombok.RequiredArgsConstructor;

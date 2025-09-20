@@ -1,7 +1,7 @@
 package com.vendo.user_service.service;
 
 import com.vendo.user_service.builder.UserDataBuilder;
-import com.vendo.user_service.exception.UserAlreadyExistsException;
+import com.vendo.user_service.common.exception.UserAlreadyExistsException;
 import com.vendo.user_service.model.User;
 import com.vendo.user_service.repository.UserRepository;
 import org.junit.jupiter.api.Test;

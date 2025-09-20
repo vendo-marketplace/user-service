@@ -1,5 +1,7 @@
-package com.vendo.user_service.security.token;
+package com.vendo.user_service.security.service;
 
+import com.vendo.user_service.security.common.config.JwtProperties;
+import com.vendo.user_service.security.common.util.JwtUtils;
 import io.jsonwebtoken.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.userdetails.UserDetails;

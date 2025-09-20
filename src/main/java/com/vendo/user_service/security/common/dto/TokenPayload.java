@@ -1,4 +1,4 @@
-package com.vendo.user_service.security.token;
+package com.vendo.user_service.security.common.dto;
 
 import lombok.Builder;
 import lombok.Data;

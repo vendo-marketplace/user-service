@@ -1,10 +1,10 @@
 package com.vendo.user_service.security.filter;
 
-import com.vendo.user_service.security.exception.AccessDeniedException;
-import com.vendo.user_service.security.exception.AuthenticationFilterExceptionHandler;
+import com.vendo.user_service.security.common.exception.AccessDeniedException;
+import com.vendo.user_service.security.common.exception.handler.AuthenticationFilterExceptionHandler;
 import com.vendo.user_service.model.User;
 import com.vendo.user_service.common.type.UserStatus;
-import com.vendo.user_service.security.token.JwtUtils;
+import com.vendo.user_service.security.common.util.JwtUtils;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;

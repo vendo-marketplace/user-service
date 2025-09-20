@@ -1,4 +1,4 @@
-package com.vendo.user_service.config;
+package com.vendo.user_service.common.config;
 
 import org.mapstruct.MapperConfig;
 import org.mapstruct.ReportingPolicy;

@@ -1,4 +1,4 @@
-package com.vendo.user_service.security.exception;
+package com.vendo.user_service.security.common.exception;
 
 import org.springframework.security.core.AuthenticationException;
 
