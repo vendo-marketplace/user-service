@@ -3,7 +3,6 @@ package com.vendo.user_service.service;
 import com.vendo.user_service.builder.AuthRequestDataBuilder;
 import com.vendo.user_service.builder.UserDataBuilder;
 import com.vendo.user_service.exception.UserAlreadyExistsException;
-import com.vendo.user_service.exception.UserNotFoundException;
 import com.vendo.user_service.model.User;
 import com.vendo.user_service.security.token.JwtService;
 import com.vendo.user_service.security.token.JwtUserDetailsService;
@@ -16,6 +15,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -94,10 +94,10 @@ public class AuthServiceTest {
     public void signIn_shouldThrowException_whenUserNotFound() {
         AuthRequest authRequest = AuthRequestDataBuilder.buildUserWithRequiredFields().build();
 
-        doThrow(new UserNotFoundException("User not found"))
+        doThrow(new UsernameNotFoundException("User not found"))
                 .when(userService).findByEmailOrThrow(authRequest.getEmail());
 
-        assertThrows(UserNotFoundException.class, () -> userService.findByEmailOrThrow(authRequest.getEmail()));
+        assertThrows(UsernameNotFoundException.class, () -> userService.findByEmailOrThrow(authRequest.getEmail()));
 
         verify(userService).findByEmailOrThrow(authRequest.getEmail());
         verify(passwordEncoder, never()).matches(anyString(), anyString());

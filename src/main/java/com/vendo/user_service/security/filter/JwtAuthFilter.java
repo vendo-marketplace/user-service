@@ -4,7 +4,7 @@ import com.vendo.user_service.security.exception.AccessDeniedException;
 import com.vendo.user_service.security.exception.AuthenticationFilterExceptionHandler;
 import com.vendo.user_service.model.User;
 import com.vendo.user_service.common.type.UserStatus;
-import com.vendo.user_service.security.token.JwtService;
+import com.vendo.user_service.security.token.JwtUtils;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -30,7 +30,7 @@ import static com.vendo.user_service.common.constants.AuthConstants.BEARER_PREFI
 @RequiredArgsConstructor
 public class JwtAuthFilter extends OncePerRequestFilter {
 
-    private final JwtService jwtService;
+    private final JwtUtils jwtUtils;
 
     private final UserDetailsService userDetailsService;
 
@@ -72,7 +72,7 @@ public class JwtAuthFilter extends OncePerRequestFilter {
     }
 
     private UserDetails validateUserAccessibility(String jwtToken) {
-        String email = jwtService.extractSubject(jwtToken);
+        String email = jwtUtils.extractSubject(jwtToken);
         UserDetails userDetails = userDetailsService.loadUserByUsername(email);
 
         if (userDetails instanceof User && ((User) userDetails).getStatus() == UserStatus.BLOCKED) {

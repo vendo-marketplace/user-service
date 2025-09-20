@@ -10,12 +10,13 @@ import org.springframework.stereotype.Service;
 @RequiredArgsConstructor
 public class JwtUserDetailsService {
 
+    private final JwtUtils jwtUtils;
+
     private final JwtService jwtService;
 
     private final UserDetailsService userDetailsService;
 
     public TokenPayload generateTokenPayload(UserDetails userDetails) {
-
         if (userDetails == null) {
             throw new IllegalArgumentException("User details not present");
         }
@@ -30,7 +31,7 @@ public class JwtUserDetailsService {
     }
 
     public UserDetails getUserDetailsIfTokenValidOrThrow(String token) {
-        String subject = jwtService.extractSubject(token);
+        String subject =  jwtUtils.extractSubject(token);
         UserDetails userDetails = userDetailsService.loadUserByUsername(subject);
         boolean isTokenValid = jwtService.isTokenValid(token, userDetails);
 

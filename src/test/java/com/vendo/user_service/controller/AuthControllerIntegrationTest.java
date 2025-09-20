@@ -2,19 +2,25 @@ package com.vendo.user_service.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.vendo.user_service.builder.AuthRequestDataBuilder;
+import com.vendo.user_service.builder.UserDataBuilder;
 import com.vendo.user_service.common.type.UserRole;
 import com.vendo.user_service.common.type.UserStatus;
 import com.vendo.user_service.model.User;
 import com.vendo.user_service.repository.UserRepository;
+import com.vendo.user_service.security.token.JwtService;
 import com.vendo.user_service.web.dto.AuthRequest;
-import org.junit.jupiter.api.AfterEach;
+import com.vendo.user_service.web.dto.AuthResponse;
+import com.vendo.user_service.web.dto.RefreshRequest;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
+import org.springframework.mock.web.MockHttpServletResponse;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.context.event.annotation.AfterTestClass;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.util.Optional;
@@ -40,8 +46,16 @@ class AuthControllerIntegrationTest {
     @Autowired
     private PasswordEncoder passwordEncoder;
 
-    @AfterEach
+    @Autowired
+    private JwtService jwtService;
+
+    @BeforeEach
     void setUp() {
+        userRepository.deleteAll();
+    }
+
+    @AfterTestClass
+    void tearDown() {
         userRepository.deleteAll();
     }
 
@@ -62,5 +76,145 @@ class AuthControllerIntegrationTest {
         assertThat(passwordEncoder.matches(authRequest.getPassword(), user.getPassword())).isTrue();
         assertThat(user.getRole()).isEqualTo(UserRole.USER);
         assertThat(user.getStatus()).isEqualTo(UserStatus.ACTIVE);
+    }
+
+    @Test
+    void signUp_shouldReturnBadRequest_whenUserAlreadyExists() throws Exception {
+        AuthRequest authRequest = AuthRequestDataBuilder.buildUserWithRequiredFields().build();
+        User user = User.builder()
+                .email(authRequest.getEmail())
+                .password(passwordEncoder.encode(authRequest.getPassword()))
+                .build();
+        userRepository.save(user);
+
+        MockHttpServletResponse response = mockMvc.perform(post("/auth/sign-up")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(authRequest))
+        ).andExpect(status().isConflict()).andReturn().getResponse();
+
+        String responseMessage = response.getContentAsString();
+        assertThat(responseMessage).isNotBlank();
+        assertThat(responseMessage).isEqualTo("User with this email already exists");
+    }
+
+    @Test
+    void signIn_shouldReturnPairOfTokens() throws Exception {
+        AuthRequest authRequest = AuthRequestDataBuilder.buildUserWithRequiredFields().build();
+        User user = User.builder()
+                .email(authRequest.getEmail())
+                .password(passwordEncoder.encode(authRequest.getPassword()))
+                .role(UserRole.USER)
+                .status(UserStatus.ACTIVE)
+                .build();
+        userRepository.save(user);
+
+        MockHttpServletResponse response = mockMvc.perform(post("/auth/sign-in")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(authRequest))
+        ).andExpect(status().isOk()).andReturn().getResponse();
+
+        String responseContent = response.getContentAsString();
+        assertThat(responseContent).isNotBlank();
+
+        AuthResponse authResponse = objectMapper.readValue(responseContent, AuthResponse.class);
+        assertThat(authResponse).isNotNull();
+
+        assertThat(authResponse.getAccessToken()).isNotBlank();
+        assertThat(jwtService.isTokenValid(authResponse.getAccessToken(), user)).isTrue();
+        assertThat(authResponse.getRefreshToken()).isNotBlank();
+        assertThat(jwtService.isTokenValid(authResponse.getRefreshToken(), user)).isTrue();
+    }
+
+    @Test
+    void signIn_shouldReturnBadRequest_whenUserDoesNotExist() throws Exception {
+        AuthRequest authRequest = AuthRequestDataBuilder.buildUserWithRequiredFields().build();
+
+        MockHttpServletResponse response = mockMvc.perform(post("/auth/sign-in")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(authRequest))
+        ).andExpect(status().isBadRequest()).andReturn().getResponse();
+
+        String responseMessage = response.getContentAsString();
+        assertThat(responseMessage).isNotBlank();
+        assertThat(responseMessage).isEqualTo("User not found");
+    }
+
+    @Test
+    void signIn_shouldReturnForbidden_whenUserBlocked() throws Exception {
+        AuthRequest authRequest = AuthRequestDataBuilder.buildUserWithRequiredFields().build();
+        User user = User.builder()
+                .email(authRequest.getEmail())
+                .password(passwordEncoder.encode(authRequest.getPassword()))
+                .role(UserRole.USER)
+                .status(UserStatus.BLOCKED)
+                .build();
+        userRepository.save(user);
+
+        MockHttpServletResponse response = mockMvc.perform(post("/auth/sign-in")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(authRequest))
+        ).andExpect(status().isForbidden()).andReturn().getResponse();
+
+        String responseContent = response.getContentAsString();
+        assertThat(responseContent).isNotBlank();
+        assertThat(responseContent).isEqualTo("User is blocked");
+
+    }
+
+    @Test
+    void refresh_shouldReturnPairOfTokens() throws Exception {
+        User user = UserDataBuilder.buildUserWithRequiredFields().build();
+        userRepository.save(user);
+        String refreshToken = jwtService.generateRefreshToken(user);
+        RefreshRequest refreshRequest = RefreshRequest.builder().refreshToken(refreshToken).build();
+
+        MockHttpServletResponse response = mockMvc.perform(post("/auth/refresh")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(refreshRequest))
+        ).andExpect(status().isOk()).andReturn().getResponse();
+
+        String responseContent = response.getContentAsString();
+        assertThat(responseContent).isNotBlank();
+
+        AuthResponse authResponse = objectMapper.readValue(responseContent, AuthResponse.class);
+        assertThat(authResponse).isNotNull();
+
+        assertThat(authResponse.getAccessToken()).isNotBlank();
+        assertThat(jwtService.isTokenValid(authResponse.getAccessToken(), user)).isTrue();
+        assertThat(authResponse.getRefreshToken()).isNotBlank();
+        assertThat(jwtService.isTokenValid(authResponse.getRefreshToken(), user)).isTrue();
+    }
+
+    @Test
+    void refresh_shouldReturnForbidden_whenUserDoesNotExist() throws Exception {
+        User user = UserDataBuilder.buildUserWithRequiredFields().build();
+        String refreshToken = jwtService.generateRefreshToken(user);
+        RefreshRequest refreshRequest = RefreshRequest.builder().refreshToken(refreshToken).build();
+
+        MockHttpServletResponse response = mockMvc.perform(post("/auth/refresh")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(refreshRequest))
+        ).andExpect(status().isBadRequest()).andReturn().getResponse();
+
+        String responseContent = response.getContentAsString();
+        assertThat(responseContent).isNotBlank();
+        assertThat(responseContent).isEqualTo("User does not exist");
+    }
+
+    @Test
+    void refresh_shouldReturnForbidden_whenTokenIsNotValid() throws Exception {
+        User user = UserDataBuilder.buildUserWithRequiredFields().build();
+        userRepository.save(user);
+        String expiredRefreshToken = jwtService.generateRefreshTokenWithExpiration(user, 0);
+        RefreshRequest refreshRequest = RefreshRequest.builder().refreshToken(expiredRefreshToken).build();
+
+        MockHttpServletResponse response = mockMvc.perform(post("/auth/refresh")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(refreshRequest))
+        ).andExpect(status().isUnauthorized()).andReturn().getResponse();
+
+        String responseContent = response.getContentAsString();
+        assertThat(responseContent).isNotBlank();
+        assertThat(responseContent).isEqualTo("Token has expired");
     }
 }

@@ -4,6 +4,7 @@ import com.vendo.user_service.exception.WrongCredentialsException;
 import com.vendo.user_service.model.User;
 import com.vendo.user_service.common.type.UserRole;
 import com.vendo.user_service.common.type.UserStatus;
+import com.vendo.user_service.security.exception.AccessDeniedException;
 import com.vendo.user_service.security.token.JwtService;
 import com.vendo.user_service.security.token.JwtUserDetailsService;
 import com.vendo.user_service.security.token.TokenPayload;
@@ -29,6 +30,8 @@ public class AuthService {
 
     public AuthResponse signIn(AuthRequest authRequest) {
         User user = userService.findByEmailOrThrow(authRequest.getEmail());
+
+        throwIfUserBlocked(user);
         matchPasswordsOrThrow(authRequest.getPassword(), user.getPassword());
 
         String accessToken = jwtService.generateAccessToken(user);
@@ -66,6 +69,12 @@ public class AuthService {
         boolean matches = passwordEncoder.matches(rawPassword, encodedPassword);
         if (!matches) {
             throw new WrongCredentialsException("Wrong credentials");
+        }
+    }
+
+    private void throwIfUserBlocked(User user) {
+        if (user.getStatus() == UserStatus.BLOCKED) {
+            throw new AccessDeniedException("User is blocked");
         }
     }
 }

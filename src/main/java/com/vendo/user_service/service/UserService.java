@@ -1,11 +1,11 @@
 package com.vendo.user_service.service;
 
 import com.vendo.user_service.exception.UserAlreadyExistsException;
-import com.vendo.user_service.exception.UserNotFoundException;
 import com.vendo.user_service.model.User;
 import com.vendo.user_service.repository.UserRepository;
 import jakarta.validation.constraints.NotNull;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 
 import java.util.Optional;
@@ -23,13 +23,13 @@ public class UserService {
 
     public User findByEmailOrThrow(@NotNull String email) {
         return userRepository.findByEmail(email)
-                .orElseThrow(() -> new UserNotFoundException("User not found"));
+                .orElseThrow(() -> new UsernameNotFoundException("User not found"));
     }
 
     public void throwIfUserExistsByEmail(String email) {
         Optional<User> user = userRepository.findByEmail(email);
         if (user.isPresent()) {
-            throw new UserAlreadyExistsException("User already exists");
+            throw new UserAlreadyExistsException("User with this email already exists");
         }
     }
 }
