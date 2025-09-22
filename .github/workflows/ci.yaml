@@ -8,13 +8,17 @@ on:
 
 jobs:
   test:
-    runs-on: ubuntu-latest
+    runs-on: windows-latest
 
     services:
       mongo:
         image: mongo:latest
         ports:
           - 27017:27017
+        env:
+          MONGO_INITDB_ROOT_USERNAME: root
+          MONGO_INITDB_ROOT_PASSWORD: secret
+          MONGO_INITDB_DATABASE: mydatabase
         options: >-
           --health-cmd "mongosh --eval 'db.adminCommand(\"ping\")'" 
           --health-interval=10s 
