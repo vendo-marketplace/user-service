@@ -109,9 +109,9 @@
 			<version>1.6.3</version>
 		</dependency>
 		<dependency>
-			<groupId>com.vendo.lib</groupId>
+			<groupId>io.github.vendo-marketplace-be</groupId>
 			<artifactId>common</artifactId>
-			<version>1.0.2</version>
+			<version>1.0.0</version>
 		</dependency>
         <dependency>
             <groupId>org.assertj</groupId>
