@@ -8,9 +8,10 @@ import jakarta.validation.ValidatorFactory;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import java.time.LocalDate;
 import java.util.Set;
 
-import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
+import static org.assertj.core.api.Assertions.assertThat;
 
 class UserTest {
 
@@ -89,6 +90,100 @@ class UserTest {
         User user = UserDataBuilder.buildUserWithRequiredFields().password("qwerty1234").build();
 
         validateUserField(user, "Invalid password. Should include minimum 8 characters, 1 uppercase character, 1 lowercase character, 1 special symbol");
+    }
+
+    @Test
+    void whenBirthDateIsNull_thenNoViolations() {
+        User user = UserDataBuilder.buildUserWithRequiredFields().birthDate(null).build();
+
+        Set<ConstraintViolation<User>> violations = validator.validate(user);
+
+        assertThat(violations).isEmpty();
+    }
+
+    @Test
+    void whenBirthDateIsInPast_thenNoViolations() {
+        User user = UserDataBuilder.buildUserWithRequiredFields().birthDate(LocalDate.of(2000, 2, 20)).build();
+
+        Set<ConstraintViolation<User>> violations = validator.validate(user);
+
+        assertThat(violations).isEmpty();
+    }
+
+    @Test
+    void whenBirthDateIsToday_thenViolationsFalls() {
+        User user = UserDataBuilder.buildUserWithRequiredFields().birthDate(LocalDate.now()).build();
+
+        validateUserField(user, "Birth date must be in the past");
+    }
+
+    @Test
+    void whenBirthDateIsInFuture_thenValidationFalls() {
+        User user = UserDataBuilder.buildUserWithRequiredFields().birthDate(LocalDate.now().plusDays(1)).build();
+
+        validateUserField(user, "Birth date must be in the past");
+    }
+
+    @Test
+    void whenFullNameIsNull_thenNoViolations() {
+        User user = UserDataBuilder.buildUserWithRequiredFields().fullName(null).build();
+
+        Set<ConstraintViolation<User>> violations = validator.validate(user);
+
+        assertThat(violations).isEmpty();
+    }
+
+    @Test
+    void whenFullNameIsTwoWordsValid_thenNoViolations() {
+        User user = UserDataBuilder.buildUserWithRequiredFields().fullName("John Smith").build();
+
+        Set<ConstraintViolation<User>> violations = validator.validate(user);
+
+        assertThat(violations).isEmpty();
+    }
+
+    @Test
+    void whenFullNameIsThreeWordsValid_thenNoViolations() {
+        User user = UserDataBuilder.buildUserWithRequiredFields().fullName("John Smith Junior").build();
+
+        Set<ConstraintViolation<User>> violations = validator.validate(user);
+
+        assertThat(violations).isEmpty();
+    }
+
+    @Test
+    void whenFullNameStartsWithLowercase_thenValidationFails() {
+        User user = UserDataBuilder.buildUserWithRequiredFields().fullName("john Smith").build();
+
+        validateUserField(user, "Invalid full name. Should contain 2-3 words, each starting with capital letter");
+    }
+
+    @Test
+    void whenFullNameHasOnlyOneWord_thenValidationFails() {
+        User user = UserDataBuilder.buildUserWithRequiredFields().fullName("John").build();
+
+        validateUserField(user, "Invalid full name. Should contain 2-3 words, each starting with capital letter");
+    }
+
+    @Test
+    void whenFullNameHasFourWords_thenValidationFails() {
+        User user = UserDataBuilder.buildUserWithRequiredFields().fullName("John Smith Junior Senior").build();
+
+        validateUserField(user, "Invalid full name. Should contain 2-3 words, each starting with capital letter");
+    }
+
+    @Test
+    void whenFullNameContainsDigits_thenValidationFails() {
+        User user = UserDataBuilder.buildUserWithRequiredFields().fullName("John Smith2").build();
+
+        validateUserField(user, "Invalid full name. Should contain 2-3 words, each starting with capital letter");
+    }
+
+    @Test
+    void whenFullNameContainsDoubleSpaces_thenValidationFails() {
+        User user = UserDataBuilder.buildUserWithRequiredFields().fullName("John  Smith").build();
+
+        validateUserField(user, "Invalid full name. Should contain 2-3 words, each starting with capital letter");
     }
 
     private void validateUserField(User user, String validationMessage) {
