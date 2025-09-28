@@ -1,7 +1,9 @@
 package com.vendo.user_service.security.service;
 
+import com.vendo.user_service.common.type.UserStatus;
+import com.vendo.user_service.model.User;
 import com.vendo.user_service.security.common.config.JwtProperties;
-import com.vendo.user_service.security.common.util.JwtUtils;
+import com.vendo.user_service.security.common.helper.JwtHelper;
 import io.jsonwebtoken.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -11,20 +13,25 @@ import java.util.Date;
 import java.util.List;
 import java.util.Map;
 
+import static com.vendo.security.common.type.TokenClaim.ROLES_CLAIM;
+import static com.vendo.security.common.type.TokenClaim.STATUS_CLAIM;
+
 @Service
 @RequiredArgsConstructor
 public class JwtService {
 
-    private final JwtUtils jwtUtils;
+    private final JwtHelper jwtHelper;
 
     private final JwtProperties jwtProperties;
 
-    public static final String ROLES_CLAIM = "roles";
-
     public String generateAccessToken(UserDetails userDetails) {
-        List<String> roles = jwtUtils.getRoles(userDetails);
+        List<String> roles = jwtHelper.getRoles(userDetails);
+        UserStatus status = ((User) userDetails).getStatus();
 
-        return generateAccessToken(userDetails, Map.of(ROLES_CLAIM, roles));
+        return generateAccessToken(userDetails, Map.of(
+                ROLES_CLAIM.getClaim(), roles,
+                STATUS_CLAIM.getClaim(), status
+        ));
     }
 
     public String generateAccessToken(UserDetails userDetails, Map<String, Object> claims) {
@@ -36,13 +43,13 @@ public class JwtService {
     }
 
     public String generateTokenWithExpiration(UserDetails userDetails, int expiration) {
-        List<String> roles = jwtUtils.getRoles(userDetails);
-        return buildToken(userDetails, Map.of(ROLES_CLAIM, roles), expiration);
+        List<String> roles = jwtHelper.getRoles(userDetails);
+        return buildToken(userDetails, Map.of(ROLES_CLAIM.getClaim(), roles), expiration);
     }
 
     public boolean isTokenValid(String token, UserDetails userDetails) {
         try {
-            String subject = jwtUtils.extractClaim(token, Claims::getSubject);
+            String subject = jwtHelper.extractClaim(token, Claims::getSubject);
             return (!isTokenExpired(token) && userDetails.getUsername().equals(subject));
         } catch (JwtException exception) {
             return false;
@@ -51,7 +58,7 @@ public class JwtService {
 
     public boolean isTokenExpired(String token) {
         try {
-            return jwtUtils.extractClaim(token, Claims::getExpiration).before(new Date());
+            return jwtHelper.extractClaim(token, Claims::getExpiration).before(new Date());
         } catch (ExpiredJwtException exception) {
             return true;
         } catch (JwtException exception) {
@@ -65,7 +72,7 @@ public class JwtService {
                 .subject(userDetails.getUsername())
                 .issuedAt(new Date(System.currentTimeMillis()))
                 .expiration(new Date(System.currentTimeMillis() + expiration))
-                .signWith(jwtUtils.getSignInKey(), SignatureAlgorithm.HS256)
+                .signWith(jwtHelper.getSignInKey(), SignatureAlgorithm.HS256)
                 .compact();
     }
 }

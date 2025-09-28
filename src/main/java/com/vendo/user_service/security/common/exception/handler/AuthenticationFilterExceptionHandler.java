@@ -1,6 +1,6 @@
 package com.vendo.user_service.security.common.exception.handler;
 
-import com.vendo.user_service.security.common.exception.AccessDeniedException;
+import com.vendo.security.common.exception.AccessDeniedException;
 import io.jsonwebtoken.JwtException;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;

@@ -1,17 +1,18 @@
 package com.vendo.user_service.security.filter;
 
-import com.vendo.user_service.security.common.exception.AccessDeniedException;
+import com.vendo.security.common.exception.AccessDeniedException;
+import com.vendo.user_service.security.common.exception.InvalidTokenException;
 import com.vendo.user_service.security.common.exception.handler.AuthenticationFilterExceptionHandler;
 import com.vendo.user_service.model.User;
 import com.vendo.user_service.common.type.UserStatus;
-import com.vendo.user_service.security.common.util.JwtUtils;
+import com.vendo.user_service.security.common.helper.JwtHelper;
+import com.vendo.user_service.security.service.JwtService;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.security.authentication.AuthenticationCredentialsNotFoundException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -30,7 +31,9 @@ import static com.vendo.user_service.common.constants.AuthConstants.BEARER_PREFI
 @RequiredArgsConstructor
 public class JwtAuthFilter extends OncePerRequestFilter {
 
-    private final JwtUtils jwtUtils;
+    private final JwtHelper jwtHelper;
+
+    private final JwtService jwtService;
 
     private final UserDetailsService userDetailsService;
 
@@ -49,6 +52,7 @@ public class JwtAuthFilter extends OncePerRequestFilter {
         try {
             String jwtToken = getTokenFromRequest(request);
             UserDetails userDetails = validateUserAccessibility(jwtToken);
+            throwIfTokenNotValid(jwtToken, userDetails);
             addAuthenticationToContext(userDetails);
         } catch (Exception e) {
             authenticationFilterExceptionHandler.handle(e, response);
@@ -68,11 +72,11 @@ public class JwtAuthFilter extends OncePerRequestFilter {
             return authorization.substring(BEARER_PREFIX.length());
         }
 
-        throw new AuthenticationCredentialsNotFoundException("Missing or invalid Authorization header");
+        throw new InvalidTokenException("Missing or invalid Authorization header");
     }
 
     private UserDetails validateUserAccessibility(String jwtToken) {
-        String email = jwtUtils.extractSubject(jwtToken);
+        String email = jwtHelper.extractSubject(jwtToken);
         UserDetails userDetails = userDetailsService.loadUserByUsername(email);
 
         if (userDetails instanceof User && ((User) userDetails).getStatus() == UserStatus.BLOCKED) {
@@ -80,6 +84,13 @@ public class JwtAuthFilter extends OncePerRequestFilter {
         }
 
         return userDetails;
+    }
+
+    private void throwIfTokenNotValid(String token, UserDetails userDetails) {
+        boolean tokenValid = jwtService.isTokenValid(token, userDetails);
+        if (!tokenValid) {
+            throw new InvalidTokenException("Token not valid");
+        }
     }
 
     private void addAuthenticationToContext(UserDetails userDetails) {

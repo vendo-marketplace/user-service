@@ -72,7 +72,7 @@ public class JwtAuthFilterIntegrationTest {
 
         String responseContent = response.getContentAsString();
         assertThat(responseContent).isNotBlank();
-        assertThat(responseContent).isEqualTo("Missing or invalid Authorization header");
+        assertThat(responseContent).isEqualTo("Token has expired or invalid");
     }
 
     @Test
@@ -96,7 +96,7 @@ public class JwtAuthFilterIntegrationTest {
 
         String responseContent = response.getContentAsString();
         assertThat(responseContent).isNotBlank();
-        assertThat(responseContent).isEqualTo("Missing or invalid Authorization header");
+        assertThat(responseContent).isEqualTo("Token has expired or invalid");
     }
 
     @Test

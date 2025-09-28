@@ -1,9 +1,0 @@
-package com.vendo.user_service.security.common.exception;
-
-import org.springframework.security.core.AuthenticationException;
-
-public class AccessDeniedException extends AuthenticationException {
-    public AccessDeniedException(String message) {
-        super(message);
-    }
-}

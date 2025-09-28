@@ -9,7 +9,6 @@ services:
       - '27017:27017'
 
   zipkin:
-    image: openzipkin/zipkin:latest
-    container_name: zipkin
+    image: 'openzipkin/zipkin:latest'
     ports:
       - '9411:9411'
