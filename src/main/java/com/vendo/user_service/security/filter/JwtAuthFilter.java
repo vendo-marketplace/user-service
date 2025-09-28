@@ -1,6 +1,7 @@
 package com.vendo.user_service.security.filter;
 
 import com.vendo.security.common.exception.AccessDeniedException;
+import com.vendo.user_service.security.common.exception.InvalidTokenException;
 import com.vendo.user_service.security.common.exception.handler.AuthenticationFilterExceptionHandler;
 import com.vendo.user_service.model.User;
 import com.vendo.user_service.common.type.UserStatus;
@@ -12,7 +13,6 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.security.authentication.AuthenticationCredentialsNotFoundException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -72,7 +72,7 @@ public class JwtAuthFilter extends OncePerRequestFilter {
             return authorization.substring(BEARER_PREFIX.length());
         }
 
-        throw new AuthenticationCredentialsNotFoundException("Missing or invalid Authorization header");
+        throw new InvalidTokenException("Missing or invalid Authorization header");
     }
 
     private UserDetails validateUserAccessibility(String jwtToken) {
@@ -89,7 +89,7 @@ public class JwtAuthFilter extends OncePerRequestFilter {
     private void throwIfTokenNotValid(String token, UserDetails userDetails) {
         boolean tokenValid = jwtService.isTokenValid(token, userDetails);
         if (!tokenValid) {
-            throw new AuthenticationCredentialsNotFoundException("Token not valid");
+            throw new InvalidTokenException("Token not valid");
         }
     }
 
