@@ -1,5 +1,6 @@
 package com.vendo.user_service.service;
 
+import com.vendo.security.common.exception.AccessDeniedException;
 import com.vendo.user_service.model.User;
 import com.vendo.user_service.common.type.UserRole;
 import com.vendo.user_service.common.type.UserStatus;

@@ -1,5 +1,6 @@
 package com.vendo.user_service.common.exception.handler;
 
+import com.vendo.security.common.exception.AccessDeniedException;
 import com.vendo.user_service.common.exception.UserAlreadyExistsException;
 import io.jsonwebtoken.ExpiredJwtException;
 import org.springframework.http.HttpStatus;
