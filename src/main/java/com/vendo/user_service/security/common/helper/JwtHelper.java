@@ -1,4 +1,4 @@
-package com.vendo.user_service.security.common.util;
+package com.vendo.user_service.security.common.helper;
 
 import com.vendo.user_service.security.common.config.JwtProperties;
 import io.jsonwebtoken.Claims;
@@ -17,7 +17,7 @@ import java.util.function.Function;
 
 @Service
 @RequiredArgsConstructor
-public class JwtUtils {
+public class JwtHelper {
 
     private final JwtProperties jwtProperties;
 
