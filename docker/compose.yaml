@@ -12,3 +12,10 @@ services:
     image: 'openzipkin/zipkin:latest'
     ports:
       - '9411:9411'
+
+  redis:
+    image: redis:7-alpine
+    container_name: redis
+    restart: always
+    ports:
+      - "6379:6379"
