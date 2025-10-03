@@ -10,3 +10,12 @@ security:
 eureka:
   client:
     enabled: false
+redis:
+  host: localhost
+  port: 6379
+  reset-password:
+    token:
+      ttl: 600
+kafka:
+  host: localhost
+  port: 9092

@@ -1,4 +1,4 @@
-package com.vendo.user_service.integration.kafka.common.config;
+package com.vendo.user_service.integration.kafka.common.topics;
 
 public interface OutputTopics {
 

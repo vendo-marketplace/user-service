@@ -28,11 +28,6 @@ public class AuthController {
         authService.signUp(authRequest);
     }
 
-    @GetMapping("/test")
-    public void test() {
-        System.out.println("Test");
-    }
-
     @PostMapping("/refresh")
     ResponseEntity<AuthResponse> refresh(@Valid @RequestBody RefreshRequest refreshRequest) {
         return ResponseEntity.ok(authService.refresh(refreshRequest));

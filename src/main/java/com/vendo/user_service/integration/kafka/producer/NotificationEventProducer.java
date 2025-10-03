@@ -5,14 +5,14 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
 
-import static com.vendo.user_service.integration.kafka.common.config.OutputTopics.PASSWORD_RECOVERY_EMAIL_NOTIFICATION_TOPIC;
+import static com.vendo.user_service.integration.kafka.common.topics.OutputTopics.PASSWORD_RECOVERY_EMAIL_NOTIFICATION_TOPIC;
 
 @Slf4j
 @Service
 @RequiredArgsConstructor
 public class NotificationEventProducer {
 
-    private final KafkaTemplate<String, String> kafkaTemplate;
+    private final KafkaTemplate<String, Object> kafkaTemplate;
 
     public void sendRecoveryPasswordNotificationEvent(String message) {
         log.info("[NOTIFICATION_EVENT_PRODUCER: Sent {} for password recovery email message", PASSWORD_RECOVERY_EMAIL_NOTIFICATION_TOPIC);

@@ -5,6 +5,9 @@ import com.vendo.user_service.builder.AuthRequestDataBuilder;
 import com.vendo.user_service.builder.UserDataBuilder;
 import com.vendo.user_service.common.type.UserRole;
 import com.vendo.user_service.common.type.UserStatus;
+import com.vendo.user_service.integration.redis.common.constants.RedisPrefixNamespaces;
+import com.vendo.user_service.integration.redis.common.dto.ForgotPasswordRequest;
+import com.vendo.user_service.kafka.consumer.TestConsumer;
 import com.vendo.user_service.model.User;
 import com.vendo.user_service.repository.UserRepository;
 import com.vendo.user_service.security.common.helper.JwtHelper;
@@ -17,7 +20,9 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.http.MediaType;
+import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.mock.web.MockHttpServletResponse;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.context.ActiveProfiles;
@@ -52,6 +57,15 @@ class AuthControllerIntegrationTest {
 
     @Autowired
     private JwtHelper jwtHelper;
+
+    @Autowired
+    private TestConsumer testConsumer;
+
+    @Autowired
+    private RedisTemplate<String, Object> redisTemplate;
+
+    @Autowired
+    private KafkaTemplate<String, Object> kafkaTemplate;
 
     @BeforeEach
     void setUp() {
@@ -222,5 +236,46 @@ class AuthControllerIntegrationTest {
         String responseContent = response.getContentAsString();
         assertThat(responseContent).isNotBlank();
         assertThat(responseContent).isEqualTo("Token has expired");
+    }
+
+    @Test
+    void forgotPassword_shouldSentNotificationEvent() throws Exception {
+        User user = UserDataBuilder.buildUserWithRequiredFields().build();
+        userRepository.save(user);
+        ForgotPasswordRequest forgotPasswordRequest = ForgotPasswordRequest.builder()
+                .email(user.getEmail())
+                .build();
+
+        mockMvc.perform(post("/auth/forgot-password")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(forgotPasswordRequest))
+        ).andExpect(status().isUnauthorized()).andReturn().getResponse();
+
+        String token = getValueFromRedis(RedisPrefixNamespaces.RESET_PASSWORD_EMAIL +  user.getEmail()).toString();
+        System.out.println(token);
+        assertThat(token).isNotBlank();
+
+        assertThat(waitForMessageToConsumeInKafka(token)).isTrue();
+    }
+
+
+    private Object getValueFromRedis(String id) {
+        return redisTemplate.opsForValue().get(id);
+    }
+    private boolean waitForMessageToConsumeInKafka(String token) {
+        int attempts = 5;
+        while (attempts-- != 0) {
+            try {
+                Thread.sleep(1000);
+                boolean hasReceived = testConsumer.hasReceived(token);
+                if (hasReceived) {
+                    return true;
+                }
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+            }
+        }
+
+        return false;
     }
 }
