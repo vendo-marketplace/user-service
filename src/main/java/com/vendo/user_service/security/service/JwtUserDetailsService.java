@@ -1,8 +1,8 @@
 package com.vendo.user_service.security.service;
 
 import com.vendo.user_service.security.common.dto.TokenPayload;
-import com.vendo.user_service.security.common.exception.InvalidTokenException;
 import com.vendo.user_service.security.common.helper.JwtHelper;
+import io.jsonwebtoken.Claims;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
@@ -32,15 +32,8 @@ public class JwtUserDetailsService {
                 .build();
     }
 
-    public UserDetails getUserDetailsIfTokenValidOrThrow(String token) {
-        String subject =  jwtHelper.extractSubject(token);
-        UserDetails userDetails = userDetailsService.loadUserByUsername(subject);
-        boolean isTokenValid = jwtService.isTokenValid(token, userDetails);
-
-        if (isTokenValid) {
-            return userDetails;
-        }
-
-        throw new InvalidTokenException("Token not valid");
+    public UserDetails retrieveUserDetails(String token) {
+        Claims claims = jwtHelper.extractAllClaims(token);
+        return userDetailsService.loadUserByUsername(claims.getSubject());
     }
 }

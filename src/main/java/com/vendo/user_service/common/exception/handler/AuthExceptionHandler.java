@@ -1,8 +1,7 @@
 package com.vendo.user_service.common.exception.handler;
 
-import com.vendo.security.common.exception.AccessDeniedException;
+import com.vendo.user_service.common.exception.PasswordRecoveryNotificationAlreadySentException;
 import com.vendo.user_service.common.exception.UserAlreadyExistsException;
-import io.jsonwebtoken.ExpiredJwtException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.BadCredentialsException;
@@ -28,13 +27,8 @@ public class AuthExceptionHandler {
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(e.getMessage());
     }
 
-    @ExceptionHandler(ExpiredJwtException.class)
-    public ResponseEntity<String> handleExpiredJwtException() {
-        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Token has expired");
-    }
-
-    @ExceptionHandler(AccessDeniedException.class)
-    public ResponseEntity<String> handleAccessDeniedException(AccessDeniedException e) {
-        return ResponseEntity.status(HttpStatus.FORBIDDEN).body(e.getMessage());
+    @ExceptionHandler(PasswordRecoveryNotificationAlreadySentException.class)
+    public ResponseEntity<String> handlePasswordRecoveryNotificationAlreadySentException(PasswordRecoveryNotificationAlreadySentException e) {
+        return ResponseEntity.status(HttpStatus.GONE).body(e.getMessage());
     }
 }

@@ -114,13 +114,13 @@ public class AuthServiceTest {
                 .refreshToken("refreshToken")
                 .build();
 
-        when(jwtUserDetailsService.getUserDetailsIfTokenValidOrThrow(refreshRequest.getRefreshToken()))
+        when(jwtUserDetailsService.retrieveUserDetails(refreshRequest.getRefreshToken()))
                 .thenReturn(user);
         when(jwtUserDetailsService.generateTokenPayload(user)).thenReturn(tokenPayload);
 
         authService.refresh(refreshRequest);
 
-        verify(jwtUserDetailsService).getUserDetailsIfTokenValidOrThrow(refreshRequest.getRefreshToken());
+        verify(jwtUserDetailsService).retrieveUserDetails(refreshRequest.getRefreshToken());
         verify(jwtUserDetailsService).generateTokenPayload(user);
     }
 
@@ -129,12 +129,12 @@ public class AuthServiceTest {
         RefreshRequest refreshRequest = RefreshRequest.builder().build();
 
         doThrow(new BadCredentialsException("Token not valid"))
-                .when(jwtUserDetailsService).getUserDetailsIfTokenValidOrThrow(refreshRequest.getRefreshToken());
+                .when(jwtUserDetailsService).retrieveUserDetails(refreshRequest.getRefreshToken());
 
         assertThrows(BadCredentialsException.class, () ->
-                jwtUserDetailsService.getUserDetailsIfTokenValidOrThrow(refreshRequest.getRefreshToken()));
+                jwtUserDetailsService.retrieveUserDetails(refreshRequest.getRefreshToken()));
 
-        verify(jwtUserDetailsService).getUserDetailsIfTokenValidOrThrow(refreshRequest.getRefreshToken());
+        verify(jwtUserDetailsService).retrieveUserDetails(refreshRequest.getRefreshToken());
         verify(jwtUserDetailsService, never()).generateTokenPayload(any(User.class));
     }
 }

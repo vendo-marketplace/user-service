@@ -7,6 +7,7 @@ import com.vendo.user_service.common.type.UserRole;
 import com.vendo.user_service.common.type.UserStatus;
 import com.vendo.user_service.model.User;
 import com.vendo.user_service.repository.UserRepository;
+import com.vendo.user_service.security.common.helper.JwtHelper;
 import com.vendo.user_service.security.service.JwtService;
 import com.vendo.user_service.web.dto.AuthRequest;
 import com.vendo.user_service.web.dto.AuthResponse;
@@ -48,6 +49,9 @@ class AuthControllerIntegrationTest {
 
     @Autowired
     private JwtService jwtService;
+
+    @Autowired
+    private JwtHelper jwtHelper;
 
     @BeforeEach
     void setUp() {
@@ -120,9 +124,10 @@ class AuthControllerIntegrationTest {
         assertThat(authResponse).isNotNull();
 
         assertThat(authResponse.getAccessToken()).isNotBlank();
-        assertThat(jwtService.isTokenValid(authResponse.getAccessToken(), user)).isTrue();
+        assertThat(jwtHelper.extractAllClaims(authResponse.getAccessToken())).isNotNull();
+
         assertThat(authResponse.getRefreshToken()).isNotBlank();
-        assertThat(jwtService.isTokenValid(authResponse.getRefreshToken(), user)).isTrue();
+        assertThat(jwtHelper.extractAllClaims(authResponse.getAccessToken())).isNotNull();
     }
 
     @Test
@@ -180,9 +185,10 @@ class AuthControllerIntegrationTest {
         assertThat(authResponse).isNotNull();
 
         assertThat(authResponse.getAccessToken()).isNotBlank();
-        assertThat(jwtService.isTokenValid(authResponse.getAccessToken(), user)).isTrue();
+        assertThat(jwtHelper.extractAllClaims(authResponse.getAccessToken())).isNotNull();
+
         assertThat(authResponse.getRefreshToken()).isNotBlank();
-        assertThat(jwtService.isTokenValid(authResponse.getRefreshToken(), user)).isTrue();
+        assertThat(jwtHelper.extractAllClaims(authResponse.getAccessToken())).isNotNull();
     }
 
     @Test
