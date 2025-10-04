@@ -1,5 +1,8 @@
 spring:
   data:
+    redis:
+      host: localhost
+      port: 6379
     mongodb:
       uri: mongodb://root:secret@localhost:27017/mydatabase?authSource=admin
 security:
@@ -11,8 +14,6 @@ eureka:
   client:
     enabled: false
 redis:
-  host: localhost
-  port: 6379
   reset-password:
     token:
       ttl: 600

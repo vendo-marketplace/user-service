@@ -7,6 +7,8 @@ import com.vendo.user_service.common.type.UserRole;
 import com.vendo.user_service.common.type.UserStatus;
 import com.vendo.user_service.integration.redis.common.constants.RedisPrefixNamespaces;
 import com.vendo.user_service.integration.redis.common.dto.ForgotPasswordRequest;
+import com.vendo.user_service.integration.redis.common.dto.ResetPasswordRequest;
+import com.vendo.user_service.integration.redis.service.RedisService;
 import com.vendo.user_service.kafka.consumer.TestConsumer;
 import com.vendo.user_service.model.User;
 import com.vendo.user_service.repository.UserRepository;
@@ -18,11 +20,10 @@ import com.vendo.user_service.web.dto.RefreshRequest;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.http.MediaType;
-import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.mock.web.MockHttpServletResponse;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.context.ActiveProfiles;
@@ -30,9 +31,11 @@ import org.springframework.test.context.event.annotation.AfterTestClass;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.util.Optional;
+import java.util.UUID;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @SpringBootTest
@@ -62,18 +65,20 @@ class AuthControllerIntegrationTest {
     private TestConsumer testConsumer;
 
     @Autowired
-    private RedisTemplate<String, Object> redisTemplate;
+    private RedisService redisService;
 
-    @Autowired
-    private KafkaTemplate<String, Object> kafkaTemplate;
+    @Value("${redis.reset-password.token.ttl}")
+    private int RESET_PASSWORD_TOKEN_TTL;
 
     @BeforeEach
     void setUp() {
+        redisService.clearRedisStorage();
         userRepository.deleteAll();
     }
 
     @AfterTestClass
     void tearDown() {
+        redisService.clearRedisStorage();
         userRepository.deleteAll();
     }
 
@@ -242,40 +247,171 @@ class AuthControllerIntegrationTest {
     void forgotPassword_shouldSentNotificationEvent() throws Exception {
         User user = UserDataBuilder.buildUserWithRequiredFields().build();
         userRepository.save(user);
-        ForgotPasswordRequest forgotPasswordRequest = ForgotPasswordRequest.builder()
-                .email(user.getEmail())
-                .build();
+        ForgotPasswordRequest forgotPasswordRequest = ForgotPasswordRequest.builder().email(user.getEmail()).build();
 
         mockMvc.perform(post("/auth/forgot-password")
                 .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(forgotPasswordRequest))
-        ).andExpect(status().isUnauthorized()).andReturn().getResponse();
+                .content(objectMapper.writeValueAsString(forgotPasswordRequest)))
+                .andExpect(status().isOk());
 
-        String token = getValueFromRedis(RedisPrefixNamespaces.RESET_PASSWORD_EMAIL +  user.getEmail()).toString();
-        System.out.println(token);
+        Optional<String> target = redisService.getValue(RedisPrefixNamespaces.RESET_PASSWORD_EMAIL + user.getEmail());
+        assertThat(target).isPresent();
+
+        String token = target.get();
         assertThat(token).isNotBlank();
 
-        assertThat(waitForMessageToConsumeInKafka(token)).isTrue();
+        assertThat(testConsumer.waitForMessage(token, 5)).isTrue();
     }
 
+    @Test
+    void forgotPassword_shouldReturnConflict_whenMessageHasAlreadySent() throws Exception {
+        User user = UserDataBuilder.buildUserWithRequiredFields().build();
+        ForgotPasswordRequest forgotPasswordRequest = ForgotPasswordRequest.builder().email(user.getEmail()).build();
+        userRepository.save(user);
+        redisService.saveToken(
+                RedisPrefixNamespaces.RESET_PASSWORD_EMAIL + user.getEmail(),
+                String.valueOf(UUID.randomUUID()),
+                RESET_PASSWORD_TOKEN_TTL
+        );
 
-    private Object getValueFromRedis(String id) {
-        return redisTemplate.opsForValue().get(id);
+        String responseContent = mockMvc.perform(post("/auth/forgot-password")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(forgotPasswordRequest)))
+                .andExpect(status().isConflict())
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
+
+        assertThat(responseContent).isNotBlank();
+        assertThat(responseContent).isEqualTo("Password recovery notification has already sent");
+
+        Optional<String> target = redisService.getValue(RedisPrefixNamespaces.RESET_PASSWORD_EMAIL + user.getEmail());
+        assertThat(target).isPresent();
+
+        String token = target.get();
+        assertThat(token).isNotBlank();
+
+        assertThat(testConsumer.waitForMessage(token, 3)).isFalse();
     }
-    private boolean waitForMessageToConsumeInKafka(String token) {
-        int attempts = 5;
-        while (attempts-- != 0) {
-            try {
-                Thread.sleep(1000);
-                boolean hasReceived = testConsumer.hasReceived(token);
-                if (hasReceived) {
-                    return true;
-                }
-            } catch (InterruptedException e) {
-                Thread.currentThread().interrupt();
-            }
+
+    @Test
+    void forgotPassword_shouldReturnBadRequest_whenUserNotFound() throws Exception {
+        User user = UserDataBuilder.buildUserWithRequiredFields().build();
+        ForgotPasswordRequest forgotPasswordRequest = ForgotPasswordRequest.builder().email(user.getEmail()).build();
+
+        String responseContent = mockMvc.perform(post("/auth/forgot-password")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(forgotPasswordRequest)))
+                .andExpect(status().isBadRequest())
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
+
+        assertThat(responseContent).isNotBlank();
+        assertThat(responseContent).isEqualTo("User not found");
+
+        Optional<String> target = redisService.getValue(RedisPrefixNamespaces.RESET_PASSWORD_EMAIL + user.getEmail());
+        assertThat(target).isEmpty();
+    }
+
+    @Test
+    void forgotPassword_shouldReturnBadRequest_whenRequestBodyIsInvalid() throws Exception {
+        User user = UserDataBuilder.buildUserWithRequiredFields().build();
+        userRepository.save(user);
+        ForgotPasswordRequest forgotPasswordRequest = ForgotPasswordRequest.builder().build();
+
+        String responseContent = mockMvc.perform(post("/auth/forgot-password")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(forgotPasswordRequest)))
+                .andExpect(status().isBadRequest()).andReturn().getResponse().getContentAsString();
+
+        assertThat(responseContent).isNotBlank();
+        assertThat(responseContent).contains("Email is required");
+
+        Optional<String> target = redisService.getValue(RedisPrefixNamespaces.RESET_PASSWORD_EMAIL + user.getEmail());
+        assertThat(target).isEmpty();
+    }
+
+    @Test
+    void resetPassword_shouldSuccessfullyResetPassword() throws Exception {
+        User user = UserDataBuilder.buildUserWithRequiredFields().build();
+        String token = String.valueOf(UUID.randomUUID());
+        String newPassword = "newTestPassword1234@";
+        ResetPasswordRequest resetPasswordRequest = ResetPasswordRequest.builder().password(newPassword).build();
+        userRepository.save(user);
+        redisService.saveToken(
+                RedisPrefixNamespaces.RESET_PASSWORD_TOKEN + token,
+                user.getEmail(),
+                RESET_PASSWORD_TOKEN_TTL
+        );
+
+        mockMvc.perform(put("/auth/reset-password").param("token", token)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(resetPasswordRequest)))
+                .andExpect(status().isOk());
+
+        Optional<User> optionalUser = userRepository.findByEmail(user.getEmail());
+        assertThat(optionalUser).isPresent();
+        assertThat(passwordEncoder.matches(newPassword, optionalUser.get().getPassword())).isTrue();
+    }
+
+    @Test
+    void resetPassword_shouldReturnGone_whenTokenExpired() throws Exception {
+        User user = UserDataBuilder.buildUserWithRequiredFields().build();
+        String token = String.valueOf(UUID.randomUUID());
+        String newPassword = "newTestPassword1234@";
+        ResetPasswordRequest resetPasswordRequest = ResetPasswordRequest.builder().password(newPassword).build();
+        userRepository.save(user);
+        redisService.saveToken(
+                RedisPrefixNamespaces.RESET_PASSWORD_TOKEN + token,
+                user.getEmail(),
+                1
+        );
+
+        sleepSafely(1);
+
+        String responseContent = mockMvc.perform(put("/auth/reset-password").param("token", token)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(resetPasswordRequest)))
+                .andExpect(status().isGone()).andReturn().getResponse().getContentAsString();
+
+        assertThat(responseContent).isNotBlank();
+        assertThat(responseContent).isEqualTo("Token has expired");
+
+        Optional<User> optionalUser = userRepository.findByEmail(user.getEmail());
+        assertThat(optionalUser).isPresent();
+        assertThat(passwordEncoder.matches(newPassword, optionalUser.get().getPassword())).isFalse();
+    }
+
+    @Test
+    void resetPassword_shouldReturnBadRequest_whenUserNotFound() throws Exception {
+        User user = UserDataBuilder.buildUserWithRequiredFields().build();
+        String token = String.valueOf(UUID.randomUUID());
+        String newPassword = "newTestPassword1234@";
+        ResetPasswordRequest resetPasswordRequest = ResetPasswordRequest.builder().password(newPassword).build();
+        redisService.saveToken(
+                RedisPrefixNamespaces.RESET_PASSWORD_TOKEN + token,
+                user.getEmail(),
+                RESET_PASSWORD_TOKEN_TTL
+        );
+
+        String responseContent = mockMvc.perform(put("/auth/reset-password").param("token", token)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(resetPasswordRequest)))
+                .andExpect(status().isBadRequest()).andReturn().getResponse().getContentAsString();
+
+        assertThat(responseContent).isNotBlank();
+        assertThat(responseContent).isEqualTo("User not found");
+
+        Optional<User> optionalUser = userRepository.findByEmail(user.getEmail());
+        assertThat(optionalUser).isNotPresent();
+    }
+
+    private void sleepSafely(long seconds) {
+        try {
+             Thread.sleep(seconds * 1000);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
         }
-
-        return false;
     }
 }

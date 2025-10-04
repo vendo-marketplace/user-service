@@ -1,6 +1,7 @@
 package com.vendo.user_service.common.exception.handler;
 
 import com.vendo.user_service.common.exception.PasswordRecoveryNotificationAlreadySentException;
+import com.vendo.user_service.common.exception.RedisValueExpiredException;
 import com.vendo.user_service.common.exception.UserAlreadyExistsException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -29,6 +30,11 @@ public class AuthExceptionHandler {
 
     @ExceptionHandler(PasswordRecoveryNotificationAlreadySentException.class)
     public ResponseEntity<String> handlePasswordRecoveryNotificationAlreadySentException(PasswordRecoveryNotificationAlreadySentException e) {
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(e.getMessage());
+    }
+
+    @ExceptionHandler(RedisValueExpiredException.class)
+    public ResponseEntity<String> handleRedisValueExpiredException(RedisValueExpiredException e) {
         return ResponseEntity.status(HttpStatus.GONE).body(e.getMessage());
     }
 }

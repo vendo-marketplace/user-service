@@ -18,11 +18,23 @@ public class TestConsumer {
             groupId = "test_password_recovery_email_notification_group",
             properties = {"auto.offset.reset=latest"}
     )
-    private void listenPasswordRecoveryEmailNotificationEvent(String token) {
-        dataPriorityBlockingList.add(token);
+    private void listenPasswordRecoveryEmailNotificationEvent(String message) {
+        dataPriorityBlockingList.add(message);
     }
 
-    public boolean hasReceived(String value) {
-        return dataPriorityBlockingList.contains(value);
+    public boolean waitForMessage(String value, int seconds) {
+        while (seconds-- != 0) {
+            try {
+                if (dataPriorityBlockingList.contains(value)) {
+                    return true;
+                }
+
+                Thread.sleep(1000);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+            }
+        }
+
+        return false;
     }
 }
