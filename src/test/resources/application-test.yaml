@@ -4,7 +4,7 @@ spring:
       host: localhost
       port: 6379
     mongodb:
-      uri: mongodb://root:secret@localhost:27017/mydatabase?authSource=admin
+      uri: ${MONGO_DB_URI}
 security:
   jwt:
     secret-key: secretkeysecretkeysecretkeysecretkeysecretkeysecretkeysecretkeysecretkeysecretkey

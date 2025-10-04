@@ -16,9 +16,7 @@ jobs:
         ports:
           - 27017:27017
         env:
-          MONGO_INITDB_ROOT_USERNAME: ${{ secrets.MONGO_USERNAME }}
-          MONGO_INITDB_ROOT_PASSWORD: ${{ secrets.MONGO_PASSWORD }}
-          MONGO_INITDB_DATABASE: ${{ secrets.MONGO_DATABASE }}
+          MONGO_DB_URI: ${{ secrets.MONGO_DB_URI }}
         options: >-
           --health-cmd "mongosh --eval 'db.adminCommand(\"ping\")'"
           --health-interval=10s
