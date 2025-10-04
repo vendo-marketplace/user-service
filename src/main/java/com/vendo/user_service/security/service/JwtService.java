@@ -47,25 +47,6 @@ public class JwtService {
         return buildToken(userDetails, Map.of(ROLES_CLAIM.getClaim(), roles), expiration);
     }
 
-    public boolean isTokenValid(String token, UserDetails userDetails) {
-        try {
-            String subject = jwtHelper.extractClaim(token, Claims::getSubject);
-            return (!isTokenExpired(token) && userDetails.getUsername().equals(subject));
-        } catch (JwtException exception) {
-            return false;
-        }
-    }
-
-    public boolean isTokenExpired(String token) {
-        try {
-            return jwtHelper.extractClaim(token, Claims::getExpiration).before(new Date());
-        } catch (ExpiredJwtException exception) {
-            return true;
-        } catch (JwtException exception) {
-            return false;
-        }
-    }
-
     private String buildToken(UserDetails userDetails, Map<String, Object> claims, int expiration) {
         return Jwts.builder()
                 .claims(claims)

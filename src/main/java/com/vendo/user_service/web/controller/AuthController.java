@@ -1,9 +1,9 @@
 package com.vendo.user_service.web.controller;
 
+import com.vendo.user_service.integration.redis.common.dto.ForgotPasswordRequest;
+import com.vendo.user_service.integration.redis.common.dto.ResetPasswordRequest;
 import com.vendo.user_service.service.AuthService;
-import com.vendo.user_service.web.dto.AuthRequest;
-import com.vendo.user_service.web.dto.AuthResponse;
-import com.vendo.user_service.web.dto.RefreshRequest;
+import com.vendo.user_service.web.dto.*;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -31,5 +31,15 @@ public class AuthController {
     @PostMapping("/refresh")
     ResponseEntity<AuthResponse> refresh(@Valid @RequestBody RefreshRequest refreshRequest) {
         return ResponseEntity.ok(authService.refresh(refreshRequest));
+    }
+
+    @PostMapping("/forgot-password")
+    void forgotPassword(@Valid @RequestBody ForgotPasswordRequest forgotPasswordRequest) {
+        authService.forgotPassword(forgotPasswordRequest);
+    }
+
+    @PutMapping("/reset-password")
+    void resetPassword(@RequestParam String token, @Valid @RequestBody ResetPasswordRequest resetPasswordRequest) {
+        authService.resetPassword(token, resetPasswordRequest);
     }
 }

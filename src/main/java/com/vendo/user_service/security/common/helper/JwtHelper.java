@@ -2,6 +2,8 @@ package com.vendo.user_service.security.common.helper;
 
 import com.vendo.user_service.security.common.config.JwtProperties;
 import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.Jws;
+import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
 import lombok.RequiredArgsConstructor;
@@ -21,27 +23,21 @@ public class JwtHelper {
 
     private final JwtProperties jwtProperties;
 
-    public String extractSubject(String token) {
-        return extractClaim(token, Claims::getSubject);
-    }
-
     public List<String> getRoles(UserDetails userDetails) {
         return userDetails.getAuthorities().stream()
                 .map(GrantedAuthority::getAuthority)
                 .toList();
     }
 
-    public  <T> T extractClaim(String token, Function<Claims, T> claimsResolver) {
-        Claims claims = extractAllClaims(token);
-        return claimsResolver.apply(claims);
+    public Claims extractAllClaims(String token) {
+        return parseSignedClaims(token).getPayload();
     }
 
-    private Claims extractAllClaims(String token) {
+    private Jws<Claims> parseSignedClaims(String token) throws JwtException {
         return Jwts.parser()
                 .verifyWith((SecretKey) getSignInKey())
                 .build()
-                .parseSignedClaims(token)
-                .getPayload();
+                .parseSignedClaims(token);
     }
 
     public Key getSignInKey() {

@@ -3,6 +3,7 @@ package com.vendo.user_service.service;
 import com.vendo.user_service.common.exception.UserAlreadyExistsException;
 import com.vendo.user_service.model.User;
 import com.vendo.user_service.repository.UserRepository;
+import com.vendo.user_service.integration.redis.common.dto.UpdateUserRequest;
 import jakarta.validation.constraints.NotNull;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -19,6 +20,24 @@ public class UserService {
     public void save(User user) {
         throwIfUserExistsByEmail(user.getEmail());
         userRepository.save(user);
+    }
+
+    public void update(String userId, UpdateUserRequest updateUserRequest) {
+        User user = findByUserIdOrThrow(userId);
+
+        Optional.ofNullable(updateUserRequest.getEmail()).ifPresent(user::setEmail);
+        Optional.ofNullable(updateUserRequest.getRole()).ifPresent(user::setRole);
+        Optional.ofNullable(updateUserRequest.getStatus()).ifPresent(user::setStatus);
+        Optional.ofNullable(updateUserRequest.getPassword()).ifPresent(user::setPassword);
+        Optional.ofNullable(updateUserRequest.getBirthDate()).ifPresent(user::setBirthDate);
+        Optional.ofNullable(updateUserRequest.getFullName()).ifPresent(user::setFullName);
+
+        userRepository.save(user);
+    }
+
+    public User findByUserIdOrThrow(@NotNull String userId) {
+        return userRepository.findById(userId)
+                .orElseThrow(() -> new UsernameNotFoundException("User not found"));
     }
 
     public User findByEmailOrThrow(@NotNull String email) {
