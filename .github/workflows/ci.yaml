@@ -51,7 +51,7 @@ jobs:
           - 9092:9092
         env:
           KAFKA_BROKER_ID: 1
-          KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+          KAFKA_ZOOKEEPER_CONNECT: localhost:2181
           KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://localhost:9092
           KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:9092
           KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
@@ -75,19 +75,13 @@ jobs:
       - name: Wait for MongoDB to be ready
         run: |
           for i in {1..30}; do
-            nc -z mongo 27017 && echo "✅ MongoDB is up!" && exit 0
+            nc -z localhost 27017 && echo "✅ MongoDB is up!" && exit 0
             echo "Waiting for MongoDB..."
             sleep 2
           done
           echo "❌ MongoDB did not start in time" && exit 1
 
-      - name: Initialize MongoDB database
-        run: |
-          docker exec $(docker ps -qf "ancestor=mongo:6.0") \
-          mongosh -u root -p secret --authenticationDatabase admin --eval \
-          "db.getSiblingDB('mydatabase').createCollection('init');"
-
       - name: Run tests
         env:
-          MONGO_DB_URI: ${{ secrets.MONGO_DB_URI }}
+          MONGO_DB_URI: mongodb://root:secret@localhost:27017/mydatabase?authSource=admin&authMechanism=SCRAM-SHA-256
         run: mvn -B clean verify -DskipITs=false
