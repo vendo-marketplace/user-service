@@ -22,19 +22,7 @@ public class TestConsumer {
         dataPriorityBlockingList.add(message);
     }
 
-    public boolean waitForMessage(String value, int seconds) {
-        while (seconds-- != 0) {
-            try {
-                if (dataPriorityBlockingList.contains(value)) {
-                    return true;
-                }
-
-                Thread.sleep(1000);
-            } catch (InterruptedException e) {
-                Thread.currentThread().interrupt();
-            }
-        }
-
-        return false;
+    public boolean hasReceived(String value) {
+        return dataPriorityBlockingList.contains(value);
     }
 }

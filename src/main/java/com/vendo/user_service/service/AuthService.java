@@ -45,7 +45,9 @@ public class AuthService {
     public AuthResponse signIn(AuthRequest authRequest) {
         User user = userService.findByEmailOrThrow(authRequest.getEmail());
 
-        throwIfUserBlocked(user);
+        if (user.getStatus() == UserStatus.BLOCKED) {
+            throw new AccessDeniedException("User is blocked");
+        }
         matchPasswordsOrThrow(authRequest.getPassword(), user.getPassword());
 
         String accessToken = jwtService.generateAccessToken(user);
@@ -110,12 +112,6 @@ public class AuthService {
         boolean matches = passwordEncoder.matches(rawPassword, encodedPassword);
         if (!matches) {
             throw new BadCredentialsException("Wrong credentials");
-        }
-    }
-
-    private void throwIfUserBlocked(User user) {
-        if (user.getStatus() == UserStatus.BLOCKED) {
-            throw new AccessDeniedException("User is blocked");
         }
     }
 }

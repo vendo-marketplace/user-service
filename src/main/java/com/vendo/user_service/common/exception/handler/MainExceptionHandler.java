@@ -14,6 +14,7 @@ import java.util.stream.Collectors;
 @ControllerAdvice
 public class MainExceptionHandler {
 
+    // TODO move to common #16 Refactoring
     private static final String COLON_DELIMITER = ": ";
 
     private static final String COMMA_DELIMITER = ", ";

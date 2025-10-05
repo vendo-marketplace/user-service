@@ -31,8 +31,10 @@ import org.springframework.test.web.servlet.MockMvc;
 
 import java.util.Optional;
 import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
+import static org.awaitility.Awaitility.await;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -243,7 +245,7 @@ class AuthControllerIntegrationTest {
     }
 
     @Test
-    void forgotPassword_shouldSentNotificationEvent() throws Exception {
+    void forgotPassword_shouldSentNotificationEventSuccessfully() throws Exception {
         User user = UserDataBuilder.buildUserWithRequiredFields().build();
         userRepository.save(user);
         ForgotPasswordRequest forgotPasswordRequest = ForgotPasswordRequest.builder().email(user.getEmail()).build();
@@ -258,8 +260,7 @@ class AuthControllerIntegrationTest {
 
         String token = target.get();
         assertThat(token).isNotBlank();
-
-        assertThat(testConsumer.waitForMessage(token, 5)).isTrue();
+        await().atMost(5, TimeUnit.SECONDS).untilAsserted(() -> assertThat(testConsumer.hasReceived(token)).isTrue());
     }
 
     @Test
@@ -289,8 +290,7 @@ class AuthControllerIntegrationTest {
 
         String token = target.get();
         assertThat(token).isNotBlank();
-
-        assertThat(testConsumer.waitForMessage(token, 3)).isFalse();
+        await().atMost(5, TimeUnit.SECONDS).untilAsserted(() -> assertThat(testConsumer.hasReceived(token)).isFalse());
     }
 
     @Test
