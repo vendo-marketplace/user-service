@@ -21,7 +21,7 @@ public class TestConsumer {
             properties = {"auto.offset.reset=latest"}
     )
     private void listenPasswordRecoveryEmailNotificationEvent(String message) {
-        log.debug("[PASSWORD_RECOVERY_EMAIL_NOTIFICATION_EVENT_CONSUMER]: Received test message for password recovery: {}", message);
+        log.info("[PASSWORD_RECOVERY_EMAIL_NOTIFICATION_EVENT_CONSUMER]: Received test message for password recovery: {}", message);
         dataPriorityBlockingList.add(message);
     }
 
