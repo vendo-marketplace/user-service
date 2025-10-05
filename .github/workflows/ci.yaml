@@ -106,11 +106,10 @@ jobs:
           for i in {1..30}; do
             nc -z localhost 9092 && echo "✅ Kafka is up!" && break
             echo "Waiting for Kafka... attempt $i"
-            echo ${{ secrets.MONGO_DB_URI }}
             sleep 2
           done
 
       - name: Run tests
         env:
-          MONGO_DB_URI: ${{ secrets.MONGO_DB_URI }}
+          MONGO_DB_URI: mongodb://root:secret@localhost:27017/mydatabase?authSource=admin&authMechanism=SCRAM-SHA-256
         run: mvn -B clean verify -DskipITs=false
