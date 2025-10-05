@@ -18,7 +18,7 @@ public class TestConsumer {
     @KafkaListener(
             topics = InputTopics.PASSWORD_RECOVERY_EMAIL_NOTIFICATION_TOPIC,
             groupId = "test_password_recovery_email_notification_group",
-            properties = {"auto.offset.reset=latest"}
+            properties = {"auto.offset.reset=earliest"}
     )
     private void listenPasswordRecoveryEmailNotificationEvent(String message) {
         log.info("[PASSWORD_RECOVERY_EMAIL_NOTIFICATION_EVENT_CONSUMER]: Received test message for password recovery: {}", message);
