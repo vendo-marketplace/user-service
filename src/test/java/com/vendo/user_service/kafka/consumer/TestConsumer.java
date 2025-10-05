@@ -2,11 +2,13 @@ package com.vendo.user_service.kafka.consumer;
 
 import com.vendo.user_service.kafka.common.topics.InputTopics;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Service;
 
 import java.util.concurrent.LinkedBlockingQueue;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class TestConsumer {
@@ -19,6 +21,7 @@ public class TestConsumer {
             properties = {"auto.offset.reset=latest"}
     )
     private void listenPasswordRecoveryEmailNotificationEvent(String message) {
+        log.debug("[PASSWORD_RECOVERY_EMAIL_NOTIFICATION_EVENT_CONSUMER]: Received test message for password recovery: {}", message);
         dataPriorityBlockingList.add(message);
     }
 
