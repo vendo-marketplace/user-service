@@ -13,7 +13,7 @@ public class RedisService {
 
     private final RedisTemplate<String, String> redisTemplate;
 
-    public void saveToken(String key, String value, long seconds) {
+    public void saveValue(String key, String value, long seconds) {
         redisTemplate.opsForValue().set(key, value, Duration.ofSeconds(seconds));
     }
 

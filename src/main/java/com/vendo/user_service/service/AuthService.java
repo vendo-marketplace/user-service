@@ -4,7 +4,7 @@ import com.vendo.security.common.exception.AccessDeniedException;
 import com.vendo.user_service.common.exception.PasswordRecoveryNotificationAlreadySentException;
 import com.vendo.user_service.common.exception.RedisValueExpiredException;
 import com.vendo.user_service.integration.kafka.producer.NotificationEventProducer;
-import com.vendo.user_service.integration.redis.common.constants.RedisPrefixNamespaces;
+import com.vendo.user_service.integration.redis.common.config.RedisProperties;
 import com.vendo.user_service.integration.redis.common.dto.ForgotPasswordRequest;
 import com.vendo.user_service.integration.redis.common.dto.ResetPasswordRequest;
 import com.vendo.user_service.integration.redis.common.dto.UpdateUserRequest;
@@ -17,7 +17,6 @@ import com.vendo.user_service.security.service.JwtUserDetailsService;
 import com.vendo.user_service.security.common.dto.TokenPayload;
 import com.vendo.user_service.web.dto.*;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -41,8 +40,7 @@ public class AuthService {
 
     private final JwtUserDetailsService jwtUserDetailsService;
 
-    @Value("${redis.reset-password.token.ttl}")
-    private int RESET_PASSWORD_TOKEN_TTL;
+    private final RedisProperties redisProperties;
 
     public AuthResponse signIn(AuthRequest authRequest) {
         User user = userService.findByEmailOrThrow(authRequest.getEmail());
@@ -82,22 +80,24 @@ public class AuthService {
     }
 
     public void forgotPassword(ForgotPasswordRequest forgotPasswordRequests) {
-        if (redisService.hasActiveKey(RedisPrefixNamespaces.RESET_PASSWORD_EMAIL + forgotPasswordRequests.getEmail())) {
+        if (redisService.hasActiveKey(redisProperties.getResetPassword().getPrefixes().getEmailPrefix() + forgotPasswordRequests.getEmail())) {
             throw new PasswordRecoveryNotificationAlreadySentException("Password recovery notification has already sent");
         }
 
         User user = userService.findByEmailOrThrow(forgotPasswordRequests.getEmail());
         String token = String.valueOf(UUID.randomUUID());
 
-        redisService.saveToken(RedisPrefixNamespaces.RESET_PASSWORD_TOKEN + token, user.getEmail(), RESET_PASSWORD_TOKEN_TTL);
-        redisService.saveToken(RedisPrefixNamespaces.RESET_PASSWORD_EMAIL + user.getEmail(), token, RESET_PASSWORD_TOKEN_TTL);
+        String resetPasswordTokenPrefix = redisProperties.getResetPassword().getPrefixes().getTokenPrefix();
+        String resetPasswordEmailPrefix = redisProperties.getResetPassword().getPrefixes().getEmailPrefix();
+        redisService.saveValue(resetPasswordTokenPrefix + token, user.getEmail(), redisProperties.getResetPassword().getTtl());
+        redisService.saveValue(resetPasswordEmailPrefix + user.getEmail(), token, redisProperties.getResetPassword().getTtl());
 
         notificationEventProducer.sendRecoveryPasswordNotificationEvent(token);
     }
 
     public void resetPassword(String token, ResetPasswordRequest resetPasswordRequest) {
-        String email = redisService.getValue(RedisPrefixNamespaces.RESET_PASSWORD_TOKEN + token)
-                .orElseThrow(() -> new RedisValueExpiredException("Token has expired"));
+        String email = redisService.getValue(redisProperties.getResetPassword().getPrefixes().getTokenPrefix() + token)
+                .orElseThrow(() -> new RedisValueExpiredException("Notification token has expired"));
 
         User user = userService.findByEmailOrThrow(email);
 
