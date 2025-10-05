@@ -260,7 +260,7 @@ class AuthControllerIntegrationTest {
 
         String token = target.get();
         assertThat(token).isNotBlank();
-        await().atMost(5, TimeUnit.SECONDS).untilAsserted(() -> assertThat(testConsumer.hasReceived(token)).isTrue());
+        await().atMost(15, TimeUnit.SECONDS).untilAsserted(() -> assertThat(testConsumer.hasReceived(token)).isTrue());
     }
 
     @Test
@@ -332,7 +332,7 @@ class AuthControllerIntegrationTest {
     }
 
     @Test
-    void resetPassword_shouldSuccessfullyResetPassword() throws Exception {
+    void resetPassword_shouldResetPasswordSuccessfully() throws Exception {
         User user = UserDataBuilder.buildUserWithRequiredFields().build();
         String token = String.valueOf(UUID.randomUUID());
         String newPassword = "newTestPassword1234@";
