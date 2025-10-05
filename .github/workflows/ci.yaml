@@ -111,5 +111,5 @@ jobs:
 
       - name: Run tests
         env:
-          MONGO_DB_URI: ${{ db_envs.MONGO_DB_URI }}
+          MONGO_DB_URI: ${{ secrets.db_envs.MONGO_DB_URI }}
         run: mvn -B clean verify -DskipITs=false
