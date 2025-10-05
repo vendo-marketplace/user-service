@@ -9,9 +9,10 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
+
     services:
       mongo:
-        image: mongo:latest
+        image: mongo:6.0
         ports:
           - 27017:27017
         env:
@@ -62,16 +63,31 @@ jobs:
           --health-retries=10
 
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       - name: Set up JDK 17
-        uses: actions/setup-java@v3
+        uses: actions/setup-java@v4
         with:
-          java-version: '17'
-          distribution: 'temurin'
+          distribution: temurin
+          java-version: 17
           cache: maven
+
+      - name: Wait for MongoDB to be ready
+        run: |
+          for i in {1..30}; do
+            nc -z mongo 27017 && echo "✅ MongoDB is up!" && exit 0
+            echo "Waiting for MongoDB..."
+            sleep 2
+          done
+          echo "❌ MongoDB did not start in time" && exit 1
+
+      - name: Initialize MongoDB database
+        run: |
+          docker exec $(docker ps -qf "ancestor=mongo:6.0") \
+          mongosh -u root -p secret --authenticationDatabase admin --eval \
+          "db.getSiblingDB('mydatabase').createCollection('init');"
 
       - name: Run tests
         env:
           MONGO_DB_URI: ${{ secrets.MONGO_DB_URI }}
-        run: mvn clean verify -DskipITs=false
+        run: mvn -B clean verify -DskipITs=false
