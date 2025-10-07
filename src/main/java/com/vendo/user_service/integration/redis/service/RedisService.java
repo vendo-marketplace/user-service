@@ -28,11 +28,4 @@ public class RedisService {
     public boolean hasActiveKey(String key) {
         return redisTemplate.hasKey(key);
     }
-
-    public void clearRedisStorage() {
-        redisTemplate.getConnectionFactory()
-                .getConnection()
-                .serverCommands()
-                .flushAll();;
-    }
 }

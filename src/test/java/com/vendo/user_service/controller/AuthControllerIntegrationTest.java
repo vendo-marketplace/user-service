@@ -22,6 +22,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockHttpServletResponse;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -71,15 +72,24 @@ class AuthControllerIntegrationTest {
     @Autowired
     private RedisProperties redisProperties;
 
+    @Autowired
+    private RedisTemplate<String, String> redisTemplate;
+
     @BeforeEach
     void setUp() {
-        redisService.clearRedisStorage();
+        redisTemplate.getConnectionFactory()
+                .getConnection()
+                .serverCommands()
+                .flushAll();
         userRepository.deleteAll();
     }
 
     @AfterTestClass
     void tearDown() {
-        redisService.clearRedisStorage();
+        redisTemplate.getConnectionFactory()
+                .getConnection()
+                .serverCommands()
+                .flushAll();
         userRepository.deleteAll();
     }
 
@@ -353,6 +363,8 @@ class AuthControllerIntegrationTest {
         Optional<User> optionalUser = userRepository.findByEmail(user.getEmail());
         assertThat(optionalUser).isPresent();
         assertThat(passwordEncoder.matches(newPassword, optionalUser.get().getPassword())).isTrue();
+        assertThat(redisService.hasActiveKey(redisProperties.getResetPassword().getPrefixes().getTokenPrefix() + token)).isFalse();
+        assertThat(redisService.hasActiveKey(redisProperties.getResetPassword().getPrefixes().getEmailPrefix() + user.getEmail())).isFalse();
     }
 
     @Test
@@ -369,7 +381,6 @@ class AuthControllerIntegrationTest {
         );
 
         sleepSafely(1);
-
         String responseContent = mockMvc.perform(put("/auth/reset-password").param("token", token)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(resetPasswordRequest)))
@@ -381,6 +392,8 @@ class AuthControllerIntegrationTest {
         Optional<User> optionalUser = userRepository.findByEmail(user.getEmail());
         assertThat(optionalUser).isPresent();
         assertThat(passwordEncoder.matches(newPassword, optionalUser.get().getPassword())).isFalse();
+        assertThat(redisService.hasActiveKey(redisProperties.getResetPassword().getPrefixes().getTokenPrefix() + token)).isFalse();
+        assertThat(redisService.hasActiveKey(redisProperties.getResetPassword().getPrefixes().getEmailPrefix() + user.getEmail())).isFalse();
     }
 
     @Test

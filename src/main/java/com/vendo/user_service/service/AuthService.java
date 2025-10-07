@@ -83,17 +83,19 @@ public class AuthService {
     }
 
     public void forgotPassword(ForgotPasswordRequest forgotPasswordRequests) {
-        if (redisService.hasActiveKey(redisProperties.getResetPassword().getPrefixes().getEmailPrefix() + forgotPasswordRequests.getEmail())) {
+        String resetPasswordEmailPrefix = redisProperties.getResetPassword().getPrefixes().getEmailPrefix();
+        String resetPasswordTokenPrefix = redisProperties.getResetPassword().getPrefixes().getTokenPrefix();
+        long resetPasswordTtl = redisProperties.getResetPassword().getTtl();
+
+        if (redisService.hasActiveKey(resetPasswordEmailPrefix + forgotPasswordRequests.getEmail())) {
             throw new PasswordRecoveryNotificationAlreadySentException("Password recovery notification has already sent");
         }
 
         User user = userService.findByEmailOrThrow(forgotPasswordRequests.getEmail());
         String token = String.valueOf(UUID.randomUUID());
 
-        String resetPasswordTokenPrefix = redisProperties.getResetPassword().getPrefixes().getTokenPrefix();
-        String resetPasswordEmailPrefix = redisProperties.getResetPassword().getPrefixes().getEmailPrefix();
-        redisService.saveValue(resetPasswordTokenPrefix + token, user.getEmail(), redisProperties.getResetPassword().getTtl());
-        redisService.saveValue(resetPasswordEmailPrefix + user.getEmail(), token, redisProperties.getResetPassword().getTtl());
+        redisService.saveValue(resetPasswordTokenPrefix + token, user.getEmail(), resetPasswordTtl);
+        redisService.saveValue(resetPasswordEmailPrefix + user.getEmail(), token, resetPasswordTtl);
 
         PasswordRecoveryEvent passwordRecoveryEvent = PasswordRecoveryEvent.builder()
                 .email(user.getEmail())
@@ -103,7 +105,10 @@ public class AuthService {
     }
 
     public void resetPassword(String token, ResetPasswordRequest resetPasswordRequest) {
-        String email = redisService.getValue(redisProperties.getResetPassword().getPrefixes().getTokenPrefix() + token)
+        String resetPasswordTokenPrefix = redisProperties.getResetPassword().getPrefixes().getTokenPrefix();
+        String resetPasswordEmailPrefix = redisProperties.getResetPassword().getPrefixes().getEmailPrefix();
+
+        String email = redisService.getValue(resetPasswordTokenPrefix + token)
                 .orElseThrow(() -> new RedisValueExpiredException("Notification token has expired"));
 
         User user = userService.findByEmailOrThrow(email);
@@ -112,12 +117,8 @@ public class AuthService {
                 .password(passwordEncoder.encode(resetPasswordRequest.getPassword()))
                 .build());
 
-        // TODO write tests for this case
-        String resetPasswordTokenPrefix = redisProperties.getResetPassword().getPrefixes().getTokenPrefix();
-        String resetPasswordEmailPrefix = redisProperties.getResetPassword().getPrefixes().getEmailPrefix();
         redisService.deleteValue(resetPasswordTokenPrefix + token);
         redisService.deleteValue(resetPasswordEmailPrefix + email);
-
     }
 
     private void matchPasswordsOrThrow(String rawPassword, String encodedPassword) {

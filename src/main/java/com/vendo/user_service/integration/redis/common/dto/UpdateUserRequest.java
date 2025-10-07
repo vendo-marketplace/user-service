@@ -23,5 +23,4 @@ public class UpdateUserRequest {
 
     private String fullName;
 
-
 }
