@@ -1,5 +1,6 @@
 package com.vendo.user_service.kafka.consumer;
 
+import com.vendo.user_service.integration.kafka.common.dto.PasswordRecoveryEvent;
 import com.vendo.user_service.kafka.common.topics.InputTopics;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -20,9 +21,9 @@ public class TestConsumer {
             groupId = "test_password_recovery_email_notification_group",
             properties = {"auto.offset.reset=earliest"}
     )
-    private void listenPasswordRecoveryEmailNotificationEvent(String message) {
-        log.info("[PASSWORD_RECOVERY_EMAIL_NOTIFICATION_EVENT_CONSUMER]: Received test message for password recovery: {}", message);
-        dataPriorityBlockingList.add(message);
+    private void listenPasswordRecoveryEmailNotificationEvent(PasswordRecoveryEvent passwordRecoveryEvent) {
+        log.info("[PASSWORD_RECOVERY_EMAIL_NOTIFICATION_EVENT_CONSUMER]: Received test message for password recovery: {}", passwordRecoveryEvent);
+        dataPriorityBlockingList.add(passwordRecoveryEvent.getToken());
     }
 
     public boolean hasReceived(String value) {

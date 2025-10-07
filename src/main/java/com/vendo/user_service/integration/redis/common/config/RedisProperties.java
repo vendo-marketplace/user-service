@@ -9,7 +9,7 @@ import org.springframework.context.annotation.Configuration;
 @Getter
 @Setter
 @Configuration
-@ConfigurationProperties("redis")
+@ConfigurationProperties(prefix = "redis")
 public class RedisProperties {
 
     private ResetPassword resetPassword;

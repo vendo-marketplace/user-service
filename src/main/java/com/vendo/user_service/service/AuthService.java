@@ -3,6 +3,7 @@ package com.vendo.user_service.service;
 import com.vendo.security.common.exception.AccessDeniedException;
 import com.vendo.user_service.common.exception.PasswordRecoveryNotificationAlreadySentException;
 import com.vendo.user_service.common.exception.RedisValueExpiredException;
+import com.vendo.user_service.integration.kafka.common.dto.PasswordRecoveryEvent;
 import com.vendo.user_service.integration.kafka.producer.NotificationEventProducer;
 import com.vendo.user_service.integration.redis.common.config.RedisProperties;
 import com.vendo.user_service.integration.redis.common.dto.ForgotPasswordRequest;
@@ -94,7 +95,11 @@ public class AuthService {
         redisService.saveValue(resetPasswordTokenPrefix + token, user.getEmail(), redisProperties.getResetPassword().getTtl());
         redisService.saveValue(resetPasswordEmailPrefix + user.getEmail(), token, redisProperties.getResetPassword().getTtl());
 
-        notificationEventProducer.sendRecoveryPasswordNotificationEvent(token);
+        PasswordRecoveryEvent passwordRecoveryEvent = PasswordRecoveryEvent.builder()
+                .email(user.getEmail())
+                .token(token)
+                .build();
+        notificationEventProducer.sendRecoveryPasswordNotificationEvent(passwordRecoveryEvent);
     }
 
     public void resetPassword(String token, ResetPasswordRequest resetPasswordRequest) {
@@ -106,6 +111,13 @@ public class AuthService {
         userService.update(user.getId(), UpdateUserRequest.builder()
                 .password(passwordEncoder.encode(resetPasswordRequest.getPassword()))
                 .build());
+
+        // TODO write tests for this case
+        String resetPasswordTokenPrefix = redisProperties.getResetPassword().getPrefixes().getTokenPrefix();
+        String resetPasswordEmailPrefix = redisProperties.getResetPassword().getPrefixes().getEmailPrefix();
+        redisService.deleteValue(resetPasswordTokenPrefix + token);
+        redisService.deleteValue(resetPasswordEmailPrefix + email);
+
     }
 
     private void matchPasswordsOrThrow(String rawPassword, String encodedPassword) {
