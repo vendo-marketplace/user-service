@@ -102,12 +102,12 @@ class AuthControllerIntegrationTest {
                 .content(objectMapper.writeValueAsString(authRequest))
         ).andExpect(status().isOk());
 
-        Optional<User> optionalUser = userRepository.findByEmail(authRequest.getEmail());
+        Optional<User> optionalUser = userRepository.findByEmail(authRequest.email());
         assertThat(optionalUser).isPresent();
         User user = optionalUser.get();
 
-        assertThat(user.getEmail()).isEqualTo(authRequest.getEmail());
-        assertThat(passwordEncoder.matches(authRequest.getPassword(), user.getPassword())).isTrue();
+        assertThat(user.getEmail()).isEqualTo(authRequest.email());
+        assertThat(passwordEncoder.matches(authRequest.password(), user.getPassword())).isTrue();
         assertThat(user.getRole()).isEqualTo(UserRole.USER);
         assertThat(user.getStatus()).isEqualTo(UserStatus.ACTIVE);
     }
@@ -116,8 +116,8 @@ class AuthControllerIntegrationTest {
     void signUp_shouldReturnBadRequest_whenUserAlreadyExists() throws Exception {
         AuthRequest authRequest = AuthRequestDataBuilder.buildUserWithRequiredFields().build();
         User user = User.builder()
-                .email(authRequest.getEmail())
-                .password(passwordEncoder.encode(authRequest.getPassword()))
+                .email(authRequest.email())
+                .password(passwordEncoder.encode(authRequest.password()))
                 .build();
         userRepository.save(user);
 
@@ -135,8 +135,8 @@ class AuthControllerIntegrationTest {
     void signIn_shouldReturnPairOfTokens() throws Exception {
         AuthRequest authRequest = AuthRequestDataBuilder.buildUserWithRequiredFields().build();
         User user = User.builder()
-                .email(authRequest.getEmail())
-                .password(passwordEncoder.encode(authRequest.getPassword()))
+                .email(authRequest.email())
+                .password(passwordEncoder.encode(authRequest.password()))
                 .role(UserRole.USER)
                 .status(UserStatus.ACTIVE)
                 .build();
@@ -153,11 +153,11 @@ class AuthControllerIntegrationTest {
         AuthResponse authResponse = objectMapper.readValue(responseContent, AuthResponse.class);
         assertThat(authResponse).isNotNull();
 
-        assertThat(authResponse.getAccessToken()).isNotBlank();
-        assertThat(jwtHelper.extractAllClaims(authResponse.getAccessToken())).isNotNull();
+        assertThat(authResponse.accessToken()).isNotBlank();
+        assertThat(jwtHelper.extractAllClaims(authResponse.accessToken())).isNotNull();
 
-        assertThat(authResponse.getRefreshToken()).isNotBlank();
-        assertThat(jwtHelper.extractAllClaims(authResponse.getAccessToken())).isNotNull();
+        assertThat(authResponse.refreshToken()).isNotBlank();
+        assertThat(jwtHelper.extractAllClaims(authResponse.accessToken())).isNotNull();
     }
 
     @Test
@@ -178,8 +178,8 @@ class AuthControllerIntegrationTest {
     void signIn_shouldReturnForbidden_whenUserBlocked() throws Exception {
         AuthRequest authRequest = AuthRequestDataBuilder.buildUserWithRequiredFields().build();
         User user = User.builder()
-                .email(authRequest.getEmail())
-                .password(passwordEncoder.encode(authRequest.getPassword()))
+                .email(authRequest.email())
+                .password(passwordEncoder.encode(authRequest.password()))
                 .role(UserRole.USER)
                 .status(UserStatus.BLOCKED)
                 .build();
@@ -214,11 +214,11 @@ class AuthControllerIntegrationTest {
         AuthResponse authResponse = objectMapper.readValue(responseContent, AuthResponse.class);
         assertThat(authResponse).isNotNull();
 
-        assertThat(authResponse.getAccessToken()).isNotBlank();
-        assertThat(jwtHelper.extractAllClaims(authResponse.getAccessToken())).isNotNull();
+        assertThat(authResponse.accessToken()).isNotBlank();
+        assertThat(jwtHelper.extractAllClaims(authResponse.accessToken())).isNotNull();
 
-        assertThat(authResponse.getRefreshToken()).isNotBlank();
-        assertThat(jwtHelper.extractAllClaims(authResponse.getAccessToken())).isNotNull();
+        assertThat(authResponse.refreshToken()).isNotBlank();
+        assertThat(jwtHelper.extractAllClaims(authResponse.accessToken())).isNotNull();
     }
 
     @Test

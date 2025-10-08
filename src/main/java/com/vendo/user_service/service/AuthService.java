@@ -44,12 +44,12 @@ public class AuthService {
     private final RedisProperties redisProperties;
 
     public AuthResponse signIn(AuthRequest authRequest) {
-        User user = userService.findByEmailOrThrow(authRequest.getEmail());
+        User user = userService.findByEmailOrThrow(authRequest.email());
 
         if (user.getStatus() == UserStatus.BLOCKED) {
             throw new AccessDeniedException("User is blocked");
         }
-        matchPasswordsOrThrow(authRequest.getPassword(), user.getPassword());
+        matchPasswordsOrThrow(authRequest.password(), user.getPassword());
 
         String accessToken = jwtService.generateAccessToken(user);
         String refreshToken = jwtService.generateRefreshToken(user);
@@ -61,11 +61,11 @@ public class AuthService {
     }
 
     public void signUp(AuthRequest authRequest) {
-        userService.throwIfUserExistsByEmail(authRequest.getEmail());
-        String encodedPassword = passwordEncoder.encode(authRequest.getPassword());
+        userService.throwIfUserExistsByEmail(authRequest.email());
+        String encodedPassword = passwordEncoder.encode(authRequest.password());
 
         userService.save(User.builder()
-                        .email(authRequest.getEmail())
+                        .email(authRequest.email())
                         .role(UserRole.USER)
                         .status(UserStatus.ACTIVE)
                         .password(encodedPassword)
@@ -73,12 +73,12 @@ public class AuthService {
     }
 
     public AuthResponse refresh(RefreshRequest refreshRequest) {
-        UserDetails userDetails = jwtUserDetailsService.retrieveUserDetails(refreshRequest.getRefreshToken());
+        UserDetails userDetails = jwtUserDetailsService.retrieveUserDetails(refreshRequest.refreshToken());
         TokenPayload tokenPayload = jwtUserDetailsService.generateTokenPayload(userDetails);
 
         return AuthResponse.builder()
-                .accessToken(tokenPayload.getAccessToken())
-                .refreshToken(tokenPayload.getRefreshToken())
+                .accessToken(tokenPayload.accessToken())
+                .refreshToken(tokenPayload.refreshToken())
                 .build();
     }
 
@@ -87,11 +87,11 @@ public class AuthService {
         String resetPasswordTokenPrefix = redisProperties.getResetPassword().getPrefixes().getTokenPrefix();
         long resetPasswordTtl = redisProperties.getResetPassword().getTtl();
 
-        if (redisService.hasActiveKey(resetPasswordEmailPrefix + forgotPasswordRequests.getEmail())) {
+        if (redisService.hasActiveKey(resetPasswordEmailPrefix + forgotPasswordRequests.email())) {
             throw new PasswordRecoveryNotificationAlreadySentException("Password recovery notification has already sent");
         }
 
-        User user = userService.findByEmailOrThrow(forgotPasswordRequests.getEmail());
+        User user = userService.findByEmailOrThrow(forgotPasswordRequests.email());
         String token = String.valueOf(UUID.randomUUID());
 
         redisService.saveValue(resetPasswordTokenPrefix + token, user.getEmail(), resetPasswordTtl);
@@ -114,7 +114,7 @@ public class AuthService {
         User user = userService.findByEmailOrThrow(email);
 
         userService.update(user.getId(), UpdateUserRequest.builder()
-                .password(passwordEncoder.encode(resetPasswordRequest.getPassword()))
+                .password(passwordEncoder.encode(resetPasswordRequest.password()))
                 .build());
 
         redisService.deleteValue(resetPasswordTokenPrefix + token);

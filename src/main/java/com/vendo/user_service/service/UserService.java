@@ -25,12 +25,12 @@ public class UserService {
     public void update(String userId, UpdateUserRequest updateUserRequest) {
         User user = findByUserIdOrThrow(userId);
 
-        Optional.ofNullable(updateUserRequest.getEmail()).ifPresent(user::setEmail);
-        Optional.ofNullable(updateUserRequest.getRole()).ifPresent(user::setRole);
-        Optional.ofNullable(updateUserRequest.getStatus()).ifPresent(user::setStatus);
-        Optional.ofNullable(updateUserRequest.getPassword()).ifPresent(user::setPassword);
-        Optional.ofNullable(updateUserRequest.getBirthDate()).ifPresent(user::setBirthDate);
-        Optional.ofNullable(updateUserRequest.getFullName()).ifPresent(user::setFullName);
+        Optional.ofNullable(updateUserRequest.email()).ifPresent(user::setEmail);
+        Optional.ofNullable(updateUserRequest.role()).ifPresent(user::setRole);
+        Optional.ofNullable(updateUserRequest.status()).ifPresent(user::setStatus);
+        Optional.ofNullable(updateUserRequest.password()).ifPresent(user::setPassword);
+        Optional.ofNullable(updateUserRequest.birthDate()).ifPresent(user::setBirthDate);
+        Optional.ofNullable(updateUserRequest.fullName()).ifPresent(user::setFullName);
 
         userRepository.save(user);
     }
