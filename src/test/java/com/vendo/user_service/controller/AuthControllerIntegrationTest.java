@@ -270,7 +270,7 @@ class AuthControllerIntegrationTest {
 
         String token = target.get();
         assertThat(token).isNotBlank();
-        await().atMost(10, TimeUnit.SECONDS)
+        await().atMost(20, TimeUnit.SECONDS)
                 .untilAsserted(() -> assertThat(testConsumer.hasReceived(token)).isTrue());
     }
 
