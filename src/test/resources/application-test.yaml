@@ -6,20 +6,30 @@ spring:
     mongodb:
       uri: mongodb://root:secret@localhost:27017/mydatabase?authSource=admin&authMechanism=SCRAM-SHA-256
       authentication-database: admin
+
 security:
   jwt:
     secret-key: secretkeysecretkeysecretkeysecretkeysecretkeysecretkeysecretkeysecretkeysecretkey
     access-expiration-time: 60000
     refresh-expiration-time: 120000
+
 eureka:
   client:
     enabled: false
+
 redis:
   reset-password:
     prefixes:
       email-prefix: "test-email-prefix:"
       token-prefix: "test-token-prefix:"
     ttl: 600
+
 kafka:
   host: localhost
   port: 9092
+  events:
+    password-recovery-email-notification-event:
+      topic: "PASSWORD_RECOVERY_EMAIL_NOTIFICATION_TOPIC"
+      groupId: "password_recovery_email_notification_test_group"
+      properties:
+        auto-offset-reset: "latest"

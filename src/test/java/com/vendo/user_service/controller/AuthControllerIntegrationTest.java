@@ -387,7 +387,7 @@ class AuthControllerIntegrationTest {
                 .andExpect(status().isGone()).andReturn().getResponse().getContentAsString();
 
         assertThat(responseContent).isNotBlank();
-        assertThat(responseContent).isEqualTo("Notification token has expired");
+        assertThat(responseContent).isEqualTo("Password recovery token has expired");
 
         Optional<User> optionalUser = userRepository.findByEmail(user.getEmail());
         assertThat(optionalUser).isPresent();
