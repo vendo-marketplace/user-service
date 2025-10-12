@@ -32,4 +32,4 @@ kafka:
       topic: "PASSWORD_RECOVERY_EMAIL_NOTIFICATION_TOPIC"
       groupId: "password_recovery_email_notification_test_group"
       properties:
-        auto-offset-reset: "latest"
+        auto-offset-reset: "earliest"
