@@ -268,7 +268,7 @@ class AuthControllerIntegrationTest {
         Optional<String> token = redisService.getValue(redisProperties.getResetPassword().getPrefixes().getEmailPrefix() + user.getEmail());
         assertThat(token).isPresent();
         assertThat(token.get()).isNotBlank();
-        await().atMost(20, TimeUnit.SECONDS)
+        await().atMost(10, TimeUnit.SECONDS)
                 .untilAsserted(() -> assertThat(testConsumer.hasReceived(token.get())).isTrue());
     }
 
