@@ -265,13 +265,11 @@ class AuthControllerIntegrationTest {
                 .content(objectMapper.writeValueAsString(forgotPasswordRequest)))
                 .andExpect(status().isOk());
 
-        Optional<String> target = redisService.getValue(redisProperties.getResetPassword().getPrefixes().getEmailPrefix() + user.getEmail());
-        assertThat(target).isPresent();
-
-        String token = target.get();
-        assertThat(token).isNotBlank();
+        Optional<String> token = redisService.getValue(redisProperties.getResetPassword().getPrefixes().getEmailPrefix() + user.getEmail());
+        assertThat(token).isPresent();
+        assertThat(token.get()).isNotBlank();
         await().atMost(20, TimeUnit.SECONDS)
-                .untilAsserted(() -> assertThat(testConsumer.hasReceived(token)).isTrue());
+                .untilAsserted(() -> assertThat(testConsumer.hasReceived(token.get())).isTrue());
     }
 
     @Test
