@@ -14,6 +14,7 @@ import java.util.stream.Collectors;
 @ControllerAdvice
 public class MainExceptionHandler {
 
+    // TODO move to common #16 Refactoring
     private static final String COLON_DELIMITER = ": ";
 
     private static final String COMMA_DELIMITER = ", ";
@@ -34,7 +35,7 @@ public class MainExceptionHandler {
         String invalidFields = exception.getBindingResult()
                 .getFieldErrors()
                 .stream()
-                .map(fieldError -> fieldError.getField() + COLON_DELIMITER + fieldError.getDefaultMessage())
+                .map(fieldError -> COLON_DELIMITER + fieldError.getDefaultMessage())
                 .collect(Collectors.joining(COMMA_DELIMITER));
 
         return ResponseEntity.badRequest().body(invalidFields);

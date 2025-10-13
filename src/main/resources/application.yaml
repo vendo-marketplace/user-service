@@ -2,6 +2,6 @@ spring:
   application:
     name: user-service
   profiles:
-    active: dev
+    active: dev,redis,kafka
   config:
     import: "optional:configserver:${CONFIG_SERVER_URL}/"

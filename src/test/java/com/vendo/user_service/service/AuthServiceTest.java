@@ -44,15 +44,15 @@ public class AuthServiceTest {
         AuthRequest authRequest = AuthRequestDataBuilder.buildUserWithRequiredFields().build();
         String encodedPassword = "encodedPassword";
 
-        doNothing().when(userService).throwIfUserExistsByEmail(authRequest.getEmail());
-        when(passwordEncoder.encode(authRequest.getPassword())).thenReturn(encodedPassword);
+        doNothing().when(userService).throwIfUserExistsByEmail(authRequest.email());
+        when(passwordEncoder.encode(authRequest.password())).thenReturn(encodedPassword);
 
         authService.signUp(authRequest);
 
-        verify(userService).throwIfUserExistsByEmail(authRequest.getEmail());
-        verify(passwordEncoder).encode(authRequest.getPassword());
+        verify(userService).throwIfUserExistsByEmail(authRequest.email());
+        verify(passwordEncoder).encode(authRequest.password());
         verify(userService).save(argThat(user ->
-                        user.getEmail().equals(authRequest.getEmail()) &&
+                        user.getEmail().equals(authRequest.email()) &&
                         user.getPassword().equals(encodedPassword))
         );
     }
@@ -62,11 +62,11 @@ public class AuthServiceTest {
         AuthRequest authRequest = AuthRequestDataBuilder.buildUserWithRequiredFields().build();
 
         doThrow(new UserAlreadyExistsException("User already exists"))
-                .when(userService).throwIfUserExistsByEmail(authRequest.getEmail());
+                .when(userService).throwIfUserExistsByEmail(authRequest.email());
 
         assertThrows(UserAlreadyExistsException.class, () -> authService.signUp(authRequest));
 
-        verify(userService).throwIfUserExistsByEmail(authRequest.getEmail());
+        verify(userService).throwIfUserExistsByEmail(authRequest.email());
         verify(userService, never()).save(any(User.class));
     }
 
@@ -77,15 +77,15 @@ public class AuthServiceTest {
         String accessToken = "accessToken";
         String refreshToken = "refreshToken";
 
-        when(userService.findByEmailOrThrow(authRequest.getEmail())).thenReturn(user);
-        when(passwordEncoder.matches(authRequest.getPassword(), user.getPassword())).thenReturn(true);
+        when(userService.findByEmailOrThrow(authRequest.email())).thenReturn(user);
+        when(passwordEncoder.matches(authRequest.password(), user.getPassword())).thenReturn(true);
         when(jwtService.generateAccessToken(user)).thenReturn(accessToken);
         when(jwtService.generateRefreshToken(user)).thenReturn(refreshToken);
 
         authService.signIn(authRequest);
 
-        verify(userService).findByEmailOrThrow(authRequest.getEmail());
-        verify(passwordEncoder).matches(authRequest.getPassword(), user.getPassword());
+        verify(userService).findByEmailOrThrow(authRequest.email());
+        verify(passwordEncoder).matches(authRequest.password(), user.getPassword());
         verify(jwtService).generateAccessToken(user);
         verify(jwtService).generateRefreshToken(user);
     }
@@ -95,11 +95,11 @@ public class AuthServiceTest {
         AuthRequest authRequest = AuthRequestDataBuilder.buildUserWithRequiredFields().build();
 
         doThrow(new UsernameNotFoundException("User not found"))
-                .when(userService).findByEmailOrThrow(authRequest.getEmail());
+                .when(userService).findByEmailOrThrow(authRequest.email());
 
-        assertThrows(UsernameNotFoundException.class, () -> userService.findByEmailOrThrow(authRequest.getEmail()));
+        assertThrows(UsernameNotFoundException.class, () -> userService.findByEmailOrThrow(authRequest.email()));
 
-        verify(userService).findByEmailOrThrow(authRequest.getEmail());
+        verify(userService).findByEmailOrThrow(authRequest.email());
         verify(passwordEncoder, never()).matches(anyString(), anyString());
         verify(jwtService, never()).generateAccessToken(any(User.class));
         verify(jwtService, never()).generateRefreshToken(any(User.class));
@@ -114,13 +114,13 @@ public class AuthServiceTest {
                 .refreshToken("refreshToken")
                 .build();
 
-        when(jwtUserDetailsService.getUserDetailsIfTokenValidOrThrow(refreshRequest.getRefreshToken()))
+        when(jwtUserDetailsService.retrieveUserDetails(refreshRequest.refreshToken()))
                 .thenReturn(user);
         when(jwtUserDetailsService.generateTokenPayload(user)).thenReturn(tokenPayload);
 
         authService.refresh(refreshRequest);
 
-        verify(jwtUserDetailsService).getUserDetailsIfTokenValidOrThrow(refreshRequest.getRefreshToken());
+        verify(jwtUserDetailsService).retrieveUserDetails(refreshRequest.refreshToken());
         verify(jwtUserDetailsService).generateTokenPayload(user);
     }
 
@@ -129,12 +129,12 @@ public class AuthServiceTest {
         RefreshRequest refreshRequest = RefreshRequest.builder().build();
 
         doThrow(new BadCredentialsException("Token not valid"))
-                .when(jwtUserDetailsService).getUserDetailsIfTokenValidOrThrow(refreshRequest.getRefreshToken());
+                .when(jwtUserDetailsService).retrieveUserDetails(refreshRequest.refreshToken());
 
         assertThrows(BadCredentialsException.class, () ->
-                jwtUserDetailsService.getUserDetailsIfTokenValidOrThrow(refreshRequest.getRefreshToken()));
+                jwtUserDetailsService.retrieveUserDetails(refreshRequest.refreshToken()));
 
-        verify(jwtUserDetailsService).getUserDetailsIfTokenValidOrThrow(refreshRequest.getRefreshToken());
+        verify(jwtUserDetailsService).retrieveUserDetails(refreshRequest.refreshToken());
         verify(jwtUserDetailsService, never()).generateTokenPayload(any(User.class));
     }
 }

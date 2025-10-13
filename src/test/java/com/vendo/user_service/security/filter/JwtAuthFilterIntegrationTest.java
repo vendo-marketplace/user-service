@@ -72,7 +72,7 @@ public class JwtAuthFilterIntegrationTest {
 
         String responseContent = response.getContentAsString();
         assertThat(responseContent).isNotBlank();
-        assertThat(responseContent).isEqualTo("Token has expired or invalid");
+        assertThat(responseContent).isEqualTo("Missing or invalid Authorization header");
     }
 
     @Test
@@ -96,7 +96,7 @@ public class JwtAuthFilterIntegrationTest {
 
         String responseContent = response.getContentAsString();
         assertThat(responseContent).isNotBlank();
-        assertThat(responseContent).isEqualTo("Token has expired or invalid");
+        assertThat(responseContent).isEqualTo("Missing or invalid Authorization header");
     }
 
     @Test
@@ -105,7 +105,7 @@ public class JwtAuthFilterIntegrationTest {
         String accessToken = jwtService.generateAccessToken(user);
 
         MockHttpServletResponse response = mockMvc.perform(get("/test/ping").header(AUTHORIZATION, "Bearer " + accessToken))
-                .andExpect(status().isUnauthorized())
+                .andExpect(status().isBadRequest())
                 .andReturn().getResponse();
 
         String responseContent = response.getContentAsString();
@@ -126,6 +126,6 @@ public class JwtAuthFilterIntegrationTest {
         String responseContent = response.getContentAsString();
 
         assertThat(responseContent).isNotBlank();
-        assertThat(responseContent).isEqualTo("Token has expired or invalid");
+        assertThat(responseContent).isEqualTo("Token has expired");
     }
 }
