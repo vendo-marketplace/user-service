@@ -16,9 +16,9 @@ public class TestConsumer {
     private static final LinkedBlockingQueue<String> dataPriorityBlockingList = new LinkedBlockingQueue<>();
 
     @KafkaListener(
-            topics = "${kafka.events.password-recovery-email-notification-event.topic}",
-            groupId = "${kafka.events.password-recovery-email-notification-event.groupId}",
-            properties = {"auto.offset.reset: ${kafka.events.password-recovery-email-notification-event.properties.auto-offset-reset}"}
+            topics = "${kafka.events.password-recovery-event.topic}",
+            groupId = "${kafka.events.password-recovery-event.groupId}",
+            properties = {"auto.offset.reset: ${kafka.events.password-recovery-event.properties.auto-offset-reset}"}
     )
     private void listenPasswordRecoveryEmailNotificationEvent(@Payload String token) {
         log.info("Received event for password recovery: {}", token);

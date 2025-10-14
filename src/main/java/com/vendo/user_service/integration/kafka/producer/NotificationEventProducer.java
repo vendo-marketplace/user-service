@@ -11,13 +11,13 @@ import org.springframework.stereotype.Service;
 @RequiredArgsConstructor
 public class NotificationEventProducer {
 
-    @Value("${kafka.events.password-recovery-email-notification-event.topic}")
-    private String passwordRecoveryEmailNotificationEventTopic;
+    @Value("${kafka.events.password-recovery-event.topic}")
+    private String passwordRecoveryEventTopic;
 
     private final KafkaTemplate<String, String> kafkaTemplate;
 
     public void sendRecoveryPasswordNotificationEvent(String token) {
         log.info("Sent event for password recovery: {}", token);
-        kafkaTemplate.send(passwordRecoveryEmailNotificationEventTopic, token);
+        kafkaTemplate.send(passwordRecoveryEventTopic, token);
     }
 }
