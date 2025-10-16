@@ -1,6 +1,6 @@
 package com.vendo.user_service.security.service;
 
-import com.vendo.user_service.common.type.UserStatus;
+import com.vendo.domain.user.common.type.UserStatus;
 import com.vendo.user_service.model.User;
 import com.vendo.user_service.security.common.config.JwtProperties;
 import com.vendo.user_service.security.common.helper.JwtHelper;
