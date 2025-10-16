@@ -15,8 +15,7 @@ public class UserAntPathResolver implements AntPathResolver {
             "/auth/sign-in",
             "/auth/sign-up",
             "/auth/refresh",
-            "/auth/forgot-password",
-            "/auth/reset-password",
+            "/password/**",
             "/swagger-ui/**",
             "/v3/api-docs/**",
     };

@@ -11,13 +11,11 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 
 import java.util.stream.Collectors;
 
+import static com.vendo.common.constants.Delimiters.COLON_DELIMITER;
+import static com.vendo.common.constants.Delimiters.COMMA_DELIMITER;
+
 @ControllerAdvice
 public class MainExceptionHandler {
-
-    // TODO move to common #16 Refactoring
-    private static final String COLON_DELIMITER = ": ";
-
-    private static final String COMMA_DELIMITER = ", ";
 
     @ExceptionHandler(ConstraintViolationException.class)
     public ResponseEntity<String> handleConstraintViolationException(ConstraintViolationException exception, HttpServletRequest request, HttpServletResponse response) {

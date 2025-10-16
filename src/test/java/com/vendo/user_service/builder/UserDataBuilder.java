@@ -1,7 +1,7 @@
 package com.vendo.user_service.builder;
 
+import com.vendo.domain.user.common.type.UserStatus;
 import com.vendo.user_service.common.type.UserRole;
-import com.vendo.user_service.common.type.UserStatus;
 import com.vendo.user_service.model.User;
 
 public class UserDataBuilder {

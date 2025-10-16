@@ -1,12 +1,12 @@
 package com.vendo.user_service.service;
 
+import com.vendo.integration.redis.common.exception.RedisValueExpiredException;
 import com.vendo.user_service.common.exception.PasswordRecoveryNotificationAlreadySentException;
 import com.vendo.user_service.integration.kafka.producer.NotificationEventProducer;
 import com.vendo.user_service.integration.redis.common.config.RedisProperties;
 import com.vendo.user_service.integration.redis.common.dto.ForgotPasswordRequest;
 import com.vendo.user_service.integration.redis.common.dto.ResetPasswordRequest;
 import com.vendo.user_service.integration.redis.common.dto.UpdateUserRequest;
-import com.vendo.user_service.integration.redis.common.exception.RedisValueExpiredException;
 import com.vendo.user_service.integration.redis.service.RedisService;
 import com.vendo.user_service.model.User;
 import lombok.RequiredArgsConstructor;
@@ -62,8 +62,7 @@ public class ForgotPasswordService {
                 .password(passwordEncoder.encode(resetPasswordRequest.password()))
                 .build());
 
-        redisService.deleteValue(resetPasswordTokenPrefix + token);
-        redisService.deleteValue(resetPasswordEmailPrefix + email);
+        redisService.deleteValues(resetPasswordTokenPrefix + token, resetPasswordEmailPrefix + email);
     }
 
 }

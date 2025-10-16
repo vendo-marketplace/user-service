@@ -5,6 +5,7 @@ import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 
 import java.time.Duration;
+import java.util.List;
 import java.util.Optional;
 
 @Service
@@ -21,8 +22,8 @@ public class RedisService {
         return Optional.ofNullable(redisTemplate.opsForValue().get(key));
     }
 
-    public void deleteValue(String key) {
-        redisTemplate.delete(key);
+    public void deleteValues(String... keys) {
+        redisTemplate.delete(List.of(keys));
     }
 
     public boolean hasActiveKey(String key) {

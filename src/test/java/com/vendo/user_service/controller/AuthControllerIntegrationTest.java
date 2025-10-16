@@ -1,10 +1,10 @@
 package com.vendo.user_service.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.vendo.domain.user.common.type.UserStatus;
 import com.vendo.user_service.builder.AuthRequestDataBuilder;
 import com.vendo.user_service.builder.UserDataBuilder;
 import com.vendo.user_service.common.type.UserRole;
-import com.vendo.user_service.common.type.UserStatus;
 import com.vendo.user_service.model.User;
 import com.vendo.user_service.repository.UserRepository;
 import com.vendo.user_service.security.common.helper.JwtHelper;

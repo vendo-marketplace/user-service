@@ -1,9 +1,9 @@
 package com.vendo.user_service.service;
 
+import com.vendo.domain.user.common.type.UserStatus;
 import com.vendo.security.common.exception.AccessDeniedException;
 import com.vendo.user_service.model.User;
 import com.vendo.user_service.common.type.UserRole;
-import com.vendo.user_service.common.type.UserStatus;
 import com.vendo.user_service.security.service.JwtService;
 import com.vendo.user_service.security.service.JwtUserDetailsService;
 import com.vendo.user_service.security.common.dto.TokenPayload;

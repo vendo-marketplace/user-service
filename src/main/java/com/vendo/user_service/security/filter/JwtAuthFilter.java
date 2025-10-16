@@ -1,9 +1,9 @@
 package com.vendo.user_service.security.filter;
 
+import com.vendo.domain.user.common.type.UserStatus;
 import com.vendo.security.common.exception.AccessDeniedException;
-import com.vendo.user_service.security.common.exception.InvalidTokenException;
+import com.vendo.security.common.exception.InvalidTokenException;
 import com.vendo.user_service.model.User;
-import com.vendo.user_service.common.type.UserStatus;
 import com.vendo.user_service.security.common.helper.JwtHelper;
 import io.jsonwebtoken.Claims;
 import jakarta.servlet.FilterChain;
