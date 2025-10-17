@@ -20,8 +20,8 @@ public class ForgotPasswordController {
     }
 
     @PutMapping("/reset")
-    void resetPassword(@RequestParam String token, @Valid @RequestBody ResetPasswordRequest resetPasswordRequest) {
-        forgotPasswordService.resetPassword(token, resetPasswordRequest);
+    void resetPassword(@Valid @RequestBody ResetPasswordRequest resetPasswordRequest) {
+        forgotPasswordService.resetPassword(resetPasswordRequest);
     }
 
 }

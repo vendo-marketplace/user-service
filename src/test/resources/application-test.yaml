@@ -21,7 +21,7 @@ redis:
   reset-password:
     prefixes:
       email-prefix: "test-email-prefix:"
-      token-prefix: "test-token-prefix:"
+      otp-prefix: "test-otp-prefix:"
     ttl: 600
 
 kafka:

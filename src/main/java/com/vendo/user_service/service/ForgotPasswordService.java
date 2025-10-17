@@ -14,7 +14,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
-import java.util.UUID;
+import java.util.Random;
 
 @Slf4j
 @Service
@@ -32,29 +32,28 @@ public class ForgotPasswordService {
     private final UserService userService;
 
     public void forgotPassword(ForgotPasswordRequest forgotPasswordRequests) {
-        String resetPasswordEmailPrefix = redisProperties.getResetPassword().getPrefixes().getEmailPrefix();
-        String resetPasswordTokenPrefix = redisProperties.getResetPassword().getPrefixes().getTokenPrefix();
-        long resetPasswordTtl = redisProperties.getResetPassword().getTtl();
+        RedisProperties.ResetPassword resetProperties = redisProperties.getResetPassword();
+        RedisProperties.ResetPassword.Prefixes resetPrefixes = resetProperties.getPrefixes();
 
-        if (redisService.hasActiveKey(resetPasswordEmailPrefix + forgotPasswordRequests.email())) {
+        if (redisService.hasActiveKey(resetPrefixes.getEmailPrefix() + forgotPasswordRequests.email())) {
             throw new PasswordRecoveryNotificationAlreadySentException("Password recovery notification has already sent");
         }
 
         User user = userService.findByEmailOrThrow(forgotPasswordRequests.email());
-        String token = String.valueOf(UUID.randomUUID());
+        String otpCode = generateOtpCode();
 
-        redisService.saveValue(resetPasswordTokenPrefix + token, user.getEmail(), resetPasswordTtl);
-        redisService.saveValue(resetPasswordEmailPrefix + user.getEmail(), token, resetPasswordTtl);
+        redisService.saveValue(resetPrefixes.getOtpPrefix() + otpCode, user.getEmail(), resetProperties.getTtl());
+        redisService.saveValue(resetPrefixes.getEmailPrefix() + user.getEmail(), otpCode, resetProperties.getTtl());
 
-        notificationEventProducer.sendRecoveryPasswordNotificationEvent(token);
+        notificationEventProducer.sendRecoveryPasswordNotificationEvent(otpCode);
     }
 
-    public void resetPassword(String token, ResetPasswordRequest resetPasswordRequest) {
-        String resetPasswordTokenPrefix = redisProperties.getResetPassword().getPrefixes().getTokenPrefix();
-        String resetPasswordEmailPrefix = redisProperties.getResetPassword().getPrefixes().getEmailPrefix();
+    public void resetPassword(ResetPasswordRequest resetPasswordRequest) {
+        RedisProperties.ResetPassword resetProperties = redisProperties.getResetPassword();
+        RedisProperties.ResetPassword.Prefixes resetPrefixes = resetProperties.getPrefixes();
 
-        String email = redisService.getValue(resetPasswordTokenPrefix + token)
-                .orElseThrow(() -> new RedisValueExpiredException("Password recovery token has expired"));
+        String email = redisService.getValue(resetPrefixes.getOtpPrefix() + resetPasswordRequest.otp())
+                .orElseThrow(() -> new RedisValueExpiredException("Password recovery otp has expired"));
 
         User user = userService.findByEmailOrThrow(email);
 
@@ -62,7 +61,12 @@ public class ForgotPasswordService {
                 .password(passwordEncoder.encode(resetPasswordRequest.password()))
                 .build());
 
-        redisService.deleteValues(resetPasswordTokenPrefix + token, resetPasswordEmailPrefix + email);
+        redisService.deleteValues(resetPrefixes.getOtpPrefix() + resetPasswordRequest.otp(), resetPrefixes.getEmailPrefix() + email);
+    }
+
+    private String generateOtpCode() {
+        int maxSixDigitNumber = new Random().nextInt(1_000_000);
+        return String.format("%06d", maxSixDigitNumber);
     }
 
 }

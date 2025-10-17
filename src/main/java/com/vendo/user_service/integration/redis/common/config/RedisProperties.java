@@ -26,7 +26,7 @@ public class RedisProperties {
 
             private String emailPrefix;
 
-            private String tokenPrefix;
+            private String otpPrefix;
         }
     }
 }

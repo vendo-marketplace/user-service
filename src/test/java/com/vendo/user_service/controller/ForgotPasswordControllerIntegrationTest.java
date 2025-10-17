@@ -22,7 +22,6 @@ import org.springframework.test.context.event.annotation.AfterTestClass;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.util.Optional;
-import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
@@ -89,11 +88,11 @@ public class ForgotPasswordControllerIntegrationTest {
                         .content(objectMapper.writeValueAsString(forgotPasswordRequest)))
                 .andExpect(status().isOk());
 
-        Optional<String> token = redisService.getValue(redisProperties.getResetPassword().getPrefixes().getEmailPrefix() + user.getEmail());
-        assertThat(token).isPresent();
-        assertThat(token.get()).isNotBlank();
+        Optional<String> otp = redisService.getValue(redisProperties.getResetPassword().getPrefixes().getEmailPrefix() + user.getEmail());
+        assertThat(otp).isPresent();
+        assertThat(otp.get()).isNotBlank();
         await().atMost(10, TimeUnit.SECONDS)
-                .untilAsserted(() -> assertThat(testConsumer.hasReceived(token.get())).isTrue());
+                .untilAsserted(() -> assertThat(testConsumer.hasReceived(otp.get())).isTrue());
     }
 
     @Test
@@ -103,7 +102,7 @@ public class ForgotPasswordControllerIntegrationTest {
         userRepository.save(user);
         redisService.saveValue(
                 redisProperties.getResetPassword().getPrefixes().getEmailPrefix() + user.getEmail(),
-                String.valueOf(UUID.randomUUID()),
+                String.valueOf(123456),
                 redisProperties.getResetPassword().getTtl()
         );
 
@@ -118,12 +117,11 @@ public class ForgotPasswordControllerIntegrationTest {
         assertThat(responseContent).isNotBlank();
         assertThat(responseContent).isEqualTo("Password recovery notification has already sent");
 
-        Optional<String> target = redisService.getValue(redisProperties.getResetPassword().getPrefixes().getEmailPrefix() + user.getEmail());
-        assertThat(target).isPresent();
+        Optional<String> otp = redisService.getValue(redisProperties.getResetPassword().getPrefixes().getEmailPrefix() + user.getEmail());
+        assertThat(otp).isPresent();
 
-        String token = target.get();
-        assertThat(token).isNotBlank();
-        await().atMost(5, TimeUnit.SECONDS).untilAsserted(() -> assertThat(testConsumer.hasReceived(token)).isFalse());
+        assertThat(otp.get()).isNotBlank();
+        await().atMost(5, TimeUnit.SECONDS).untilAsserted(() -> assertThat(testConsumer.hasReceived(otp.get())).isFalse());
     }
 
     @Test
@@ -142,8 +140,8 @@ public class ForgotPasswordControllerIntegrationTest {
         assertThat(responseContent).isNotBlank();
         assertThat(responseContent).isEqualTo("User not found");
 
-        Optional<String> target = redisService.getValue(redisProperties.getResetPassword().getPrefixes().getEmailPrefix() + user.getEmail());
-        assertThat(target).isEmpty();
+        Optional<String> otp = redisService.getValue(redisProperties.getResetPassword().getPrefixes().getEmailPrefix() + user.getEmail());
+        assertThat(otp).isEmpty();
     }
 
     @Test
@@ -160,24 +158,26 @@ public class ForgotPasswordControllerIntegrationTest {
         assertThat(responseContent).isNotBlank();
         assertThat(responseContent).contains("Email is required");
 
-        Optional<String> target = redisService.getValue(redisProperties.getResetPassword().getPrefixes().getEmailPrefix() + user.getEmail());
-        assertThat(target).isEmpty();
+        Optional<String> otp = redisService.getValue(redisProperties.getResetPassword().getPrefixes().getEmailPrefix() + user.getEmail());
+        assertThat(otp).isEmpty();
     }
 
     @Test
     void resetPassword_shouldResetPasswordSuccessfully() throws Exception {
         User user = UserDataBuilder.buildUserWithRequiredFields().build();
-        String token = String.valueOf(UUID.randomUUID());
+        Integer otp = 123456;
         String newPassword = "newTestPassword1234@";
-        ResetPasswordRequest resetPasswordRequest = ResetPasswordRequest.builder().password(newPassword).build();
+        ResetPasswordRequest resetPasswordRequest = ResetPasswordRequest.builder()
+                .otp(otp)
+                .password(newPassword).build();
         userRepository.save(user);
         redisService.saveValue(
-                redisProperties.getResetPassword().getPrefixes().getTokenPrefix() + token,
+                redisProperties.getResetPassword().getPrefixes().getOtpPrefix() + otp,
                 user.getEmail(),
                 redisProperties.getResetPassword().getTtl()
         );
 
-        mockMvc.perform(put("/password/reset").param("token", token)
+        mockMvc.perform(put("/password/reset")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(resetPasswordRequest)))
                 .andExpect(status().isOk());
@@ -185,52 +185,52 @@ public class ForgotPasswordControllerIntegrationTest {
         Optional<User> optionalUser = userRepository.findByEmail(user.getEmail());
         assertThat(optionalUser).isPresent();
         assertThat(passwordEncoder.matches(newPassword, optionalUser.get().getPassword())).isTrue();
-        assertThat(redisService.hasActiveKey(redisProperties.getResetPassword().getPrefixes().getTokenPrefix() + token)).isFalse();
+        assertThat(redisService.hasActiveKey(redisProperties.getResetPassword().getPrefixes().getOtpPrefix() + otp)).isFalse();
         assertThat(redisService.hasActiveKey(redisProperties.getResetPassword().getPrefixes().getEmailPrefix() + user.getEmail())).isFalse();
     }
 
     @Test
     void resetPassword_shouldReturnGone_whenTokenExpired() throws Exception {
         User user = UserDataBuilder.buildUserWithRequiredFields().build();
-        String token = String.valueOf(UUID.randomUUID());
+        Integer otp = 123456;
         String newPassword = "newTestPassword1234@";
-        ResetPasswordRequest resetPasswordRequest = ResetPasswordRequest.builder().password(newPassword).build();
+        ResetPasswordRequest resetPasswordRequest = ResetPasswordRequest.builder().otp(otp).password(newPassword).build();
         userRepository.save(user);
         redisService.saveValue(
-                redisProperties.getResetPassword().getPrefixes().getTokenPrefix(),
+                redisProperties.getResetPassword().getPrefixes().getOtpPrefix(),
                 user.getEmail(),
                 1
         );
 
         sleepSafely(1);
-        String responseContent = mockMvc.perform(put("/password/reset").param("token", token)
+        String responseContent = mockMvc.perform(put("/password/reset")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(resetPasswordRequest)))
                 .andExpect(status().isGone()).andReturn().getResponse().getContentAsString();
 
         assertThat(responseContent).isNotBlank();
-        assertThat(responseContent).isEqualTo("Password recovery token has expired");
+        assertThat(responseContent).isEqualTo("Password recovery otp has expired");
 
         Optional<User> optionalUser = userRepository.findByEmail(user.getEmail());
         assertThat(optionalUser).isPresent();
         assertThat(passwordEncoder.matches(newPassword, optionalUser.get().getPassword())).isFalse();
-        assertThat(redisService.hasActiveKey(redisProperties.getResetPassword().getPrefixes().getTokenPrefix() + token)).isFalse();
+        assertThat(redisService.hasActiveKey(redisProperties.getResetPassword().getPrefixes().getOtpPrefix() + otp)).isFalse();
         assertThat(redisService.hasActiveKey(redisProperties.getResetPassword().getPrefixes().getEmailPrefix() + user.getEmail())).isFalse();
     }
 
     @Test
     void resetPassword_shouldReturnBadRequest_whenUserNotFound() throws Exception {
         User user = UserDataBuilder.buildUserWithRequiredFields().build();
-        String token = String.valueOf(UUID.randomUUID());
+        Integer otp = 123456;
         String newPassword = "newTestPassword1234@";
-        ResetPasswordRequest resetPasswordRequest = ResetPasswordRequest.builder().password(newPassword).build();
+        ResetPasswordRequest resetPasswordRequest = ResetPasswordRequest.builder().otp(otp).password(newPassword).build();
         redisService.saveValue(
-                redisProperties.getResetPassword().getPrefixes().getTokenPrefix() + token,
+                redisProperties.getResetPassword().getPrefixes().getOtpPrefix() + otp,
                 user.getEmail(),
                 redisProperties.getResetPassword().getTtl()
         );
 
-        String responseContent = mockMvc.perform(put("/password/reset").param("token", token)
+        String responseContent = mockMvc.perform(put("/password/reset")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(resetPasswordRequest)))
                 .andExpect(status().isBadRequest())
