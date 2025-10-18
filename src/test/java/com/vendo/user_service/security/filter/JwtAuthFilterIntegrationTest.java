@@ -1,6 +1,6 @@
 package com.vendo.user_service.security.filter;
 
-import com.vendo.user_service.builder.UserDataBuilder;
+import com.vendo.user_service.common.builder.UserDataBuilder;
 import com.vendo.user_service.model.User;
 import com.vendo.user_service.repository.UserRepository;
 import com.vendo.user_service.security.service.JwtService;

@@ -25,7 +25,7 @@ public class TestConsumer {
         dataPriorityBlockingList.add(email);
     }
 
-    public boolean hasReceived(String value) {
-        return dataPriorityBlockingList.contains(value);
+    public boolean removeIfReceived(String value) {
+        return dataPriorityBlockingList.remove(value);
     }
 }

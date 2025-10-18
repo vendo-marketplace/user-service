@@ -12,21 +12,27 @@ import org.springframework.context.annotation.Configuration;
 @ConfigurationProperties(prefix = "redis")
 public class RedisProperties {
 
-    private ResetPassword resetPassword;
+    private PasswordRecovery passwordRecovery;
 
     @Data
-    public static class ResetPassword {
+    public static class PasswordRecovery {
 
-        private Prefixes prefixes;
+        private PrefixProperties email;
 
-        private long ttl;
+        private PrefixProperties otp;
+
+        private PrefixProperties attempts;
 
         @Data
-        public static class Prefixes {
+        public static class PrefixProperties {
 
-            private String emailPrefix;
+            private String prefix;
 
-            private String otpPrefix;
+            private long ttl;
+            
+            public String buildPrefix(String value) {
+                return prefix + value;
+            }
         }
     }
 }
