@@ -2,6 +2,7 @@ package com.vendo.user_service.service;
 
 import com.vendo.integration.redis.common.exception.RedisValueExpiredException;
 import com.vendo.user_service.common.exception.OtpAlreadySentException;
+import com.vendo.user_service.common.exception.OtpTooManyRequestsException;
 import com.vendo.user_service.integration.kafka.producer.PasswordRecoveryEventProducer;
 import com.vendo.user_service.integration.redis.common.config.RedisProperties;
 import com.vendo.user_service.integration.redis.common.dto.ResetPasswordRequest;
@@ -53,7 +54,6 @@ public class PasswordRecoveryService {
 
         String email = redisService.getValue(recoveryProperties.getOtp().buildPrefix(String.valueOf(resetPasswordRequest.otp())))
                 .orElseThrow(() -> new RedisValueExpiredException("Otp has expired"));
-        System.out.println(email);
 
         User user = userService.findByEmailOrThrow(email);
 
@@ -68,9 +68,9 @@ public class PasswordRecoveryService {
 
     @Transactional
     public void resendOtp(String email) {
-        userService.findByEmailOrThrow(email);
-
         RedisProperties.PasswordRecovery recoveryProperties = redisProperties.getPasswordRecovery();
+
+        userService.findByEmailOrThrow(email);
 
         Optional<String> attempts = redisService.getValue(recoveryProperties.getAttempts().buildPrefix(email));
         if (attempts.isEmpty()) {
@@ -78,10 +78,8 @@ public class PasswordRecoveryService {
                     recoveryProperties.getAttempts().buildPrefix(email),
                     String.valueOf(1),
                     recoveryProperties.getAttempts().getTtl());
-            return;
         } else if(Integer.parseInt(attempts.get()) == 3) {
-            log.info("User {} reached maximum attempts for resending otp code", email);
-            return;
+            throw new OtpTooManyRequestsException("User reached maximum attempts for resending otp code");
         } else {
             redisService.saveValue(
                     recoveryProperties.getAttempts().buildPrefix(email),
@@ -93,10 +91,7 @@ public class PasswordRecoveryService {
         if (otp.isPresent()) {
             passwordRecoveryEventProducer.sendRecoveryPasswordEvent(email);
         } else {
-            String newOtp = generateOtp();
-            redisService.saveValue(recoveryProperties.getOtp().buildPrefix(newOtp), email, recoveryProperties.getOtp().getTtl());
-            redisService.saveValue(recoveryProperties.getEmail().buildPrefix(email), newOtp, recoveryProperties.getOtp().getTtl());
-
+            redisService.saveValue(recoveryProperties.getEmail().buildPrefix(email), generateOtp(), recoveryProperties.getOtp().getTtl());
             passwordRecoveryEventProducer.sendRecoveryPasswordEvent(email);
         }
     }

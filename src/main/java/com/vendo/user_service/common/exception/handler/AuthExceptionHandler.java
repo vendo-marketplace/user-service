@@ -1,6 +1,7 @@
 package com.vendo.user_service.common.exception.handler;
 
 import com.vendo.user_service.common.exception.OtpAlreadySentException;
+import com.vendo.user_service.common.exception.OtpTooManyRequestsException;
 import com.vendo.user_service.common.exception.UserAlreadyExistsException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -30,5 +31,10 @@ public class AuthExceptionHandler {
     @ExceptionHandler(OtpAlreadySentException.class)
     public ResponseEntity<String> handlePasswordRecoveryEventAlreadySentException(OtpAlreadySentException e) {
         return ResponseEntity.status(HttpStatus.CONFLICT).body(e.getMessage());
+    }
+
+    @ExceptionHandler(OtpTooManyRequestsException.class)
+    public ResponseEntity<String> handleOtpTooManyRequestsException(OtpTooManyRequestsException e) {
+        return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS).body(e.getMessage());
     }
 }
