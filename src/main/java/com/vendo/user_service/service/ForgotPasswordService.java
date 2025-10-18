@@ -1,8 +1,8 @@
 package com.vendo.user_service.service;
 
 import com.vendo.integration.redis.common.exception.RedisValueExpiredException;
-import com.vendo.user_service.common.exception.PasswordRecoveryNotificationAlreadySentException;
-import com.vendo.user_service.integration.kafka.producer.NotificationEventProducer;
+import com.vendo.user_service.common.exception.OtpAlreadySentException;
+import com.vendo.user_service.integration.kafka.producer.PasswordRecoveryEventProducer;
 import com.vendo.user_service.integration.redis.common.config.RedisProperties;
 import com.vendo.user_service.integration.redis.common.dto.ForgotPasswordRequest;
 import com.vendo.user_service.integration.redis.common.dto.ResetPasswordRequest;
@@ -25,7 +25,7 @@ public class ForgotPasswordService {
 
     private final PasswordEncoder passwordEncoder;
 
-    private final NotificationEventProducer notificationEventProducer;
+    private final PasswordRecoveryEventProducer passwordRecoveryEventProducer;
 
     private final RedisProperties redisProperties;
 
@@ -36,16 +36,16 @@ public class ForgotPasswordService {
         RedisProperties.ResetPassword.Prefixes resetPrefixes = resetProperties.getPrefixes();
 
         if (redisService.hasActiveKey(resetPrefixes.getEmailPrefix() + forgotPasswordRequests.email())) {
-            throw new PasswordRecoveryNotificationAlreadySentException("Password recovery notification has already sent");
+            throw new OtpAlreadySentException("Otp has already sent to email");
         }
 
         User user = userService.findByEmailOrThrow(forgotPasswordRequests.email());
-        String otpCode = generateOtpCode();
+        String otp = generateOtpCode();
 
-        redisService.saveValue(resetPrefixes.getOtpPrefix() + otpCode, user.getEmail(), resetProperties.getTtl());
-        redisService.saveValue(resetPrefixes.getEmailPrefix() + user.getEmail(), otpCode, resetProperties.getTtl());
+        redisService.saveValue(resetPrefixes.getOtpPrefix() + otp, user.getEmail(), resetProperties.getTtl());
+        redisService.saveValue(resetPrefixes.getEmailPrefix() + user.getEmail(), otp, resetProperties.getTtl());
 
-        notificationEventProducer.sendRecoveryPasswordNotificationEvent(otpCode);
+        passwordRecoveryEventProducer.sendRecoveryPasswordEvent(user.getEmail());
     }
 
     public void resetPassword(ResetPasswordRequest resetPasswordRequest) {
@@ -53,7 +53,7 @@ public class ForgotPasswordService {
         RedisProperties.ResetPassword.Prefixes resetPrefixes = resetProperties.getPrefixes();
 
         String email = redisService.getValue(resetPrefixes.getOtpPrefix() + resetPasswordRequest.otp())
-                .orElseThrow(() -> new RedisValueExpiredException("Password recovery otp has expired"));
+                .orElseThrow(() -> new RedisValueExpiredException("Otp has expired"));
 
         User user = userService.findByEmailOrThrow(email);
 

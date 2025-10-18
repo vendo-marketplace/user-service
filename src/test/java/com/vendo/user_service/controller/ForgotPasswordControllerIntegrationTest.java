@@ -78,7 +78,7 @@ public class ForgotPasswordControllerIntegrationTest {
     }
 
     @Test
-    void forgotPassword_shouldSentNotificationEventSuccessfully() throws Exception {
+    void forgotPassword_shouldSendForgotPasswordEventSuccessfully() throws Exception {
         User user = UserDataBuilder.buildUserWithRequiredFields().build();
         userRepository.save(user);
         ForgotPasswordRequest forgotPasswordRequest = ForgotPasswordRequest.builder().email(user.getEmail()).build();
@@ -92,11 +92,11 @@ public class ForgotPasswordControllerIntegrationTest {
         assertThat(otp).isPresent();
         assertThat(otp.get()).isNotBlank();
         await().atMost(10, TimeUnit.SECONDS)
-                .untilAsserted(() -> assertThat(testConsumer.hasReceived(otp.get())).isTrue());
+                .untilAsserted(() -> assertThat(testConsumer.hasReceived(user.getEmail())).isTrue());
     }
 
     @Test
-    void forgotPassword_shouldReturnConflict_whenMessageHasAlreadySent() throws Exception {
+    void forgotPassword_shouldReturnConflict_whenForgotPasswordEventHasAlreadySent() throws Exception {
         User user = UserDataBuilder.buildUserWithRequiredFields().build();
         ForgotPasswordRequest forgotPasswordRequest = ForgotPasswordRequest.builder().email(user.getEmail()).build();
         userRepository.save(user);
@@ -115,7 +115,7 @@ public class ForgotPasswordControllerIntegrationTest {
                 .getContentAsString();
 
         assertThat(responseContent).isNotBlank();
-        assertThat(responseContent).isEqualTo("Password recovery notification has already sent");
+        assertThat(responseContent).isEqualTo("Otp has already sent to email");
 
         Optional<String> otp = redisService.getValue(redisProperties.getResetPassword().getPrefixes().getEmailPrefix() + user.getEmail());
         assertThat(otp).isPresent();
@@ -209,7 +209,7 @@ public class ForgotPasswordControllerIntegrationTest {
                 .andExpect(status().isGone()).andReturn().getResponse().getContentAsString();
 
         assertThat(responseContent).isNotBlank();
-        assertThat(responseContent).isEqualTo("Password recovery otp has expired");
+        assertThat(responseContent).isEqualTo("Otp has expired");
 
         Optional<User> optionalUser = userRepository.findByEmail(user.getEmail());
         assertThat(optionalUser).isPresent();
