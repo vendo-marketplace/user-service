@@ -13,7 +13,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Optional;
 import java.util.Random;
@@ -34,15 +33,14 @@ public class PasswordRecoveryService {
     private final UserService userService;
 
     public void forgotPassword(String email) {
+        userService.findByEmailOrThrow(email);
         RedisProperties.PasswordRecovery recoveryProperties = redisProperties.getPasswordRecovery();
 
         if (redisService.hasActiveKey(recoveryProperties.getEmail().buildPrefix(email))) {
             throw new OtpAlreadySentException("Otp has already sent to email");
         }
 
-        userService.findByEmailOrThrow(email);
         String otp = generateOtp();
-
         redisService.saveValue(recoveryProperties.getOtp().buildPrefix(otp), email, recoveryProperties.getOtp().getTtl());
         redisService.saveValue(recoveryProperties.getEmail().buildPrefix(email), otp, recoveryProperties.getEmail().getTtl());
 
@@ -56,7 +54,6 @@ public class PasswordRecoveryService {
                 .orElseThrow(() -> new RedisValueExpiredException("Otp has expired"));
 
         User user = userService.findByEmailOrThrow(email);
-
         userService.update(user.getId(), UpdateUserRequest.builder()
                 .password(passwordEncoder.encode(resetPasswordRequest.password()))
                 .build());
@@ -66,36 +63,40 @@ public class PasswordRecoveryService {
                 recoveryProperties.getEmail().buildPrefix(email));
     }
 
-    @Transactional
     public void resendOtp(String email) {
         RedisProperties.PasswordRecovery recoveryProperties = redisProperties.getPasswordRecovery();
-
         userService.findByEmailOrThrow(email);
 
         Optional<String> attempts = redisService.getValue(recoveryProperties.getAttempts().buildPrefix(email));
-        if (attempts.isEmpty()) {
-            redisService.saveValue(
-                    recoveryProperties.getAttempts().buildPrefix(email),
-                    String.valueOf(1),
-                    recoveryProperties.getAttempts().getTtl());
-        } else if(Integer.parseInt(attempts.get()) == 3) {
-            throw new OtpTooManyRequestsException("User reached maximum attempts for resending otp code");
-        } else {
-            redisService.saveValue(
-                    recoveryProperties.getAttempts().buildPrefix(email),
-                    String.valueOf(Integer.parseInt(attempts.get()) + 1),
-                    recoveryProperties.getAttempts().getTtl());
-        }
+        increaseResendAttemptsOrThrow(email, attempts);
 
         Optional<String> otp = redisService.getValue(recoveryProperties.getEmail().buildPrefix(email));
-        if (otp.isPresent()) {
-            passwordRecoveryEventProducer.sendRecoveryPasswordEvent(email);
-        } else {
-            redisService.saveValue(recoveryProperties.getEmail().buildPrefix(email), generateOtp(), recoveryProperties.getOtp().getTtl());
-            passwordRecoveryEventProducer.sendRecoveryPasswordEvent(email);
-        }
+        resendOrGenerateOtp(email, otp);
     }
 
+    private void increaseResendAttemptsOrThrow(String email, Optional<String> attempts) {
+        RedisProperties.PasswordRecovery recoveryProperties = redisProperties.getPasswordRecovery();
+        int attempt = attempts.map(Integer::parseInt).orElse(0);
+
+        if(attempt == 3) {
+            throw new OtpTooManyRequestsException("User reached maximum attempts for resending otp code");
+        }
+
+        redisService.saveValue(
+                recoveryProperties.getAttempts().buildPrefix(email),
+                String.valueOf(attempt + 1),
+                recoveryProperties.getAttempts().getTtl());
+    }
+
+    private void resendOrGenerateOtp(String email, Optional<String> otp) {
+        RedisProperties.PasswordRecovery recoveryProperties = redisProperties.getPasswordRecovery();
+
+        if (otp.isEmpty()) {
+            redisService.saveValue(recoveryProperties.getEmail().buildPrefix(email), generateOtp(), recoveryProperties.getOtp().getTtl());
+        }
+
+        passwordRecoveryEventProducer.sendRecoveryPasswordEvent(email);
+    }
 
     private String generateOtp() {
         int maxSixDigitNumber = new Random().nextInt(1_000_000);
