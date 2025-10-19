@@ -1,5 +1,6 @@
 package com.vendo.user_service.integration.redis.common.config;
 
+import com.vendo.integration.redis.common.config.PrefixProperties;
 import lombok.Data;
 import lombok.Getter;
 import lombok.Setter;
@@ -23,6 +24,4 @@ public class RedisProperties {
 
         private PrefixProperties attempts;
     }
-
-
 }
