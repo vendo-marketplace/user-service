@@ -175,7 +175,6 @@ class AuthControllerIntegrationTest {
         String responseContent = response.getContentAsString();
         assertThat(responseContent).isNotBlank();
         assertThat(responseContent).isEqualTo("User is blocked");
-
     }
 
     @Test

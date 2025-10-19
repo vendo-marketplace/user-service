@@ -44,7 +44,7 @@ public class PasswordRecoveryService {
         redisService.saveValue(recoveryProperties.getOtp().buildPrefix(otp), email, recoveryProperties.getOtp().getTtl());
         redisService.saveValue(recoveryProperties.getEmail().buildPrefix(email), otp, recoveryProperties.getEmail().getTtl());
 
-        passwordRecoveryEventProducer.sendRecoveryPasswordEvent(email);
+        passwordRecoveryEventProducer.sendPasswordRecoveryEvent(email);
     }
 
     public void resetPassword(ResetPasswordRequest resetPasswordRequest) {
@@ -95,7 +95,7 @@ public class PasswordRecoveryService {
             redisService.saveValue(recoveryProperties.getEmail().buildPrefix(email), generateOtp(), recoveryProperties.getOtp().getTtl());
         }
 
-        passwordRecoveryEventProducer.sendRecoveryPasswordEvent(email);
+        passwordRecoveryEventProducer.sendPasswordRecoveryEvent(email);
     }
 
     private String generateOtp() {
