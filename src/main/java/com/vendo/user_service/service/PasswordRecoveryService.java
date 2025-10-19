@@ -37,7 +37,7 @@ public class PasswordRecoveryService {
         RedisProperties.PasswordRecovery recoveryProperties = redisProperties.getPasswordRecovery();
 
         if (redisService.hasActiveKey(recoveryProperties.getEmail().buildPrefix(email))) {
-            throw new OtpAlreadySentException("Otp has already sent to email");
+            throw new OtpAlreadySentException("Otp has already sent to email.");
         }
 
         String otp = generateOtp();
@@ -51,7 +51,7 @@ public class PasswordRecoveryService {
         RedisProperties.PasswordRecovery recoveryProperties = redisProperties.getPasswordRecovery();
 
         String email = redisService.getValue(recoveryProperties.getOtp().buildPrefix(String.valueOf(resetPasswordRequest.otp())))
-                .orElseThrow(() -> new RedisValueExpiredException("Otp has expired"));
+                .orElseThrow(() -> new RedisValueExpiredException("Otp has expired."));
 
         User user = userService.findByEmailOrThrow(email);
         userService.update(user.getId(), UpdateUserRequest.builder()
@@ -65,7 +65,10 @@ public class PasswordRecoveryService {
 
     public void resendOtp(String email) {
         RedisProperties.PasswordRecovery recoveryProperties = redisProperties.getPasswordRecovery();
+
         userService.findByEmailOrThrow(email);
+        redisService.getValue(recoveryProperties.getEmail().buildPrefix(email))
+                .orElseThrow(() -> new RedisValueExpiredException("Reset session expired."));
 
         Optional<String> attempts = redisService.getValue(recoveryProperties.getAttempts().buildPrefix(email));
         increaseResendAttemptsOrThrow(email, attempts);
@@ -79,7 +82,7 @@ public class PasswordRecoveryService {
         int attempt = attempts.map(Integer::parseInt).orElse(0);
 
         if(attempt == 3) {
-            throw new OtpTooManyRequestsException("User reached maximum attempts for resending otp code");
+            throw new OtpTooManyRequestsException("Reached maximum attempts for resending otp code.");
         }
 
         redisService.saveValue(

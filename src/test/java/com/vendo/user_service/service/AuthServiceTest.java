@@ -94,7 +94,7 @@ public class AuthServiceTest {
     public void signIn_shouldThrowException_whenUserNotFound() {
         AuthRequest authRequest = AuthRequestDataBuilder.buildUserWithRequiredFields().build();
 
-        doThrow(new UsernameNotFoundException("User not found"))
+        doThrow(new UsernameNotFoundException("User not found."))
                 .when(userService).findByEmailOrThrow(authRequest.email());
 
         assertThrows(UsernameNotFoundException.class, () -> userService.findByEmailOrThrow(authRequest.email()));

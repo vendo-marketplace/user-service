@@ -5,6 +5,7 @@ import lombok.Builder;
 
 @Builder
 public record ResetPasswordRequest(
+        // TODO move otp to params
         @NotNull(message = "Otp is required")
         @Digits(integer = 6, fraction = 0, message = "Otp should have 6 digits")
         Integer otp,

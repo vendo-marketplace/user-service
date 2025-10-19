@@ -153,7 +153,7 @@ class AuthControllerIntegrationTest {
 
         String responseMessage = response.getContentAsString();
         assertThat(responseMessage).isNotBlank();
-        assertThat(responseMessage).isEqualTo("User not found");
+        assertThat(responseMessage).isEqualTo("User not found.");
     }
 
     @Test

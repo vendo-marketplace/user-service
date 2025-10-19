@@ -32,18 +32,18 @@ public class UserService {
 
     public User findByUserIdOrThrow(@NotNull String userId) {
         return userRepository.findById(userId)
-                .orElseThrow(() -> new UsernameNotFoundException("User not found"));
+                .orElseThrow(() -> new UsernameNotFoundException("User not found."));
     }
 
     public User findByEmailOrThrow(@NotNull String email) {
         return userRepository.findByEmail(email)
-                .orElseThrow(() -> new UsernameNotFoundException("User not found"));
+                .orElseThrow(() -> new UsernameNotFoundException("User not found."));
     }
 
     public void throwIfUserExistsByEmail(String email) {
         Optional<User> user = userRepository.findByEmail(email);
         if (user.isPresent()) {
-            throw new UserAlreadyExistsException("User with this email already exists");
+            throw new UserAlreadyExistsException("User with this email already exists.");
         }
     }
 }
