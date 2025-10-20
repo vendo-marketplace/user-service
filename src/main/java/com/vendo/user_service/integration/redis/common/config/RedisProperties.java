@@ -15,8 +15,20 @@ public class RedisProperties {
 
     private PasswordRecovery passwordRecovery;
 
+    private EmailVerification emailVerification;
+
     @Data
     public static class PasswordRecovery {
+
+        private PrefixProperties email;
+
+        private PrefixProperties otp;
+
+        private PrefixProperties attempts;
+    }
+
+    @Data
+    public static class EmailVerification {
 
         private PrefixProperties email;
 

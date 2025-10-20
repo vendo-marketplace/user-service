@@ -1,6 +1,7 @@
 package com.vendo.user_service.web.controller;
 
 import com.vendo.user_service.service.AuthService;
+import com.vendo.user_service.service.EmailVerificationService;
 import com.vendo.user_service.web.dto.*;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -13,6 +14,8 @@ import org.springframework.web.bind.annotation.*;
 public class AuthController {
 
     private final AuthService authService;
+
+    private final EmailVerificationService emailVerificationService;
 
     @PostMapping("/sign-in")
     ResponseEntity<AuthResponse> signIn(@Valid @RequestBody AuthRequest authRequest) {
@@ -27,5 +30,10 @@ public class AuthController {
     @PostMapping("/refresh")
     ResponseEntity<AuthResponse> refresh(@Valid @RequestBody RefreshRequest refreshRequest) {
         return ResponseEntity.ok(authService.refresh(refreshRequest));
+    }
+
+    @PostMapping("/verification/send-code")
+    void sendVerificationCode(@RequestParam String email) {
+        emailVerificationService.sendVerificationCode(email);
     }
 }
