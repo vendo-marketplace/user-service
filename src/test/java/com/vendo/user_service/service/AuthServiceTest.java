@@ -1,7 +1,7 @@
 package com.vendo.user_service.service;
 
-import com.vendo.user_service.builder.AuthRequestDataBuilder;
-import com.vendo.user_service.builder.UserDataBuilder;
+import com.vendo.user_service.common.builder.AuthRequestDataBuilder;
+import com.vendo.user_service.common.builder.UserDataBuilder;
 import com.vendo.user_service.common.exception.UserAlreadyExistsException;
 import com.vendo.user_service.model.User;
 import com.vendo.user_service.security.service.JwtService;
@@ -94,7 +94,7 @@ public class AuthServiceTest {
     public void signIn_shouldThrowException_whenUserNotFound() {
         AuthRequest authRequest = AuthRequestDataBuilder.buildUserWithRequiredFields().build();
 
-        doThrow(new UsernameNotFoundException("User not found"))
+        doThrow(new UsernameNotFoundException("User not found."))
                 .when(userService).findByEmailOrThrow(authRequest.email());
 
         assertThrows(UsernameNotFoundException.class, () -> userService.findByEmailOrThrow(authRequest.email()));

@@ -1,4 +1,4 @@
-package com.vendo.user_service.builder;
+package com.vendo.user_service.common.builder;
 
 import com.vendo.user_service.web.dto.AuthRequest;
 

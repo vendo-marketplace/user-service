@@ -1,6 +1,6 @@
 package com.vendo.user_service.model;
 
-import com.vendo.user_service.builder.UserDataBuilder;
+import com.vendo.user_service.common.builder.UserDataBuilder;
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.Validation;
 import jakarta.validation.Validator;

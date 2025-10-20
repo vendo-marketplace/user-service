@@ -1,5 +1,6 @@
 package com.vendo.user_service.integration.redis.common.config;
 
+import com.vendo.integration.redis.common.config.PrefixProperties;
 import lombok.Data;
 import lombok.Getter;
 import lombok.Setter;
@@ -12,21 +13,15 @@ import org.springframework.context.annotation.Configuration;
 @ConfigurationProperties(prefix = "redis")
 public class RedisProperties {
 
-    private ResetPassword resetPassword;
+    private PasswordRecovery passwordRecovery;
 
     @Data
-    public static class ResetPassword {
+    public static class PasswordRecovery {
 
-        private Prefixes prefixes;
+        private PrefixProperties email;
 
-        private long ttl;
+        private PrefixProperties otp;
 
-        @Data
-        public static class Prefixes {
-
-            private String emailPrefix;
-
-            private String tokenPrefix;
-        }
+        private PrefixProperties attempts;
     }
 }

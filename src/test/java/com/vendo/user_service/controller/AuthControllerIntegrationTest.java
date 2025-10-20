@@ -2,8 +2,8 @@ package com.vendo.user_service.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.vendo.domain.user.common.type.UserStatus;
-import com.vendo.user_service.builder.AuthRequestDataBuilder;
-import com.vendo.user_service.builder.UserDataBuilder;
+import com.vendo.user_service.common.builder.AuthRequestDataBuilder;
+import com.vendo.user_service.common.builder.UserDataBuilder;
 import com.vendo.user_service.common.type.UserRole;
 import com.vendo.user_service.model.User;
 import com.vendo.user_service.repository.UserRepository;
@@ -110,7 +110,7 @@ class AuthControllerIntegrationTest {
 
         String responseMessage = response.getContentAsString();
         assertThat(responseMessage).isNotBlank();
-        assertThat(responseMessage).isEqualTo("User with this email already exists");
+        assertThat(responseMessage).isEqualTo("User with this email already exists.");
     }
 
     @Test
@@ -153,7 +153,7 @@ class AuthControllerIntegrationTest {
 
         String responseMessage = response.getContentAsString();
         assertThat(responseMessage).isNotBlank();
-        assertThat(responseMessage).isEqualTo("User not found");
+        assertThat(responseMessage).isEqualTo("User not found.");
     }
 
     @Test
@@ -175,7 +175,6 @@ class AuthControllerIntegrationTest {
         String responseContent = response.getContentAsString();
         assertThat(responseContent).isNotBlank();
         assertThat(responseContent).isEqualTo("User is blocked");
-
     }
 
     @Test

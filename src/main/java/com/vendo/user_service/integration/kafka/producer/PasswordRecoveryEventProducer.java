@@ -9,15 +9,15 @@ import org.springframework.stereotype.Service;
 @Slf4j
 @Service
 @RequiredArgsConstructor
-public class NotificationEventProducer {
+public class PasswordRecoveryEventProducer {
 
     @Value("${kafka.events.password-recovery-event.topic}")
     private String passwordRecoveryEventTopic;
 
     private final KafkaTemplate<String, String> kafkaTemplate;
 
-    public void sendRecoveryPasswordNotificationEvent(String token) {
-        log.info("Sent event for password recovery: {}", token);
-        kafkaTemplate.send(passwordRecoveryEventTopic, token);
+    public void sendPasswordRecoveryEvent(String otp) {
+        log.info("Sent event for password recovery: {}", otp);
+        kafkaTemplate.send(passwordRecoveryEventTopic, otp);
     }
 }

@@ -20,12 +20,12 @@ public class TestConsumer {
             groupId = "${kafka.events.password-recovery-event.groupId}",
             properties = {"auto.offset.reset: ${kafka.events.password-recovery-event.properties.auto-offset-reset}"}
     )
-    private void listenPasswordRecoveryEmailNotificationEvent(@Payload String token) {
-        log.info("Received event for password recovery: {}", token);
-        dataPriorityBlockingList.add(token);
+    private void listenPasswordRecoveryEvent(@Payload String email) {
+        log.info("Received event for password recovery: {}", email);
+        dataPriorityBlockingList.add(email);
     }
 
-    public boolean hasReceived(String value) {
-        return dataPriorityBlockingList.contains(value);
+    public boolean removeIfReceived(String value) {
+        return dataPriorityBlockingList.remove(value);
     }
 }
