@@ -110,7 +110,7 @@ class AuthControllerIntegrationTest {
 
         String responseMessage = response.getContentAsString();
         assertThat(responseMessage).isNotBlank();
-        assertThat(responseMessage).isEqualTo("User with this email already exists");
+        assertThat(responseMessage).isEqualTo("User with this email already exists.");
     }
 
     @Test
