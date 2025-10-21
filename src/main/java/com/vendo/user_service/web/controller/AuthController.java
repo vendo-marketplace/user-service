@@ -36,4 +36,9 @@ public class AuthController {
     void sendVerificationCode(@RequestParam String email) {
         emailVerificationService.sendVerificationCode(email);
     }
+
+    @PostMapping("/verification/resend-code")
+    void resendVerificationCode(@RequestParam String email) {
+        emailVerificationService.resendVerificationCode(email);
+    }
 }
