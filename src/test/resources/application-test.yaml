@@ -28,6 +28,16 @@ redis:
     attempts:
       prefix: "test-attempts-prefix:"
       ttl: 3600
+  email-verification:
+    email:
+      prefix: "test-email-prefix:"
+      ttl: 600
+    otp:
+      prefix: "test-otp-prefix:"
+      ttl: 600
+    attempts:
+      prefix: "test-attempts-prefix:"
+      ttl: 3600
 
 kafka:
   host: localhost
@@ -36,5 +46,10 @@ kafka:
     password-recovery-event:
       topic: "PASSWORD_RECOVERY_TEST_TOPIC"
       groupId: "password_recovery_test_group"
+      properties:
+        auto-offset-reset: "earliest"
+    email-verification-event:
+      topic: "EMAIL_VERIFICATION_TEST_TOPIC"
+      groupId: "email_verification_test_group"
       properties:
         auto-offset-reset: "earliest"

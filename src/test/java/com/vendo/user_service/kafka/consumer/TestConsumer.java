@@ -25,6 +25,16 @@ public class TestConsumer {
         dataPriorityBlockingList.add(email);
     }
 
+    @KafkaListener(
+            topics = "${kafka.events.email-verification-event.topic}",
+            groupId = "${kafka.events.email-verification-event.groupId}",
+            properties = {"auto.offset.reset: ${kafka.events.email-verification-event.properties.auto-offset-reset}"}
+    )
+    private void listenEmailVerificationEvent(@Payload String email) {
+        log.info("Received event for email verification: {}", email);
+        dataPriorityBlockingList.add(email);
+    }
+
     public boolean removeIfReceived(String value) {
         return dataPriorityBlockingList.remove(value);
     }

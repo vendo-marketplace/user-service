@@ -15,7 +15,6 @@ public class EmailVerificationEventProducer {
     @Value("${kafka.events.email-verification-event.topic}")
     private String emailVerificationEventTopic;
 
-
     private final KafkaTemplate<String, String> kafkaTemplate;
 
     public void sendEmailVerificationEvent(String otp) {
