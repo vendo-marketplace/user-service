@@ -1,7 +1,8 @@
 package com.vendo.user_service.web.controller;
 
+import com.vendo.user_service.integration.redis.common.dto.VerifyEmailRequest;
 import com.vendo.user_service.service.AuthService;
-import com.vendo.user_service.service.EmailVerificationService;
+
 import com.vendo.user_service.web.dto.*;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -14,8 +15,6 @@ import org.springframework.web.bind.annotation.*;
 public class AuthController {
 
     private final AuthService authService;
-
-    private final EmailVerificationService emailVerificationService;
 
     @PostMapping("/sign-in")
     ResponseEntity<AuthResponse> signIn(@Valid @RequestBody AuthRequest authRequest) {
@@ -32,13 +31,18 @@ public class AuthController {
         return ResponseEntity.ok(authService.refresh(refreshRequest));
     }
 
-    @PostMapping("/verification/send-code")
+    @PostMapping("/send-code")
     void sendVerificationCode(@RequestParam String email) {
-        emailVerificationService.sendVerificationCode(email);
+        authService.sendVerificationCode(email);
     }
 
-    @PostMapping("/verification/resend-code")
+    @PostMapping("/resend-code")
     void resendVerificationCode(@RequestParam String email) {
-        emailVerificationService.resendVerificationCode(email);
+        authService.resendVerificationCode(email);
+    }
+
+    @PostMapping("/verify-code")
+    void verifyVerificationCode(@Valid @RequestBody VerifyEmailRequest verifyEmailRequest) {
+        authService.verifyVerificationCode(verifyEmailRequest);
     }
 }

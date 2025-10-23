@@ -26,6 +26,7 @@ public class UserService {
         User user = findByUserIdOrThrow(userId);
 
         Optional.ofNullable(updateUserRequest.password()).ifPresent(user::setPassword);
+        Optional.ofNullable(updateUserRequest.status()).ifPresent(user::setStatus);
 
         userRepository.save(user);
     }
