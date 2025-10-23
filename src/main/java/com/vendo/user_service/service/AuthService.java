@@ -69,10 +69,10 @@ public class AuthService {
         String encodedPassword = passwordEncoder.encode(authRequest.password());
 
         userService.save(User.builder()
-                        .email(authRequest.email())
-                        .role(UserRole.USER)
-                        .status(UserStatus.INCOMPLETE)
-                        .password(encodedPassword)
+                .email(authRequest.email())
+                .role(UserRole.USER)
+                .status(UserStatus.INCOMPLETE)
+                .password(encodedPassword)
                 .build());
     }
 
