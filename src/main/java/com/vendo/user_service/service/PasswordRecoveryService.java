@@ -81,7 +81,7 @@ public class PasswordRecoveryService {
         RedisProperties.PasswordRecovery recoveryProperties = redisProperties.getPasswordRecovery();
         int attempt = attempts.map(Integer::parseInt).orElse(0);
 
-        if(attempt == 3) {
+        if(attempt >= 3) {
             throw new OtpTooManyRequestsException("Reached maximum attempts for resending otp code.");
         }
 

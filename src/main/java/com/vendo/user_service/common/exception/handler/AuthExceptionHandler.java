@@ -1,5 +1,6 @@
 package com.vendo.user_service.common.exception.handler;
 
+import com.vendo.user_service.common.exception.InvalidOtpForEmailException;
 import com.vendo.user_service.common.exception.OtpAlreadySentException;
 import com.vendo.user_service.common.exception.OtpTooManyRequestsException;
 import com.vendo.user_service.common.exception.UserAlreadyExistsException;
@@ -36,5 +37,10 @@ public class AuthExceptionHandler {
     @ExceptionHandler(OtpTooManyRequestsException.class)
     public ResponseEntity<String> handleOtpTooManyRequestsException(OtpTooManyRequestsException e) {
         return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS).body(e.getMessage());
+    }
+
+    @ExceptionHandler(InvalidOtpForEmailException.class)
+    public ResponseEntity<String> handleInvalidOtpForEmailException(InvalidOtpForEmailException e) {
+        return ResponseEntity.status(HttpStatus.GONE).body(e.getMessage());
     }
 }

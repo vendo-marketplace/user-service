@@ -1,5 +1,6 @@
 package com.vendo.user_service.service;
 
+import com.vendo.domain.user.common.type.UserStatus;
 import com.vendo.user_service.common.builder.AuthRequestDataBuilder;
 import com.vendo.user_service.common.builder.UserDataBuilder;
 import com.vendo.user_service.common.exception.UserAlreadyExistsException;
@@ -73,7 +74,9 @@ public class AuthServiceTest {
     @Test
     public void signIn_shouldSuccessfullyAuthorizeUser() {
         AuthRequest authRequest = AuthRequestDataBuilder.buildUserWithRequiredFields().build();
-        User user = UserDataBuilder.buildUserWithRequiredFields().build();
+        User user = UserDataBuilder.buildUserWithRequiredFields()
+                .status(UserStatus.ACTIVE)
+                .build();
         String accessToken = "accessToken";
         String refreshToken = "refreshToken";
 

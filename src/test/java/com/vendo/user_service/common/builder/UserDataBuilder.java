@@ -11,7 +11,7 @@ public class UserDataBuilder {
                 .email("test@gmail.com")
                 .password("Qwerty1234@")
                 .role(UserRole.USER)
-                .status(UserStatus.ACTIVE);
+                .status(UserStatus.INCOMPLETE);
     }
 
 }
