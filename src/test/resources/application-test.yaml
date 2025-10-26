@@ -43,13 +43,8 @@ kafka:
   host: localhost
   port: 9092
   events:
-    password-recovery-event:
-      topic: "PASSWORD_RECOVERY_TEST_TOPIC"
-      groupId: "password_recovery_test_group"
-      properties:
-        auto-offset-reset: "earliest"
-    email-verification-event:
-      topic: "EMAIL_VERIFICATION_TEST_TOPIC"
-      groupId: "email_verification_test_group"
+    email-otp-notification-event:
+      topic: "EMAIL_OTP_NOTIFICATION_TEST_TOPIC"
+      groupId: "email_otp_notification_test_group"
       properties:
         auto-offset-reset: "earliest"

@@ -5,10 +5,10 @@ import com.vendo.domain.user.common.type.UserStatus;
 import com.vendo.user_service.common.builder.AuthRequestDataBuilder;
 import com.vendo.user_service.common.builder.UserDataBuilder;
 import com.vendo.user_service.common.type.UserRole;
-import com.vendo.user_service.integration.redis.common.config.RedisProperties;
-import com.vendo.user_service.integration.redis.common.dto.VerifyEmailRequest;
+import com.vendo.user_service.integration.redis.common.dto.ValidateRequest;
+import com.vendo.user_service.integration.redis.common.namespace.otp.EmailVerificationOtpNamespace;
 import com.vendo.user_service.integration.redis.service.RedisService;
-import com.vendo.user_service.kafka.consumer.TestConsumer;
+import com.vendo.user_service.integration.kafka.consumer.TestConsumer;
 import com.vendo.user_service.model.User;
 import com.vendo.user_service.repository.UserRepository;
 import com.vendo.user_service.security.common.helper.JwtHelper;
@@ -34,6 +34,7 @@ import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 
+import static java.lang.String.valueOf;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.awaitility.Awaitility.await;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -72,7 +73,7 @@ class AuthControllerIntegrationTest {
     private RedisService redisService;
 
     @Autowired
-    private RedisProperties redisProperties;
+    private EmailVerificationOtpNamespace emailVerificationOtpNamespace;
 
     @BeforeEach
     void setUp() {
@@ -274,19 +275,19 @@ class AuthControllerIntegrationTest {
     }
 
     @Test
-    void verifyEmail_shouldSendEmailVerificationEventSuccessfully() throws Exception {
+    void sendOtp_shouldSendEmailVerificationEventSuccessfully() throws Exception {
         User user = UserDataBuilder.buildUserWithRequiredFields().build();
         userRepository.save(user);
 
-        mockMvc.perform(MockMvcRequestBuilders.post("/auth/send-code").param("email", user.getEmail())
+        mockMvc.perform(MockMvcRequestBuilders.post("/auth/send-otp").param("email", user.getEmail())
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk());
 
-        Optional<String> otp = redisService.getValue(redisProperties.getEmailVerification().getEmail().buildPrefix(user.getEmail()));
+        Optional<String> otp = redisService.getValue(emailVerificationOtpNamespace.getEmail().buildPrefix(user.getEmail()));
         assertThat(otp).isPresent();
-        assertThat(Integer.parseInt(otp.get())).isGreaterThan(99999).isLessThan(1000000);
+        assertThat(otp.get().length()).isEqualTo(6);
 
-        Optional<String> email = redisService.getValue(redisProperties.getEmailVerification().getOtp().buildPrefix(otp.get()));
+        Optional<String> email = redisService.getValue(emailVerificationOtpNamespace.getOtp().buildPrefix(otp.get()));
         assertThat(email).isPresent();
         assertThat(email.get()).isEqualTo(user.getEmail());
 
@@ -295,17 +296,18 @@ class AuthControllerIntegrationTest {
     }
 
     @Test
-    void verifyEmail_shouldReturnConflict_whenEmailVerificationEventHasAlreadySent() throws Exception {
+    void sendOtp_shouldReturnConflict_whenEmailVerificationEventHasAlreadySent() throws Exception {
         User user = UserDataBuilder.buildUserWithRequiredFields().build();
-        RedisProperties.EmailVerification emailVerification = redisProperties.getEmailVerification();
+        String otp = "123456";
+
         redisService.saveValue(
-                emailVerification.getEmail().buildPrefix(user.getEmail()),
-                String.valueOf(123456),
-                emailVerification.getEmail().getTtl()
+                emailVerificationOtpNamespace.getEmail().buildPrefix(user.getEmail()),
+                otp,
+                emailVerificationOtpNamespace.getEmail().getTtl()
         );
         userRepository.save(user);
 
-        String responseContent = mockMvc.perform(post("/auth/send-code")
+        String responseContent = mockMvc.perform(post("/auth/send-otp")
                         .contentType(MediaType.APPLICATION_JSON).param("email", user.getEmail()))
                 .andExpect(status().isConflict())
                 .andReturn()
@@ -313,19 +315,19 @@ class AuthControllerIntegrationTest {
                 .getContentAsString();
 
         assertThat(responseContent).isNotNull();
-        assertThat(responseContent).isEqualTo("Otp has already sent to email.");
+        assertThat(responseContent).isEqualTo("Otp has already sent to the email.");
 
-        Optional<String> otp = redisService.getValue(emailVerification.getEmail().buildPrefix(user.getEmail()));
-        assertThat(otp).isPresent();
+        Optional<String> otpOptional = redisService.getValue(emailVerificationOtpNamespace.getEmail().buildPrefix(user.getEmail()));
+        assertThat(otpOptional).isPresent();
 
-        await().pollDelay(5, TimeUnit.SECONDS).atMost(10, TimeUnit.SECONDS).untilAsserted(() -> assertThat(testConsumer.removeIfReceived(otp.get())).isFalse());
+        await().pollDelay(5, TimeUnit.SECONDS).atMost(10, TimeUnit.SECONDS).untilAsserted(() -> assertThat(testConsumer.removeIfReceived(otpOptional.get())).isFalse());
     }
 
     @Test
-    void verifyEmail_shouldReturnBadRequest_whenUserNotFound() throws Exception {
+    void sendOtp_shouldReturnBadRequest_whenUserNotFound() throws Exception {
         User user = UserDataBuilder.buildUserWithRequiredFields().build();
 
-        String responseContent = mockMvc.perform(post("/auth/send-code")
+        String responseContent = mockMvc.perform(post("/auth/send-otp")
                         .contentType(MediaType.APPLICATION_JSON).param("email", user.getEmail()))
                 .andExpect(status().isBadRequest())
                 .andReturn()
@@ -335,30 +337,29 @@ class AuthControllerIntegrationTest {
         assertThat(responseContent).isNotNull();
         assertThat(responseContent).isEqualTo("User not found.");
 
-        Optional<String> otp = redisService.getValue(redisProperties.getEmailVerification().getEmail().buildPrefix(user.getEmail()));
+        Optional<String> otp = redisService.getValue(emailVerificationOtpNamespace.getEmail().buildPrefix(user.getEmail()));
         assertThat(otp).isEmpty();
     }
 
     @Test
     void resendOtp_shouldResendOtp_whenFirstAttemptAndOtpAlreadyExist() throws Exception {
         User user = UserDataBuilder.buildUserWithRequiredFields().build();
-        Integer otp = 123456;
-        RedisProperties.EmailVerification emailVerification = redisProperties.getEmailVerification();
+        String otp = "123456";
         redisService.saveValue(
-                emailVerification.getEmail().buildPrefix(user.getEmail()),
-                String.valueOf(otp),
-                emailVerification.getEmail().getTtl()
+                emailVerificationOtpNamespace.getEmail().buildPrefix(user.getEmail()),
+                otp,
+                emailVerificationOtpNamespace.getEmail().getTtl()
         );
         userRepository.save(user);
 
-        mockMvc.perform(post("/auth/resend-code").param("email", user.getEmail())
+        mockMvc.perform(post("/auth/resend-otp").param("email", user.getEmail())
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk());
 
         Optional<User> optionalUser = userRepository.findByEmail(user.getEmail());
         assertThat(optionalUser).isPresent();
 
-        Optional<String> attempts = redisService.getValue(emailVerification.getAttempts().buildPrefix(user.getEmail()));
+        Optional<String> attempts = redisService.getValue(emailVerificationOtpNamespace.getAttempts().buildPrefix(user.getEmail()));
         assertThat(attempts).isPresent();
         assertThat(Integer.parseInt(attempts.get())).isEqualTo(1);
 
@@ -368,45 +369,43 @@ class AuthControllerIntegrationTest {
     @Test
     void resendOtp_shouldResendOtp_whenFirstAttemptAndOtpDoesNotExist() throws Exception {
         User user = UserDataBuilder.buildUserWithRequiredFields().build();
-        Integer otp = 123456;
-        RedisProperties.EmailVerification emailVerification = redisProperties.getEmailVerification();
+        String otp = "123456";
         redisService.saveValue(
-                emailVerification.getEmail().buildPrefix(user.getEmail()),
-                String.valueOf(otp),
-                emailVerification.getEmail().getTtl()
+                emailVerificationOtpNamespace.getEmail().buildPrefix(user.getEmail()),
+                otp,
+                emailVerificationOtpNamespace.getEmail().getTtl()
         );
         userRepository.save(user);
 
-        mockMvc.perform(post("/auth/resend-code").param("email", user.getEmail())
+        mockMvc.perform(post("/auth/resend-otp").param("email", user.getEmail())
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk());
 
         Optional<User> optionalUser = userRepository.findByEmail(user.getEmail());
         assertThat(optionalUser).isPresent();
 
-        Optional<String> attempts = redisService.getValue(emailVerification.getAttempts().buildPrefix(user.getEmail()));
+        Optional<String> attempts = redisService.getValue(emailVerificationOtpNamespace.getAttempts().buildPrefix(user.getEmail()));
         assertThat(attempts).isPresent();
         assertThat(Integer.parseInt(attempts.get())).isEqualTo(1);
 
-        Long attemptsExpire = redisService.getExpire(emailVerification.getAttempts().buildPrefix(user.getEmail()));
+        Long attemptsExpire = redisService.getExpire(emailVerificationOtpNamespace.getAttempts().buildPrefix(user.getEmail()));
         assertThat(attemptsExpire).isNotNull();
-        assertThat(attemptsExpire).isCloseTo(emailVerification.getAttempts().getTtl(), Percentage.withPercentage(5));
+        assertThat(attemptsExpire).isCloseTo(emailVerificationOtpNamespace.getAttempts().getTtl(), Percentage.withPercentage(5));
 
         await().atMost(10, TimeUnit.SECONDS).untilAsserted(() -> assertThat(testConsumer.removeIfReceived(user.getEmail())).isTrue());
     }
 
     @Test
-    void resendOtp_shouldBadRequest_whenUserNotFound() throws Exception {
+    void resendOtp_shouldReturnBadRequest_whenUserNotFound() throws Exception {
         User user = UserDataBuilder.buildUserWithRequiredFields().build();
-        Integer otp = 123456;
-        RedisProperties.EmailVerification emailVerification = redisProperties.getEmailVerification();
+        String otp = "123456";
         redisService.saveValue(
-                emailVerification.getEmail().buildPrefix(user.getEmail()),
-                String.valueOf(otp),
-                emailVerification.getEmail().getTtl()
+                emailVerificationOtpNamespace.getEmail().buildPrefix(user.getEmail()),
+                otp,
+                emailVerificationOtpNamespace.getEmail().getTtl()
         );
 
-        String responseContent = mockMvc.perform(post("/auth/resend-code").param("email", user.getEmail())
+        String responseContent = mockMvc.perform(post("/auth/resend-otp").param("email", user.getEmail())
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isBadRequest())
                 .andReturn()
@@ -420,37 +419,37 @@ class AuthControllerIntegrationTest {
         assertThat(optionalUser).isNotPresent();
 
         await().pollDelay(5, TimeUnit.SECONDS).atMost(10, TimeUnit.SECONDS).untilAsserted(() -> assertThat(testConsumer.removeIfReceived(user.getEmail())).isFalse());
-        Optional<String> attempts = redisService.getValue(emailVerification.getAttempts().buildPrefix(user.getEmail()));
+        Optional<String> attempts = redisService.getValue(emailVerificationOtpNamespace.getAttempts().buildPrefix(user.getEmail()));
         assertThat(attempts).isEmpty();
     }
 
     @Test
     void resendOtp_shouldResendOtp_whenSecondAttempt() throws Exception {
         User user = UserDataBuilder.buildUserWithRequiredFields().build();
-        Integer otp = 123456;
-        RedisProperties.EmailVerification emailVerification = redisProperties.getEmailVerification();
+        String otp = "123456";
+        String attempts = "1";
         redisService.saveValue(
-                emailVerification.getEmail().buildPrefix(user.getEmail()),
-                String.valueOf(otp),
-                emailVerification.getEmail().getTtl()
+                emailVerificationOtpNamespace.getEmail().buildPrefix(user.getEmail()),
+                otp,
+                emailVerificationOtpNamespace.getEmail().getTtl()
         );
         redisService.saveValue(
-                emailVerification.getAttempts().buildPrefix(user.getEmail()),
-                String.valueOf(1),
-                emailVerification.getAttempts().getTtl()
+                emailVerificationOtpNamespace.getAttempts().buildPrefix(user.getEmail()),
+                attempts,
+                emailVerificationOtpNamespace.getAttempts().getTtl()
         );
         userRepository.save(user);
 
-        mockMvc.perform(post("/auth/resend-code").param("email", user.getEmail())
+        mockMvc.perform(post("/auth/resend-otp").param("email", user.getEmail())
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk());
 
         Optional<User> optionalUser = userRepository.findByEmail(user.getEmail());
         assertThat(optionalUser).isPresent();
 
-        Optional<String> attempts = redisService.getValue(emailVerification.getAttempts().buildPrefix(user.getEmail()));
-        assertThat(attempts).isPresent();
-        assertThat(Integer.parseInt(attempts.get())).isEqualTo(2);
+        Optional<String> attemptsOptional = redisService.getValue(emailVerificationOtpNamespace.getAttempts().buildPrefix(user.getEmail()));
+        assertThat(attemptsOptional).isPresent();
+        assertThat(Integer.parseInt(attemptsOptional.get())).isEqualTo(2);
 
         await().atMost(10, TimeUnit.SECONDS).untilAsserted(() -> assertThat(testConsumer.removeIfReceived(user.getEmail())).isTrue());
     }
@@ -458,30 +457,30 @@ class AuthControllerIntegrationTest {
     @Test
     void resendOtp_shouldResendOtp_whenThirdAttempt() throws Exception {
         User user = UserDataBuilder.buildUserWithRequiredFields().build();
-        Integer otp = 123456;
-        RedisProperties.EmailVerification emailVerification = redisProperties.getEmailVerification();
+        String otp = "123456";
+        String attempts = "2";
         redisService.saveValue(
-                emailVerification.getEmail().buildPrefix(user.getEmail()),
-                String.valueOf(otp),
-                emailVerification.getEmail().getTtl()
+                emailVerificationOtpNamespace.getEmail().buildPrefix(user.getEmail()),
+                otp,
+                emailVerificationOtpNamespace.getEmail().getTtl()
         );
         redisService.saveValue(
-                emailVerification.getAttempts().buildPrefix(user.getEmail()),
-                String.valueOf(2),
-                emailVerification.getAttempts().getTtl()
+                emailVerificationOtpNamespace.getAttempts().buildPrefix(user.getEmail()),
+                attempts,
+                emailVerificationOtpNamespace.getAttempts().getTtl()
         );
         userRepository.save(user);
 
-        mockMvc.perform(post("/auth/resend-code").param("email", user.getEmail())
+        mockMvc.perform(post("/auth/resend-otp").param("email", user.getEmail())
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk());
 
         Optional<User> optionalUser = userRepository.findByEmail(user.getEmail());
         assertThat(optionalUser).isPresent();
 
-        Optional<String> attempts = redisService.getValue(emailVerification.getAttempts().buildPrefix(user.getEmail()));
-        assertThat(attempts).isPresent();
-        assertThat(Integer.parseInt(attempts.get())).isEqualTo(3);
+        Optional<String> attemptsOptional = redisService.getValue(emailVerificationOtpNamespace.getAttempts().buildPrefix(user.getEmail()));
+        assertThat(attemptsOptional).isPresent();
+        assertThat(Integer.parseInt(attemptsOptional.get())).isEqualTo(3);
 
         await().atMost(10, TimeUnit.SECONDS).untilAsserted(() -> assertThat(testConsumer.removeIfReceived(user.getEmail())).isTrue());
     }
@@ -489,21 +488,21 @@ class AuthControllerIntegrationTest {
     @Test
     void resendOtp_shouldReturnTooManyRequests_whenFourthAttempt() throws Exception {
         User user = UserDataBuilder.buildUserWithRequiredFields().build();
-        Integer otp = 123456;
-        RedisProperties.EmailVerification emailVerification = redisProperties.getEmailVerification();
+        String otp = "123456";
+        String attempts = "3";
         redisService.saveValue(
-                emailVerification.getEmail().buildPrefix(user.getEmail()),
-                String.valueOf(otp),
-                emailVerification.getEmail().getTtl()
+                emailVerificationOtpNamespace.getEmail().buildPrefix(user.getEmail()),
+                otp,
+                emailVerificationOtpNamespace.getEmail().getTtl()
         );
         redisService.saveValue(
-                emailVerification.getAttempts().buildPrefix(user.getEmail()),
-                String.valueOf(3),
-                emailVerification.getAttempts().getTtl()
+                emailVerificationOtpNamespace.getAttempts().buildPrefix(user.getEmail()),
+                attempts,
+                emailVerificationOtpNamespace.getAttempts().getTtl()
         );
         userRepository.save(user);
 
-        String responseContent = mockMvc.perform(post("/auth/resend-code").param("email", user.getEmail())
+        String responseContent = mockMvc.perform(post("/auth/resend-otp").param("email", user.getEmail())
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isTooManyRequests())
                 .andReturn()
@@ -516,20 +515,19 @@ class AuthControllerIntegrationTest {
         Optional<User> optionalUser = userRepository.findByEmail(user.getEmail());
         assertThat(optionalUser).isPresent();
 
-        Optional<String> attempts = redisService.getValue(emailVerification.getAttempts().buildPrefix(user.getEmail()));
-        assertThat(attempts).isPresent();
-        assertThat(Integer.parseInt(attempts.get())).isEqualTo(3);
+        Optional<String> attemptsOptional = redisService.getValue(emailVerificationOtpNamespace.getAttempts().buildPrefix(user.getEmail()));
+        assertThat(attemptsOptional).isPresent();
+        assertThat(Integer.parseInt(attemptsOptional.get())).isEqualTo(3);
 
         await().atMost(5, TimeUnit.SECONDS).atMost(10, TimeUnit.SECONDS).untilAsserted(() -> assertThat(testConsumer.removeIfReceived(user.getEmail())).isFalse());
     }
 
     @Test
-    void resendOtp_shouldReturnGone_whenResetSessionExpired() throws Exception {
+    void resendOtp_shouldReturnGone_whenOtpSessionExpired() throws Exception {
         User user = UserDataBuilder.buildUserWithRequiredFields().build();
-        RedisProperties.EmailVerification emailVerification = redisProperties.getEmailVerification();
         userRepository.save(user);
 
-        String responseContent = mockMvc.perform(post("/auth/resend-code").param("email", user.getEmail())
+        String responseContent = mockMvc.perform(post("/auth/resend-otp").param("email", user.getEmail())
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isGone())
                 .andReturn()
@@ -537,42 +535,40 @@ class AuthControllerIntegrationTest {
                 .getContentAsString();
 
         assertThat(responseContent).isNotNull();
-        assertThat(responseContent).isEqualTo("Verification session expired.");
+        assertThat(responseContent).isEqualTo("Otp session expired.");
 
         Optional<User> optionalUser = userRepository.findByEmail(user.getEmail());
         assertThat(optionalUser).isPresent();
 
-        Optional<String> otp = redisService.getValue(emailVerification.getEmail().buildPrefix(user.getEmail()));
+        Optional<String> otp = redisService.getValue(emailVerificationOtpNamespace.getEmail().buildPrefix(user.getEmail()));
         assertThat(otp).isNotPresent();
     }
 
     @Test
-    void verifyOtp_shouldActivateUser_whenOtpIsValid() throws Exception {
+    void validate_shouldActivateUser_whenOtpIsValid() throws Exception {
         User user = UserDataBuilder.buildUserWithRequiredFields()
                 .status(UserStatus.BLOCKED)
                 .build();
         userRepository.save(user);
-
-        RedisProperties.EmailVerification emailVerification = redisProperties.getEmailVerification();
-        Integer otp = 123456;
+        String otp = "123456";
 
         redisService.saveValue(
-                emailVerification.getOtp().buildPrefix(String.valueOf(otp)),
+                emailVerificationOtpNamespace.getOtp().buildPrefix(otp),
                 user.getEmail(),
-                emailVerification.getOtp().getTtl()
+                emailVerificationOtpNamespace.getOtp().getTtl()
         );
         redisService.saveValue(
-                emailVerification.getEmail().buildPrefix(user.getEmail()),
-                String.valueOf(otp),
-                emailVerification.getEmail().getTtl()
+                emailVerificationOtpNamespace.getEmail().buildPrefix(user.getEmail()),
+                otp,
+                emailVerificationOtpNamespace.getEmail().getTtl()
         );
 
-        VerifyEmailRequest verifyEmailRequest = VerifyEmailRequest.builder()
+        ValidateRequest validateRequest = ValidateRequest.builder()
                 .otp(otp)
                 .email(user.getEmail()).build();
 
-        mockMvc.perform(post("/auth/verify-code")
-                        .content(objectMapper.writeValueAsString(verifyEmailRequest))
+        mockMvc.perform(post("/auth/validate")
+                        .content(objectMapper.writeValueAsString(validateRequest))
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk());
 
@@ -581,30 +577,28 @@ class AuthControllerIntegrationTest {
             assertThat(updateUser.getStatus()).isEqualTo(UserStatus.ACTIVE);
         });
 
-        assertThat(redisService.getValue(emailVerification.getOtp().buildPrefix(String.valueOf(otp)))).isEmpty();
-        assertThat(redisService.getValue(emailVerification.getEmail().buildPrefix(user.getEmail()))).isEmpty();
-        assertThat(redisService.getValue(emailVerification.getAttempts().buildPrefix(user.getEmail()))).isEmpty();
+        assertThat(redisService.getValue(emailVerificationOtpNamespace.getOtp().buildPrefix(otp))).isEmpty();
+        assertThat(redisService.getValue(emailVerificationOtpNamespace.getEmail().buildPrefix(user.getEmail()))).isEmpty();
+        assertThat(redisService.getValue(emailVerificationOtpNamespace.getAttempts().buildPrefix(user.getEmail()))).isEmpty();
     }
 
     @Test
-    void verifyOtp_shouldReturnBadRequest_whenOtpDoesNotMatchEmail() throws Exception {
+    void validate_shouldReturnBadRequest_whenOtpDoesNotMatchEmail() throws Exception {
         User user = UserDataBuilder.buildUserWithRequiredFields().build();
         userRepository.save(user);
-
-        RedisProperties.EmailVerification emailVerification = redisProperties.getEmailVerification();
-        Integer otp = 123456;
+        String otp = "123456";
 
         redisService.saveValue(
-                emailVerification.getOtp().buildPrefix(String.valueOf(otp)),
+                emailVerificationOtpNamespace.getOtp().buildPrefix(otp),
                 "other@example.com",
-                emailVerification.getOtp().getTtl());
+                emailVerificationOtpNamespace.getOtp().getTtl());
 
-        VerifyEmailRequest verifyEmailRequest = VerifyEmailRequest.builder()
+        ValidateRequest validateRequest = ValidateRequest.builder()
                 .otp(otp)
                 .email(user.getEmail()).build();
 
-        String responseContent = mockMvc.perform(post("/auth/verify-code")
-                        .content(objectMapper.writeValueAsString(verifyEmailRequest))
+        String responseContent = mockMvc.perform(post("/auth/validate")
+                        .content(objectMapper.writeValueAsString(validateRequest))
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isGone())
                 .andReturn()
@@ -612,28 +606,27 @@ class AuthControllerIntegrationTest {
                 .getContentAsString();
 
         assertThat(responseContent).isNotNull();
-        assertThat(responseContent).isEqualTo("Invalid verification code for this email.");
+        assertThat(responseContent).isEqualTo("Invalid otp.");
 
         User updateUser = userRepository.findByEmail(user.getEmail()).orElseThrow();
         assertThat(updateUser.getStatus()).isEqualTo(UserStatus.INCOMPLETE);
 
-        assertThat(redisService.getValue(emailVerification.getOtp().buildPrefix(String.valueOf(otp)))).isPresent();
+        assertThat(redisService.getValue(emailVerificationOtpNamespace.getOtp().buildPrefix(otp))).isPresent();
     }
 
     @Test
-    void verifyOtp_shouldReturnGone_whenOtpExpired() throws Exception {
+    void validate_shouldReturnGone_whenOtpExpired() throws Exception {
         User user = UserDataBuilder.buildUserWithRequiredFields().build();
         userRepository.save(user);
+        String otp = "123456";
 
-        Integer otp = 123456;
-
-        VerifyEmailRequest verifyEmailRequest = VerifyEmailRequest.builder()
+        ValidateRequest validateRequest = ValidateRequest.builder()
                 .otp(otp)
                 .email(user.getEmail())
                 .build();
 
-        String responseContent = mockMvc.perform(post("/auth/verify-code")
-                        .content(objectMapper.writeValueAsString(verifyEmailRequest))
+        String responseContent = mockMvc.perform(post("/auth/validate")
+                        .content(objectMapper.writeValueAsString(validateRequest))
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isGone())
                 .andReturn()

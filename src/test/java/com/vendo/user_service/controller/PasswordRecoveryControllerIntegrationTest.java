@@ -2,10 +2,10 @@ package com.vendo.user_service.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.vendo.user_service.common.builder.UserDataBuilder;
-import com.vendo.user_service.integration.redis.common.config.RedisProperties;
 import com.vendo.user_service.integration.redis.common.dto.ResetPasswordRequest;
+import com.vendo.user_service.integration.redis.common.namespace.otp.PasswordRecoveryOtpNamespace;
 import com.vendo.user_service.integration.redis.service.RedisService;
-import com.vendo.user_service.kafka.consumer.TestConsumer;
+import com.vendo.user_service.integration.kafka.consumer.TestConsumer;
 import com.vendo.user_service.model.User;
 import com.vendo.user_service.repository.UserRepository;
 import org.assertj.core.data.Percentage;
@@ -57,7 +57,7 @@ public class PasswordRecoveryControllerIntegrationTest {
     private PasswordEncoder passwordEncoder;
 
     @Autowired
-    private RedisProperties redisProperties;
+    private PasswordRecoveryOtpNamespace passwordRecoveryOtpNamespace;
 
     @BeforeEach
     void setUp() {
@@ -86,11 +86,11 @@ public class PasswordRecoveryControllerIntegrationTest {
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk());
 
-        Optional<String> otp = redisService.getValue(redisProperties.getPasswordRecovery().getEmail().buildPrefix(user.getEmail()));
+        Optional<String> otp = redisService.getValue(passwordRecoveryOtpNamespace.getEmail().buildPrefix(user.getEmail()));
         assertThat(otp).isPresent();
         assertThat(Integer.parseInt(otp.get())).isGreaterThan(99999).isLessThan(1000000);
 
-        Optional<String> email = redisService.getValue(redisProperties.getPasswordRecovery().getOtp().buildPrefix(otp.get()));
+        Optional<String> email = redisService.getValue(passwordRecoveryOtpNamespace.getOtp().buildPrefix(otp.get()));
         assertThat(email).isPresent();
         assertThat(email.get()).isEqualTo(user.getEmail());
 
@@ -101,11 +101,12 @@ public class PasswordRecoveryControllerIntegrationTest {
     @Test
     void forgotPassword_shouldReturnConflict_whenForgotPasswordEventHasAlreadySent() throws Exception {
         User user = UserDataBuilder.buildUserWithRequiredFields().build();
-        RedisProperties.PasswordRecovery recoveryProperties = redisProperties.getPasswordRecovery();
+        String otp = "123456";
+
         redisService.saveValue(
-                recoveryProperties.getEmail().buildPrefix(user.getEmail()),
-                String.valueOf(123456),
-                recoveryProperties.getEmail().getTtl()
+                passwordRecoveryOtpNamespace.getEmail().buildPrefix(user.getEmail()),
+                otp,
+                passwordRecoveryOtpNamespace.getEmail().getTtl()
         );
         userRepository.save(user);
 
@@ -117,12 +118,12 @@ public class PasswordRecoveryControllerIntegrationTest {
                 .getContentAsString();
 
         assertThat(responseContent).isNotBlank();
-        assertThat(responseContent).isEqualTo("Otp has already sent to email.");
+        assertThat(responseContent).isEqualTo("Otp has already sent to the email.");
 
-        Optional<String> otp = redisService.getValue(recoveryProperties.getEmail().buildPrefix(user.getEmail()));
-        assertThat(otp).isPresent();
+        Optional<String> otpOptional = redisService.getValue(passwordRecoveryOtpNamespace.getEmail().buildPrefix(user.getEmail()));
+        assertThat(otpOptional).isPresent();
 
-        await().pollDelay(5, TimeUnit.SECONDS).atMost(10, TimeUnit.SECONDS).untilAsserted(() -> assertThat(testConsumer.removeIfReceived(otp.get())).isFalse());
+        await().pollDelay(5, TimeUnit.SECONDS).atMost(10, TimeUnit.SECONDS).untilAsserted(() -> assertThat(testConsumer.removeIfReceived(otpOptional.get())).isFalse());
     }
 
     @Test
@@ -139,23 +140,22 @@ public class PasswordRecoveryControllerIntegrationTest {
         assertThat(responseContent).isNotBlank();
         assertThat(responseContent).isEqualTo("User not found.");
 
-        Optional<String> otp = redisService.getValue(redisProperties.getPasswordRecovery().getEmail().buildPrefix((user.getEmail())));
+        Optional<String> otp = redisService.getValue(passwordRecoveryOtpNamespace.getEmail().buildPrefix((user.getEmail())));
         assertThat(otp).isEmpty();
     }
 
     @Test
     void resetPassword_shouldResetPassword() throws Exception {
-        Integer otp = 123456;
+        String otp = "123456";
         String newPassword = "newTestPassword1234@";
-        RedisProperties.PasswordRecovery recoveryProperties = redisProperties.getPasswordRecovery();
         User user = UserDataBuilder.buildUserWithRequiredFields().build();
         ResetPasswordRequest resetPasswordRequest = ResetPasswordRequest.builder()
                 .otp(otp)
                 .password(newPassword).build();
         redisService.saveValue(
-                recoveryProperties.getOtp().buildPrefix(String.valueOf(otp)),
+                passwordRecoveryOtpNamespace.getOtp().buildPrefix(otp),
                 user.getEmail(),
-                recoveryProperties.getOtp().getTtl()
+                passwordRecoveryOtpNamespace.getOtp().getTtl()
         );
         userRepository.save(user);
 
@@ -167,13 +167,13 @@ public class PasswordRecoveryControllerIntegrationTest {
         Optional<User> optionalUser = userRepository.findByEmail(user.getEmail());
         assertThat(optionalUser).isPresent();
         assertThat(passwordEncoder.matches(newPassword, optionalUser.get().getPassword())).isTrue();
-        assertThat(redisService.hasActiveKey(recoveryProperties.getOtp().buildPrefix(String.valueOf(otp)))).isFalse();
-        assertThat(redisService.hasActiveKey(recoveryProperties.getEmail().buildPrefix(user.getEmail()))).isFalse();
+        assertThat(redisService.hasActiveKey(passwordRecoveryOtpNamespace.getOtp().buildPrefix(otp))).isFalse();
+        assertThat(redisService.hasActiveKey(passwordRecoveryOtpNamespace.getEmail().buildPrefix(user.getEmail()))).isFalse();
     }
 
     @Test
     void resetPassword_shouldReturnGone_whenTokenExpired() throws Exception {
-        Integer otp = 123456;
+        String otp = "123456";
         String newPassword = "newTestPassword1234@";
         User user = UserDataBuilder.buildUserWithRequiredFields().build();
         ResetPasswordRequest resetPasswordRequest = ResetPasswordRequest.builder().otp(otp).password(newPassword).build();
@@ -197,15 +197,14 @@ public class PasswordRecoveryControllerIntegrationTest {
 
     @Test
     void resetPassword_shouldReturnBadRequest_whenUserNotFound() throws Exception {
-        Integer otp = 123456;
+        String otp = "123456";
         String newPassword = "newTestPassword1234@";
-        RedisProperties.PasswordRecovery recoveryProperties = redisProperties.getPasswordRecovery();
         User user = UserDataBuilder.buildUserWithRequiredFields().build();
         ResetPasswordRequest resetPasswordRequest = ResetPasswordRequest.builder().otp(otp).password(newPassword).build();
         redisService.saveValue(
-                recoveryProperties.getOtp().buildPrefix(String.valueOf(otp)),
+                passwordRecoveryOtpNamespace.getOtp().buildPrefix(otp),
                 user.getEmail(),
-                recoveryProperties.getOtp().getTtl()
+                passwordRecoveryOtpNamespace.getOtp().getTtl()
         );
 
         String responseContent = mockMvc.perform(put("/password/reset")
@@ -224,25 +223,24 @@ public class PasswordRecoveryControllerIntegrationTest {
     }
 
     @Test
-    void resendOtp_shouldResendOtp_whenFirstAttemptAndOtpAlreadyExists() throws Exception {
+    void resendOtp_shouldResendOtp_whenFirstAttempt_andOtpAlreadyExists() throws Exception {
         User user = UserDataBuilder.buildUserWithRequiredFields().build();
-        Integer otp = 123456;
-        RedisProperties.PasswordRecovery recoveryProperties = redisProperties.getPasswordRecovery();
+        String otp = "123456";
         redisService.saveValue(
-                recoveryProperties.getEmail().buildPrefix(user.getEmail()),
-                String.valueOf(otp),
-                recoveryProperties.getEmail().getTtl()
+                passwordRecoveryOtpNamespace.getEmail().buildPrefix(user.getEmail()),
+                otp,
+                passwordRecoveryOtpNamespace.getEmail().getTtl()
         );
         userRepository.save(user);
 
-        mockMvc.perform(put("/password/resend").param("email", user.getEmail())
+        mockMvc.perform(put("/password/resend-otp").param("email", user.getEmail())
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk());
 
         Optional<User> optionalUser = userRepository.findByEmail(user.getEmail());
         assertThat(optionalUser).isPresent();
 
-        Optional<String> attempts = redisService.getValue(recoveryProperties.getAttempts().buildPrefix(user.getEmail()));
+        Optional<String> attempts = redisService.getValue(passwordRecoveryOtpNamespace.getAttempts().buildPrefix(user.getEmail()));
         assertThat(attempts).isPresent();
         assertThat(Integer.parseInt(attempts.get())).isEqualTo(1);
 
@@ -250,31 +248,30 @@ public class PasswordRecoveryControllerIntegrationTest {
     }
 
     @Test
-    void resendOtp_shouldResendOtp_whenFirstAttemptAndOtpDoesNotExist() throws Exception {
+    void resendOtp_shouldResendOtp_whenFirstAttempt_andOtpDoesNotExist() throws Exception {
         User user = UserDataBuilder.buildUserWithRequiredFields().build();
-        Integer otp = 123456;
-        RedisProperties.PasswordRecovery recoveryProperties = redisProperties.getPasswordRecovery();
+        String otp = "123456";
         redisService.saveValue(
-                recoveryProperties.getEmail().buildPrefix(user.getEmail()),
-                String.valueOf(otp),
-                recoveryProperties.getEmail().getTtl()
+                passwordRecoveryOtpNamespace.getEmail().buildPrefix(user.getEmail()),
+                otp,
+                passwordRecoveryOtpNamespace.getEmail().getTtl()
         );
         userRepository.save(user);
 
-        mockMvc.perform(put("/password/resend").param("email", user.getEmail())
+        mockMvc.perform(put("/password/resend-otp").param("email", user.getEmail())
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk());
 
         Optional<User> optionalUser = userRepository.findByEmail(user.getEmail());
         assertThat(optionalUser).isPresent();
 
-        Optional<String> attempts = redisService.getValue(recoveryProperties.getAttempts().buildPrefix(user.getEmail()));
+        Optional<String> attempts = redisService.getValue(passwordRecoveryOtpNamespace.getAttempts().buildPrefix(user.getEmail()));
         assertThat(attempts).isPresent();
         assertThat(Integer.parseInt(attempts.get())).isEqualTo(1);
 
-        Long attemptsExpire = redisService.getExpire(recoveryProperties.getAttempts().buildPrefix(user.getEmail()));
+        Long attemptsExpire = redisService.getExpire(passwordRecoveryOtpNamespace.getAttempts().buildPrefix(user.getEmail()));
         assertThat(attemptsExpire).isNotNull();
-        assertThat(attemptsExpire).isCloseTo(recoveryProperties.getAttempts().getTtl(), Percentage.withPercentage(5));
+        assertThat(attemptsExpire).isCloseTo(passwordRecoveryOtpNamespace.getAttempts().getTtl(), Percentage.withPercentage(5));
 
         await().atMost(10, TimeUnit.SECONDS).untilAsserted(() -> assertThat(testConsumer.removeIfReceived(user.getEmail())).isTrue());
     }
@@ -282,15 +279,14 @@ public class PasswordRecoveryControllerIntegrationTest {
     @Test
     void resendOtp_shouldReturnBadRequest_whenUserNotFound() throws Exception {
         User user = UserDataBuilder.buildUserWithRequiredFields().build();
-        Integer otp = 123456;
-        RedisProperties.PasswordRecovery recoveryProperties = redisProperties.getPasswordRecovery();
+        String otp = "123456";
         redisService.saveValue(
-                recoveryProperties.getEmail().buildPrefix(user.getEmail()),
-                String.valueOf(otp),
-                recoveryProperties.getEmail().getTtl()
+                passwordRecoveryOtpNamespace.getEmail().buildPrefix(user.getEmail()),
+                otp,
+                passwordRecoveryOtpNamespace.getEmail().getTtl()
         );
 
-        String responseContent = mockMvc.perform(put("/password/resend").param("email", user.getEmail())
+        String responseContent = mockMvc.perform(put("/password/resend-otp").param("email", user.getEmail())
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isBadRequest())
                 .andReturn()
@@ -304,35 +300,34 @@ public class PasswordRecoveryControllerIntegrationTest {
         assertThat(optionalUser).isNotPresent();
 
         await().pollDelay(5, TimeUnit.SECONDS).atMost(10, TimeUnit.SECONDS).untilAsserted(() -> assertThat(testConsumer.removeIfReceived(user.getEmail())).isFalse());
-        Optional<String> attempts = redisService.getValue(recoveryProperties.getAttempts().buildPrefix(user.getEmail()));
+        Optional<String> attempts = redisService.getValue(passwordRecoveryOtpNamespace.getAttempts().buildPrefix(user.getEmail()));
         assertThat(attempts).isEmpty();
     }
 
     @Test
     void resendOtp_shouldResendOtp_whenSecondAttempt() throws Exception {
         User user = UserDataBuilder.buildUserWithRequiredFields().build();
-        Integer otp = 123456;
-        RedisProperties.PasswordRecovery recoveryProperties = redisProperties.getPasswordRecovery();
+        String otp = "123456";
         redisService.saveValue(
-                recoveryProperties.getEmail().buildPrefix(user.getEmail()),
-                String.valueOf(otp),
-                recoveryProperties.getEmail().getTtl()
+                passwordRecoveryOtpNamespace.getEmail().buildPrefix(user.getEmail()),
+                otp,
+                passwordRecoveryOtpNamespace.getEmail().getTtl()
         );
         redisService.saveValue(
-                recoveryProperties.getAttempts().buildPrefix(user.getEmail()),
+                passwordRecoveryOtpNamespace.getAttempts().buildPrefix(user.getEmail()),
                 String.valueOf(1),
-                recoveryProperties.getAttempts().getTtl()
+                passwordRecoveryOtpNamespace.getAttempts().getTtl()
         );
         userRepository.save(user);
 
-        mockMvc.perform(put("/password/resend").param("email", user.getEmail())
+        mockMvc.perform(put("/password/resend-otp").param("email", user.getEmail())
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk());
 
         Optional<User> optionalUser = userRepository.findByEmail(user.getEmail());
         assertThat(optionalUser).isPresent();
 
-        Optional<String> attempts = redisService.getValue(recoveryProperties.getAttempts().buildPrefix(user.getEmail()));
+        Optional<String> attempts = redisService.getValue(passwordRecoveryOtpNamespace.getAttempts().buildPrefix(user.getEmail()));
         assertThat(attempts).isPresent();
         assertThat(Integer.parseInt(attempts.get())).isEqualTo(2);
 
@@ -342,28 +337,27 @@ public class PasswordRecoveryControllerIntegrationTest {
     @Test
     void resendOtp_shouldResendOtp_whenThirdAttempt() throws Exception {
         User user = UserDataBuilder.buildUserWithRequiredFields().build();
-        Integer otp = 123456;
-        RedisProperties.PasswordRecovery recoveryProperties = redisProperties.getPasswordRecovery();
+        String otp = "123456";
         redisService.saveValue(
-                recoveryProperties.getEmail().buildPrefix(user.getEmail()),
-                String.valueOf(otp),
-                recoveryProperties.getEmail().getTtl()
+                passwordRecoveryOtpNamespace.getEmail().buildPrefix(user.getEmail()),
+                otp,
+                passwordRecoveryOtpNamespace.getEmail().getTtl()
         );
         redisService.saveValue(
-                recoveryProperties.getAttempts().buildPrefix(user.getEmail()),
+                passwordRecoveryOtpNamespace.getAttempts().buildPrefix(user.getEmail()),
                 String.valueOf(2),
-                recoveryProperties.getAttempts().getTtl()
+                passwordRecoveryOtpNamespace.getAttempts().getTtl()
         );
         userRepository.save(user);
 
-        mockMvc.perform(put("/password/resend").param("email", user.getEmail())
+        mockMvc.perform(put("/password/resend-otp").param("email", user.getEmail())
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk());
 
         Optional<User> optionalUser = userRepository.findByEmail(user.getEmail());
         assertThat(optionalUser).isPresent();
 
-        Optional<String> attempts = redisService.getValue(recoveryProperties.getAttempts().buildPrefix(user.getEmail()));
+        Optional<String> attempts = redisService.getValue(passwordRecoveryOtpNamespace.getAttempts().buildPrefix(user.getEmail()));
         assertThat(attempts).isPresent();
         assertThat(Integer.parseInt(attempts.get())).isEqualTo(3);
 
@@ -373,21 +367,20 @@ public class PasswordRecoveryControllerIntegrationTest {
     @Test
     void resendOtp_shouldReturnTooManyRequests_whenFourthAttempt() throws Exception {
         User user = UserDataBuilder.buildUserWithRequiredFields().build();
-        Integer otp = 123456;
-        RedisProperties.PasswordRecovery recoveryProperties = redisProperties.getPasswordRecovery();
+        String otp = "123456";
         redisService.saveValue(
-                recoveryProperties.getEmail().buildPrefix(user.getEmail()),
-                String.valueOf(otp),
-                recoveryProperties.getEmail().getTtl()
+                passwordRecoveryOtpNamespace.getEmail().buildPrefix(user.getEmail()),
+                otp,
+                passwordRecoveryOtpNamespace.getEmail().getTtl()
         );
         redisService.saveValue(
-                recoveryProperties.getAttempts().buildPrefix(user.getEmail()),
+                passwordRecoveryOtpNamespace.getAttempts().buildPrefix(user.getEmail()),
                 String.valueOf(3),
-                recoveryProperties.getAttempts().getTtl()
+                passwordRecoveryOtpNamespace.getAttempts().getTtl()
         );
         userRepository.save(user);
 
-        String responseContent = mockMvc.perform(put("/password/resend").param("email", user.getEmail())
+        String responseContent = mockMvc.perform(put("/password/resend-otp").param("email", user.getEmail())
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isTooManyRequests())
                 .andReturn()
@@ -400,7 +393,7 @@ public class PasswordRecoveryControllerIntegrationTest {
         Optional<User> optionalUser = userRepository.findByEmail(user.getEmail());
         assertThat(optionalUser).isPresent();
 
-        Optional<String> attempts = redisService.getValue(recoveryProperties.getAttempts().buildPrefix(user.getEmail()));
+        Optional<String> attempts = redisService.getValue(passwordRecoveryOtpNamespace.getAttempts().buildPrefix(user.getEmail()));
         assertThat(attempts).isPresent();
         assertThat(Integer.parseInt(attempts.get())).isEqualTo(3);
 
@@ -408,12 +401,11 @@ public class PasswordRecoveryControllerIntegrationTest {
     }
 
     @Test
-    void resendOtp_shouldReturnGone_whenResetSessionExpired() throws Exception {
+    void resendOtp_shouldReturnGone_whenOtpSessionExpired() throws Exception {
         User user = UserDataBuilder.buildUserWithRequiredFields().build();
-        RedisProperties.PasswordRecovery recoveryProperties = redisProperties.getPasswordRecovery();
         userRepository.save(user);
 
-        String responseContent = mockMvc.perform(put("/password/resend").param("email", user.getEmail())
+        String responseContent = mockMvc.perform(put("/password/resend-otp").param("email", user.getEmail())
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isGone())
                 .andReturn()
@@ -421,12 +413,12 @@ public class PasswordRecoveryControllerIntegrationTest {
                 .getContentAsString();
 
         assertThat(responseContent).isNotNull();
-        assertThat(responseContent).isEqualTo("Reset session expired.");
+        assertThat(responseContent).isEqualTo("Otp session expired.");
 
         Optional<User> optionalUser = userRepository.findByEmail(user.getEmail());
         assertThat(optionalUser).isPresent();
 
-        Optional<String> otp = redisService.getValue(recoveryProperties.getEmail().buildPrefix(user.getEmail()));
+        Optional<String> otp = redisService.getValue(passwordRecoveryOtpNamespace.getEmail().buildPrefix(user.getEmail()));
         assertThat(otp).isNotPresent();
     }
 }
