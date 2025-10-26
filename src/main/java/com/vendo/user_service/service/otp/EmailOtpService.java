@@ -66,7 +66,6 @@ public class EmailOtpService {
         redisService.deleteValues(
                 otpNamespace.getOtp().buildPrefix(otp),
                 otpNamespace.getEmail().buildPrefix(email),
-                // TODO build attempts prefix by email
                 otpNamespace.getAttempts().buildPrefix(email)
         );
     }

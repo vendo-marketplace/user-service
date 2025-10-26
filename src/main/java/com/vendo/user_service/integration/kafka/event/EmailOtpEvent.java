@@ -1,6 +1,5 @@
 package com.vendo.user_service.integration.kafka.event;
 
-import com.vendo.user_service.integration.kafka.common.type.OtpEventType;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -10,6 +9,7 @@ import lombok.NoArgsConstructor;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
+// TODO move to common
 public class EmailOtpEvent {
 
     private String otp;
@@ -18,4 +18,11 @@ public class EmailOtpEvent {
 
     private OtpEventType otpEventType;
 
+    public enum OtpEventType {
+
+        EMAIL_VERIFICATION,
+
+        PASSWORD_RECOVERY
+
+    }
 }

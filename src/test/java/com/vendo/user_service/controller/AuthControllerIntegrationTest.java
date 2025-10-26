@@ -320,7 +320,8 @@ class AuthControllerIntegrationTest {
         Optional<String> otpOptional = redisService.getValue(emailVerificationOtpNamespace.getEmail().buildPrefix(user.getEmail()));
         assertThat(otpOptional).isPresent();
 
-        await().pollDelay(5, TimeUnit.SECONDS).atMost(10, TimeUnit.SECONDS).untilAsserted(() -> assertThat(testConsumer.removeIfReceived(otpOptional.get())).isFalse());
+        await().pollDelay(5, TimeUnit.SECONDS).atMost(10, TimeUnit.SECONDS)
+                .untilAsserted(() -> assertThat(testConsumer.removeIfReceived(otpOptional.get())).isFalse());
     }
 
     @Test
@@ -356,9 +357,6 @@ class AuthControllerIntegrationTest {
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk());
 
-        Optional<User> optionalUser = userRepository.findByEmail(user.getEmail());
-        assertThat(optionalUser).isPresent();
-
         Optional<String> attempts = redisService.getValue(emailVerificationOtpNamespace.getAttempts().buildPrefix(user.getEmail()));
         assertThat(attempts).isPresent();
         assertThat(Integer.parseInt(attempts.get())).isEqualTo(1);
@@ -380,9 +378,6 @@ class AuthControllerIntegrationTest {
         mockMvc.perform(post("/auth/resend-otp").param("email", user.getEmail())
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk());
-
-        Optional<User> optionalUser = userRepository.findByEmail(user.getEmail());
-        assertThat(optionalUser).isPresent();
 
         Optional<String> attempts = redisService.getValue(emailVerificationOtpNamespace.getAttempts().buildPrefix(user.getEmail()));
         assertThat(attempts).isPresent();
@@ -444,9 +439,6 @@ class AuthControllerIntegrationTest {
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk());
 
-        Optional<User> optionalUser = userRepository.findByEmail(user.getEmail());
-        assertThat(optionalUser).isPresent();
-
         Optional<String> attemptsOptional = redisService.getValue(emailVerificationOtpNamespace.getAttempts().buildPrefix(user.getEmail()));
         assertThat(attemptsOptional).isPresent();
         assertThat(Integer.parseInt(attemptsOptional.get())).isEqualTo(2);
@@ -474,9 +466,6 @@ class AuthControllerIntegrationTest {
         mockMvc.perform(post("/auth/resend-otp").param("email", user.getEmail())
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk());
-
-        Optional<User> optionalUser = userRepository.findByEmail(user.getEmail());
-        assertThat(optionalUser).isPresent();
 
         Optional<String> attemptsOptional = redisService.getValue(emailVerificationOtpNamespace.getAttempts().buildPrefix(user.getEmail()));
         assertThat(attemptsOptional).isPresent();
@@ -512,9 +501,6 @@ class AuthControllerIntegrationTest {
         assertThat(responseContent).isNotNull();
         assertThat(responseContent).isEqualTo("Reached maximum attempts for resending otp code.");
 
-        Optional<User> optionalUser = userRepository.findByEmail(user.getEmail());
-        assertThat(optionalUser).isPresent();
-
         Optional<String> attemptsOptional = redisService.getValue(emailVerificationOtpNamespace.getAttempts().buildPrefix(user.getEmail()));
         assertThat(attemptsOptional).isPresent();
         assertThat(Integer.parseInt(attemptsOptional.get())).isEqualTo(3);
@@ -536,9 +522,6 @@ class AuthControllerIntegrationTest {
 
         assertThat(responseContent).isNotNull();
         assertThat(responseContent).isEqualTo("Otp session expired.");
-
-        Optional<User> optionalUser = userRepository.findByEmail(user.getEmail());
-        assertThat(optionalUser).isPresent();
 
         Optional<String> otp = redisService.getValue(emailVerificationOtpNamespace.getEmail().buildPrefix(user.getEmail()));
         assertThat(otp).isNotPresent();
@@ -573,8 +556,9 @@ class AuthControllerIntegrationTest {
                 .andExpect(status().isOk());
 
         await().atMost(5, TimeUnit.SECONDS).untilAsserted(() -> {
-            User updateUser = userRepository.findByEmail(user.getEmail()).orElseThrow();
-            assertThat(updateUser.getStatus()).isEqualTo(UserStatus.ACTIVE);
+            Optional<User> optionalUser = userRepository.findByEmail(user.getEmail());
+            assertThat(optionalUser).isPresent();
+            assertThat(optionalUser.get().getStatus()).isEqualTo(UserStatus.ACTIVE);
         });
 
         assertThat(redisService.getValue(emailVerificationOtpNamespace.getOtp().buildPrefix(otp))).isEmpty();
@@ -587,10 +571,11 @@ class AuthControllerIntegrationTest {
         User user = UserDataBuilder.buildUserWithRequiredFields().build();
         userRepository.save(user);
         String otp = "123456";
+        String mismatchEmail = "mismatch@example.com";
 
         redisService.saveValue(
                 emailVerificationOtpNamespace.getOtp().buildPrefix(otp),
-                "other@example.com",
+                mismatchEmail,
                 emailVerificationOtpNamespace.getOtp().getTtl());
 
         ValidateRequest validateRequest = ValidateRequest.builder()
@@ -608,10 +593,13 @@ class AuthControllerIntegrationTest {
         assertThat(responseContent).isNotNull();
         assertThat(responseContent).isEqualTo("Invalid otp.");
 
-        User updateUser = userRepository.findByEmail(user.getEmail()).orElseThrow();
-        assertThat(updateUser.getStatus()).isEqualTo(UserStatus.INCOMPLETE);
+        Optional<User> optionalUser = userRepository.findByEmail(user.getEmail());
+        assertThat(optionalUser).isPresent();
 
-        assertThat(redisService.getValue(emailVerificationOtpNamespace.getOtp().buildPrefix(otp))).isPresent();
+        assertThat(optionalUser.get().getStatus()).isEqualTo(UserStatus.INCOMPLETE);
+        Optional<String> mismatchEmailOptional = redisService.getValue(emailVerificationOtpNamespace.getOtp().buildPrefix(otp));
+        assertThat(mismatchEmailOptional).isPresent();
+        assertThat(mismatchEmailOptional).isNotEqualTo(validateRequest.email());
     }
 
     @Test

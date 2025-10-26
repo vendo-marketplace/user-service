@@ -46,5 +46,6 @@ kafka:
     email-otp-notification-event:
       topic: "EMAIL_OTP_NOTIFICATION_TEST_TOPIC"
       groupId: "email_otp_notification_test_group"
+      container-factory: "emailOtpContainerFactory"
       properties:
-        auto-offset-reset: "earliest"
+        auto-offset-reset: "latest"

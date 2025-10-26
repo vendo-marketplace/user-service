@@ -1,9 +1,6 @@
-package com.vendo.user_service.integration.kafka.common.config.consumer;
+package com.vendo.user_service.integration.kafka.common.config;
 
-import com.vendo.user_service.integration.kafka.common.config.KafkaProperties;
-import com.vendo.user_service.integration.kafka.event.EmailOtpEvent;
 import lombok.RequiredArgsConstructor;
-import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.common.serialization.StringDeserializer;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -15,28 +12,34 @@ import org.springframework.kafka.support.serializer.JsonDeserializer;
 import java.util.HashMap;
 import java.util.Map;
 
+import static org.apache.kafka.clients.consumer.ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG;
+import static org.apache.kafka.clients.consumer.ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG;
+
 @Configuration
 @RequiredArgsConstructor
-public class EmailOtpConsumerConfig {
+public class ConsumerConfig {
 
     private final KafkaProperties kafkaProperties;
+
+    private static final String TRUSTED_PACKAGES = "*";
 
     private static final String BOOTSTRAP_ADDRESS_TEMPLATE = "%s:%d";
 
     @Bean
-    public ConsumerFactory<String, EmailOtpEvent> consumerFactory() {
+    public ConsumerFactory<String, Object> consumerFactory() {
         Map<String, Object> props = new HashMap<>();
 
-        props.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
-        props.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, BOOTSTRAP_ADDRESS_TEMPLATE.formatted(kafkaProperties.getHost(), kafkaProperties.getPort()));
+        props.put(KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
+        props.put(BOOTSTRAP_SERVERS_CONFIG, BOOTSTRAP_ADDRESS_TEMPLATE.formatted(kafkaProperties.getHost(), kafkaProperties.getPort()));
 
-        JsonDeserializer<EmailOtpEvent> deserializer = new JsonDeserializer<>(EmailOtpEvent.class);
+        JsonDeserializer<Object> deserializer = new JsonDeserializer<>();
+        deserializer.addTrustedPackages(TRUSTED_PACKAGES);
         return new DefaultKafkaConsumerFactory<>(props, new StringDeserializer(), deserializer);
     }
 
     @Bean
-    public ConcurrentKafkaListenerContainerFactory<String, EmailOtpEvent> emailOtpContainerFactory() {
-        ConcurrentKafkaListenerContainerFactory<String, EmailOtpEvent> factory =
+    public ConcurrentKafkaListenerContainerFactory<String, ?> emailOtpContainerFactory() {
+        ConcurrentKafkaListenerContainerFactory<String, ?> factory =
                 new ConcurrentKafkaListenerContainerFactory<>();
         factory.setConsumerFactory(consumerFactory());
         return factory;

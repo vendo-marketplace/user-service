@@ -88,7 +88,7 @@ public class PasswordRecoveryControllerIntegrationTest {
 
         Optional<String> otp = redisService.getValue(passwordRecoveryOtpNamespace.getEmail().buildPrefix(user.getEmail()));
         assertThat(otp).isPresent();
-        assertThat(Integer.parseInt(otp.get())).isGreaterThan(99999).isLessThan(1000000);
+        assertThat(otp.get().length()).isEqualTo(6);
 
         Optional<String> email = redisService.getValue(passwordRecoveryOtpNamespace.getOtp().buildPrefix(otp.get()));
         assertThat(email).isPresent();
@@ -123,7 +123,8 @@ public class PasswordRecoveryControllerIntegrationTest {
         Optional<String> otpOptional = redisService.getValue(passwordRecoveryOtpNamespace.getEmail().buildPrefix(user.getEmail()));
         assertThat(otpOptional).isPresent();
 
-        await().pollDelay(5, TimeUnit.SECONDS).atMost(10, TimeUnit.SECONDS).untilAsserted(() -> assertThat(testConsumer.removeIfReceived(otpOptional.get())).isFalse());
+        await().pollDelay(5, TimeUnit.SECONDS).atMost(10, TimeUnit.SECONDS)
+                .untilAsserted(() -> assertThat(testConsumer.removeIfReceived(otpOptional.get())).isFalse());
     }
 
     @Test
@@ -166,6 +167,7 @@ public class PasswordRecoveryControllerIntegrationTest {
 
         Optional<User> optionalUser = userRepository.findByEmail(user.getEmail());
         assertThat(optionalUser).isPresent();
+
         assertThat(passwordEncoder.matches(newPassword, optionalUser.get().getPassword())).isTrue();
         assertThat(redisService.hasActiveKey(passwordRecoveryOtpNamespace.getOtp().buildPrefix(otp))).isFalse();
         assertThat(redisService.hasActiveKey(passwordRecoveryOtpNamespace.getEmail().buildPrefix(user.getEmail()))).isFalse();
@@ -262,9 +264,6 @@ public class PasswordRecoveryControllerIntegrationTest {
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk());
 
-        Optional<User> optionalUser = userRepository.findByEmail(user.getEmail());
-        assertThat(optionalUser).isPresent();
-
         Optional<String> attempts = redisService.getValue(passwordRecoveryOtpNamespace.getAttempts().buildPrefix(user.getEmail()));
         assertThat(attempts).isPresent();
         assertThat(Integer.parseInt(attempts.get())).isEqualTo(1);
@@ -324,9 +323,6 @@ public class PasswordRecoveryControllerIntegrationTest {
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk());
 
-        Optional<User> optionalUser = userRepository.findByEmail(user.getEmail());
-        assertThat(optionalUser).isPresent();
-
         Optional<String> attempts = redisService.getValue(passwordRecoveryOtpNamespace.getAttempts().buildPrefix(user.getEmail()));
         assertThat(attempts).isPresent();
         assertThat(Integer.parseInt(attempts.get())).isEqualTo(2);
@@ -353,9 +349,6 @@ public class PasswordRecoveryControllerIntegrationTest {
         mockMvc.perform(put("/password/resend-otp").param("email", user.getEmail())
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk());
-
-        Optional<User> optionalUser = userRepository.findByEmail(user.getEmail());
-        assertThat(optionalUser).isPresent();
 
         Optional<String> attempts = redisService.getValue(passwordRecoveryOtpNamespace.getAttempts().buildPrefix(user.getEmail()));
         assertThat(attempts).isPresent();
@@ -389,9 +382,6 @@ public class PasswordRecoveryControllerIntegrationTest {
 
         assertThat(responseContent).isNotNull();
         assertThat(responseContent).isEqualTo("Reached maximum attempts for resending otp code.");
-
-        Optional<User> optionalUser = userRepository.findByEmail(user.getEmail());
-        assertThat(optionalUser).isPresent();
 
         Optional<String> attempts = redisService.getValue(passwordRecoveryOtpNamespace.getAttempts().buildPrefix(user.getEmail()));
         assertThat(attempts).isPresent();

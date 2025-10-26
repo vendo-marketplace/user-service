@@ -19,7 +19,7 @@ public class TestConsumer {
             topics = "${kafka.events.email-otp-notification-event.topic}",
             groupId = "${kafka.events.email-otp-notification-event.groupId}",
             properties = {"auto.offset.reset: ${kafka.events.email-otp-notification-event.properties.auto-offset-reset}"},
-            containerFactory = "emailOtpContainerFactory"
+            containerFactory = "${kafka.events.email-otp-notification-event.container-factory}"
     )
     private void listenEmailVerificationEvent(EmailOtpEvent event) {
         log.info("Received event for email otp notification: {}", event);
