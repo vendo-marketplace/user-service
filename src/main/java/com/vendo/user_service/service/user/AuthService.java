@@ -1,10 +1,10 @@
 package com.vendo.user_service.service.user;
 
 import com.vendo.domain.user.common.type.UserStatus;
+import com.vendo.integration.kafka.event.EmailOtpEvent;
 import com.vendo.security.common.exception.AccessDeniedException;
 import com.vendo.user_service.common.exception.UserAlreadyExistsException;
 import com.vendo.user_service.common.type.UserRole;
-import com.vendo.user_service.integration.kafka.event.EmailOtpEvent;
 import com.vendo.user_service.integration.redis.common.dto.ValidateRequest;
 import com.vendo.user_service.integration.redis.common.namespace.otp.EmailVerificationOtpNamespace;
 import com.vendo.user_service.model.User;
@@ -21,7 +21,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
-import static com.vendo.user_service.integration.kafka.event.EmailOtpEvent.OtpEventType.EMAIL_VERIFICATION;
+import static com.vendo.integration.kafka.event.EmailOtpEvent.OtpEventType.EMAIL_VERIFICATION;
 
 @Service
 @RequiredArgsConstructor

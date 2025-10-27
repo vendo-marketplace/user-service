@@ -1,7 +1,7 @@
 package com.vendo.user_service.service.user;
 
+import com.vendo.integration.kafka.event.EmailOtpEvent;
 import com.vendo.integration.redis.common.exception.RedisValueExpiredException;
-import com.vendo.user_service.integration.kafka.event.EmailOtpEvent;
 import com.vendo.user_service.integration.redis.common.dto.ResetPasswordRequest;
 import com.vendo.user_service.integration.redis.common.namespace.otp.PasswordRecoveryOtpNamespace;
 import com.vendo.user_service.integration.redis.service.RedisService;
@@ -12,7 +12,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
-import static com.vendo.user_service.integration.kafka.event.EmailOtpEvent.OtpEventType.PASSWORD_RECOVERY;
+import static com.vendo.integration.kafka.event.EmailOtpEvent.OtpEventType.PASSWORD_RECOVERY;
 
 @Slf4j
 @Service

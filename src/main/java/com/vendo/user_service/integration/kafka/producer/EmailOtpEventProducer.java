@@ -1,6 +1,6 @@
 package com.vendo.user_service.integration.kafka.producer;
 
-import com.vendo.user_service.integration.kafka.event.EmailOtpEvent;
+import com.vendo.integration.kafka.event.EmailOtpEvent;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
