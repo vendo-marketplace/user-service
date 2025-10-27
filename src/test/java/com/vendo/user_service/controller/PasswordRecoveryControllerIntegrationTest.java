@@ -24,7 +24,6 @@ import org.springframework.test.web.servlet.MockMvc;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 
-import static com.vendo.user_service.common.helper.WaitHelper.waitSafely;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.awaitility.Awaitility.await;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -239,8 +238,6 @@ public class PasswordRecoveryControllerIntegrationTest {
         mockMvc.perform(put("/password/resend-otp").param("email", user.getEmail())
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk());
-
-        waitSafely(1000);
 
         Optional<User> optionalUser = userRepository.findByEmail(user.getEmail());
         assertThat(optionalUser).isPresent();

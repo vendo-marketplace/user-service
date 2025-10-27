@@ -48,4 +48,4 @@ kafka:
       groupId: "email_otp_notification_test_group"
       container-factory: "consumerContainerFactory"
       properties:
-        auto-offset-reset: "latest"
+        auto-offset-reset: "earliest"
