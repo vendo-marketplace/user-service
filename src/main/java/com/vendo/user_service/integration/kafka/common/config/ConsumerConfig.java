@@ -38,7 +38,7 @@ public class ConsumerConfig {
     }
 
     @Bean
-    public ConcurrentKafkaListenerContainerFactory<String, ?> emailOtpContainerFactory() {
+    public ConcurrentKafkaListenerContainerFactory<String, ?> consumerContainerFactory() {
         ConcurrentKafkaListenerContainerFactory<String, ?> factory =
                 new ConcurrentKafkaListenerContainerFactory<>();
         factory.setConsumerFactory(consumerFactory());
