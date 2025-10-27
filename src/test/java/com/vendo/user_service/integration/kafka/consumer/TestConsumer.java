@@ -21,7 +21,7 @@ public class TestConsumer {
             properties = {"auto.offset.reset: ${kafka.events.email-otp-notification-event.properties.auto-offset-reset}"},
             containerFactory = "${kafka.events.email-otp-notification-event.container-factory}"
     )
-    private void listenEmailVerificationEvent(EmailOtpEvent event) {
+    private void listenEmailOtpEvent(EmailOtpEvent event) {
         log.info("Received event for email otp notification: {}", event);
         dataPriorityBlockingList.add(event.getEmail());
     }
