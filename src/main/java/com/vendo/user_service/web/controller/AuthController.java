@@ -1,6 +1,7 @@
 package com.vendo.user_service.web.controller;
 
-import com.vendo.user_service.service.AuthService;
+import com.vendo.user_service.integration.redis.common.dto.ValidateRequest;
+import com.vendo.user_service.service.user.AuthService;
 import com.vendo.user_service.web.dto.*;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -27,5 +28,20 @@ public class AuthController {
     @PostMapping("/refresh")
     ResponseEntity<AuthResponse> refresh(@Valid @RequestBody RefreshRequest refreshRequest) {
         return ResponseEntity.ok(authService.refresh(refreshRequest));
+    }
+
+    @PostMapping("/send-otp")
+    void sendVerificationCode(@RequestParam String email) {
+        authService.sendOtp(email);
+    }
+
+    @PostMapping("/resend-otp")
+    void resendOtp(@RequestParam String email) {
+        authService.resendOtp(email);
+    }
+
+    @PostMapping("/validate")
+    void validate(@Valid @RequestBody ValidateRequest validateRequest) {
+        authService.validate(validateRequest);
     }
 }

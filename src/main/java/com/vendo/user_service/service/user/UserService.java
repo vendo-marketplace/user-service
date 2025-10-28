@@ -1,9 +1,8 @@
-package com.vendo.user_service.service;
+package com.vendo.user_service.service.user;
 
 import com.vendo.user_service.common.exception.UserAlreadyExistsException;
 import com.vendo.user_service.model.User;
 import com.vendo.user_service.repository.UserRepository;
-import com.vendo.user_service.integration.redis.common.dto.UpdateUserRequest;
 import jakarta.validation.constraints.NotNull;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -18,14 +17,17 @@ public class UserService {
     private final UserRepository userRepository;
 
     public void save(User user) {
-        throwIfUserExistsByEmail(user.getEmail());
+        findByEmail(user.getEmail()).ifPresent(userResponse -> {
+            throw new UserAlreadyExistsException("User with this email already exists.");
+        });
         userRepository.save(user);
     }
 
-    public void update(String userId, UpdateUserRequest updateUserRequest) {
+    public void update(String userId, User requestUser) {
         User user = findByUserIdOrThrow(userId);
 
-        Optional.ofNullable(updateUserRequest.password()).ifPresent(user::setPassword);
+        Optional.ofNullable(requestUser.getPassword()).ifPresent(user::setPassword);
+        Optional.ofNullable(requestUser.getStatus()).ifPresent(user::setStatus);
 
         userRepository.save(user);
     }
@@ -35,15 +37,11 @@ public class UserService {
                 .orElseThrow(() -> new UsernameNotFoundException("User not found."));
     }
 
-    public User findByEmailOrThrow(@NotNull String email) {
-        return userRepository.findByEmail(email)
-                .orElseThrow(() -> new UsernameNotFoundException("User not found."));
+    public Optional<User> findByEmail(@NotNull String email) {
+        return userRepository.findByEmail(email);
     }
 
-    public void throwIfUserExistsByEmail(String email) {
-        Optional<User> user = userRepository.findByEmail(email);
-        if (user.isPresent()) {
-            throw new UserAlreadyExistsException("User with this email already exists.");
-        }
+    public User findByEmailOrThrow(@NotNull String email) {
+        return findByEmail(email).orElseThrow(() -> new UsernameNotFoundException("User not found."));
     }
 }

@@ -1,7 +1,7 @@
 package com.vendo.user_service.web.controller;
 
 import com.vendo.user_service.integration.redis.common.dto.ResetPasswordRequest;
-import com.vendo.user_service.service.PasswordRecoveryService;
+import com.vendo.user_service.service.user.PasswordRecoveryService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
@@ -23,7 +23,7 @@ public class PasswordRecoveryController {
         passwordRecoveryService.resetPassword(resetPasswordRequest);
     }
 
-    @PutMapping("/resend")
+    @PutMapping("/resend-otp")
     void resendOtp(@RequestParam String email) {
         passwordRecoveryService.resendOtp(email);
     }

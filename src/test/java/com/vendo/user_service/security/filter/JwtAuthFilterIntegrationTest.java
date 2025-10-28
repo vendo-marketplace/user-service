@@ -1,5 +1,6 @@
 package com.vendo.user_service.security.filter;
 
+import com.vendo.domain.user.common.type.UserStatus;
 import com.vendo.user_service.common.builder.UserDataBuilder;
 import com.vendo.user_service.model.User;
 import com.vendo.user_service.repository.UserRepository;
@@ -77,7 +78,9 @@ public class JwtAuthFilterIntegrationTest {
 
     @Test
     void doFilterInternal_shouldPassFilter_whenTokenIsValid() throws Exception {
-        User user = UserDataBuilder.buildUserWithRequiredFields().build();
+        User user = UserDataBuilder.buildUserWithRequiredFields()
+                .status(UserStatus.ACTIVE)
+                .build();
         userRepository.save(user);
         String accessToken = jwtService.generateAccessToken(user);
 

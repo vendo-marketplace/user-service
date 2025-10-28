@@ -83,8 +83,8 @@ public class JwtAuthFilter extends OncePerRequestFilter {
         String email = claims.getSubject();
         UserDetails userDetails = userDetailsService.loadUserByUsername(email);
 
-        if (userDetails instanceof User && ((User) userDetails).getStatus() == UserStatus.BLOCKED) {
-            throw new AccessDeniedException("User is blocked");
+        if (userDetails instanceof User && ((User) userDetails).getStatus() != UserStatus.ACTIVE) {
+            throw new AccessDeniedException("User is unactive.");
         }
 
         return userDetails;
