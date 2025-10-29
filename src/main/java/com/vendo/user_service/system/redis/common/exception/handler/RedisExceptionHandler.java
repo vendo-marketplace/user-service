@@ -1,4 +1,4 @@
-package com.vendo.user_service.integration.redis.common.exception.handler;
+package com.vendo.user_service.system.redis.common.exception.handler;
 
 import com.vendo.integration.redis.common.exception.RedisValueExpiredException;
 import org.springframework.http.HttpStatus;

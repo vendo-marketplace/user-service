@@ -1,6 +1,6 @@
 package com.vendo.user_service.web.controller;
 
-import com.vendo.user_service.integration.redis.common.dto.ResetPasswordRequest;
+import com.vendo.user_service.system.redis.common.dto.ResetPasswordRequest;
 import com.vendo.user_service.service.user.PasswordRecoveryService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;

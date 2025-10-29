@@ -1,6 +1,6 @@
 package com.vendo.user_service.web.controller;
 
-import com.vendo.user_service.integration.redis.common.dto.ValidateRequest;
+import com.vendo.user_service.system.redis.common.dto.ValidateRequest;
 import com.vendo.user_service.service.user.AuthService;
 import com.vendo.user_service.web.dto.*;
 import jakarta.validation.Valid;

@@ -1,4 +1,4 @@
-package com.vendo.user_service.integration.redis.common.dto;
+package com.vendo.user_service.system.redis.common.dto;
 
 import jakarta.validation.constraints.*;
 import lombok.Builder;

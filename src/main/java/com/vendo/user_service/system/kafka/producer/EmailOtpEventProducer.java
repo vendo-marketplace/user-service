@@ -1,4 +1,4 @@
-package com.vendo.user_service.integration.kafka.producer;
+package com.vendo.user_service.system.kafka.producer;
 
 import com.vendo.integration.kafka.event.EmailOtpEvent;
 import lombok.RequiredArgsConstructor;
