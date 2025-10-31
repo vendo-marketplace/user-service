@@ -1,4 +1,4 @@
-package com.vendo.user_service.integration.redis.service;
+package com.vendo.user_service.system.redis.service;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.redis.core.RedisTemplate;

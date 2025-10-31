@@ -2,6 +2,11 @@ spring:
   application:
     name: user-service
   profiles:
-    active: dev,redis,kafka
+    active: dev
+    include: kafka,redis
   config:
     import: "optional:configserver:${CONFIG_SERVER_URL}/"
+eureka:
+  client:
+    serviceUrl:
+      defaultZone: ${EUREKA_CLIENT_URL:http://localhost:8020/eureka/}

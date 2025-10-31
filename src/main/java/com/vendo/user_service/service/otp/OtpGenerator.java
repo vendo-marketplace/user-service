@@ -11,9 +11,8 @@ public class OtpGenerator {
 
     private static final String SIX_DIGIT_PATTERN = "%06d";
 
-    public String generate() {
+    public String generateSixDigitOtp() {
         int maxSixDigitNumber = new Random().nextInt(ONE_MILLION_BOUND);
         return String.format(SIX_DIGIT_PATTERN, maxSixDigitNumber);
     }
-
 }

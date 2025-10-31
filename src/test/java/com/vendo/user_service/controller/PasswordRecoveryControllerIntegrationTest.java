@@ -2,9 +2,9 @@ package com.vendo.user_service.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.vendo.user_service.common.builder.UserDataBuilder;
-import com.vendo.user_service.integration.redis.common.dto.ResetPasswordRequest;
-import com.vendo.user_service.integration.redis.common.namespace.otp.PasswordRecoveryOtpNamespace;
-import com.vendo.user_service.integration.redis.service.RedisService;
+import com.vendo.user_service.system.redis.common.dto.ResetPasswordRequest;
+import com.vendo.user_service.system.redis.common.namespace.otp.PasswordRecoveryOtpNamespace;
+import com.vendo.user_service.system.redis.service.RedisService;
 import com.vendo.user_service.integration.kafka.consumer.TestConsumer;
 import com.vendo.user_service.model.User;
 import com.vendo.user_service.repository.UserRepository;

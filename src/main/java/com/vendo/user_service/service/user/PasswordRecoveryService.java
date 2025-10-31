@@ -2,9 +2,9 @@ package com.vendo.user_service.service.user;
 
 import com.vendo.integration.kafka.event.EmailOtpEvent;
 import com.vendo.integration.redis.common.exception.RedisValueExpiredException;
-import com.vendo.user_service.integration.redis.common.dto.ResetPasswordRequest;
-import com.vendo.user_service.integration.redis.common.namespace.otp.PasswordRecoveryOtpNamespace;
-import com.vendo.user_service.integration.redis.service.RedisService;
+import com.vendo.user_service.system.redis.common.dto.ResetPasswordRequest;
+import com.vendo.user_service.system.redis.common.namespace.otp.PasswordRecoveryOtpNamespace;
+import com.vendo.user_service.system.redis.service.RedisService;
 import com.vendo.user_service.model.User;
 import com.vendo.user_service.service.otp.EmailOtpService;
 import lombok.RequiredArgsConstructor;
