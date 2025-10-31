@@ -30,7 +30,7 @@ public class EmailOtpService {
             throw new OtpAlreadySentException("Otp has already sent to the email.");
         }
 
-        String otp = otpGenerator.generate();
+        String otp = otpGenerator.generateSixDigitOtp();
         event.setOtp(otp);
 
         redisService.saveValue(otpNamespace.getOtp().buildPrefix(otp), event.getEmail(), otpNamespace.getOtp().getTtl());
@@ -45,12 +45,8 @@ public class EmailOtpService {
 
         increaseResendAttemptsOrThrow(event.getEmail(), otpNamespace);
 
-        Optional<String> otp = redisService.getValue(otpNamespace.getEmail().buildPrefix(event.getEmail()));
-        if (otp.isEmpty()) {
-            otp = otp.map(o -> otpGenerator.generate());
-            redisService.saveValue(otpNamespace.getEmail().buildPrefix(event.getEmail()), otp.get(), otpNamespace.getOtp().getTtl());
-        }
-        event.setOtp(otp.get());
+        String otp = getOtpOrGenerate(event.getEmail(), otpNamespace);
+        event.setOtp(otp);
 
         emailOtpEventProducer.sendEmailOtpEvent(event);
     }
@@ -82,5 +78,16 @@ public class EmailOtpService {
                 otpNamespace.getAttempts().buildPrefix(email),
                 String.valueOf(attempt + 1),
                 otpNamespace.getAttempts().getTtl());
+    }
+
+    private String getOtpOrGenerate(String email, OtpNamespace otpNamespace) {
+        Optional<String> otp = redisService.getValue(otpNamespace.getEmail().buildPrefix(email));
+
+        if (otp.isEmpty()) {
+            otp = otp.map(o -> otpGenerator.generateSixDigitOtp());
+            redisService.saveValue(otpNamespace.getEmail().buildPrefix(email), otp.get(), otpNamespace.getOtp().getTtl());
+        }
+
+        return otp.get();
     }
 }
