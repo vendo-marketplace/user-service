@@ -33,7 +33,7 @@ public class MainExceptionHandler {
         String invalidFields = exception.getBindingResult()
                 .getFieldErrors()
                 .stream()
-                .map(fieldError -> COLON_DELIMITER + fieldError.getDefaultMessage())
+                .map(fieldError -> fieldError.getField() + COLON_DELIMITER + fieldError.getDefaultMessage())
                 .collect(Collectors.joining(COMMA_DELIMITER));
 
         return ResponseEntity.badRequest().body(invalidFields);

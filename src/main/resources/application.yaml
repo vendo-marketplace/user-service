@@ -2,7 +2,7 @@ spring:
   application:
     name: user-service
   profiles:
-    active: prod
+    active: ${APP_PROFILE}
     include: kafka,redis
   config:
     import: "optional:configserver:${CONFIG_SERVER_URL}"
