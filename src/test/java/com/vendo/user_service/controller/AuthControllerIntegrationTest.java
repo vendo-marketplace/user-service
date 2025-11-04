@@ -34,7 +34,6 @@ import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 
-import static java.lang.String.valueOf;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.awaitility.Awaitility.await;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -546,11 +545,9 @@ class AuthControllerIntegrationTest {
                 emailVerificationOtpNamespace.getEmail().getTtl()
         );
 
-        ValidateRequest validateRequest = ValidateRequest.builder()
-                .otp(otp)
-                .email(user.getEmail()).build();
+        ValidateRequest validateRequest = ValidateRequest.builder().email(user.getEmail()).build();
 
-        mockMvc.perform(post("/auth/validate")
+        mockMvc.perform(post("/auth/validate").param("otp", otp)
                         .content(objectMapper.writeValueAsString(validateRequest))
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk());
@@ -578,11 +575,9 @@ class AuthControllerIntegrationTest {
                 mismatchEmail,
                 emailVerificationOtpNamespace.getOtp().getTtl());
 
-        ValidateRequest validateRequest = ValidateRequest.builder()
-                .otp(otp)
-                .email(user.getEmail()).build();
+        ValidateRequest validateRequest = ValidateRequest.builder().email(user.getEmail()).build();
 
-        String responseContent = mockMvc.perform(post("/auth/validate")
+        String responseContent = mockMvc.perform(post("/auth/validate").param("otp", otp)
                         .content(objectMapper.writeValueAsString(validateRequest))
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isGone())
@@ -608,12 +603,9 @@ class AuthControllerIntegrationTest {
         userRepository.save(user);
         String otp = "123456";
 
-        ValidateRequest validateRequest = ValidateRequest.builder()
-                .otp(otp)
-                .email(user.getEmail())
-                .build();
+        ValidateRequest validateRequest = ValidateRequest.builder().email(user.getEmail()).build();
 
-        String responseContent = mockMvc.perform(post("/auth/validate")
+        String responseContent = mockMvc.perform(post("/auth/validate").param("otp", otp)
                         .content(objectMapper.writeValueAsString(validateRequest))
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isGone())

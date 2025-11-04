@@ -101,10 +101,10 @@ public class AuthService {
         emailOtpService.resendOtp(event, emailVerificationOtpNamespace);
     }
 
-    public void validate(ValidateRequest validateRequest) {
+    public void validate(String otp, ValidateRequest validateRequest) {
         User user = userService.findByEmailOrThrow(validateRequest.email());
 
-        emailOtpService.verifyOtp(validateRequest.otp(), validateRequest.email(), emailVerificationOtpNamespace);
+        emailOtpService.verifyOtp(otp, validateRequest.email(), emailVerificationOtpNamespace);
 
         userService.update(user.getId(), User.builder()
                 .status(UserStatus.ACTIVE)

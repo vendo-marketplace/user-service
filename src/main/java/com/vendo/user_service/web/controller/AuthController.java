@@ -41,7 +41,10 @@ public class AuthController {
     }
 
     @PostMapping("/validate")
-    void validate(@Valid @RequestBody ValidateRequest validateRequest) {
-        authService.validate(validateRequest);
+    void validate(
+            @RequestParam String otp,
+            @Valid @RequestBody ValidateRequest validateRequest
+    ) {
+        authService.validate(otp, validateRequest);
     }
 }
