@@ -1,7 +1,9 @@
 package com.vendo.user_service.security.filter;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.vendo.domain.user.common.type.UserStatus;
 import com.vendo.user_service.common.builder.UserDataBuilder;
+import com.vendo.user_service.common.exception.ExceptionResponse;
 import com.vendo.user_service.model.User;
 import com.vendo.user_service.repository.UserRepository;
 import com.vendo.user_service.security.service.JwtService;
@@ -11,6 +13,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.http.HttpStatus;
 import org.springframework.mock.web.MockHttpServletResponse;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -35,6 +38,9 @@ public class JwtAuthFilterIntegrationTest {
 
     @Autowired
     private UserRepository userRepository;
+
+    @Autowired
+    private ObjectMapper objectMapper;
 
     @BeforeEach
     void setUp() {
@@ -73,7 +79,10 @@ public class JwtAuthFilterIntegrationTest {
 
         String responseContent = response.getContentAsString();
         assertThat(responseContent).isNotBlank();
-        assertThat(responseContent).isEqualTo("Missing or invalid Authorization header");
+
+        ExceptionResponse exceptionResponse = objectMapper.readValue(responseContent, ExceptionResponse.class);
+        assertThat(exceptionResponse.message()).isEqualTo("Missing or invalid Authorization header");
+        assertThat(exceptionResponse.code()).isEqualTo(HttpStatus.UNAUTHORIZED.value());
     }
 
     @Test
@@ -99,21 +108,27 @@ public class JwtAuthFilterIntegrationTest {
 
         String responseContent = response.getContentAsString();
         assertThat(responseContent).isNotBlank();
-        assertThat(responseContent).isEqualTo("Missing or invalid Authorization header");
+
+        ExceptionResponse exceptionResponse = objectMapper.readValue(responseContent, ExceptionResponse.class);
+        assertThat(exceptionResponse.message()).isEqualTo("Missing or invalid Authorization header");
+        assertThat(exceptionResponse.code()).isEqualTo(HttpStatus.UNAUTHORIZED.value());
     }
 
     @Test
-    void doFilterInternal_shouldReturnUnauthorized_whenUserNotFound() throws Exception {
+    void doFilterInternal_shouldReturnNotFound_whenUserNotFound() throws Exception {
         User user = UserDataBuilder.buildUserWithRequiredFields().build();
         String accessToken = jwtService.generateAccessToken(user);
 
         MockHttpServletResponse response = mockMvc.perform(get("/test/ping").header(AUTHORIZATION, "Bearer " + accessToken))
-                .andExpect(status().isBadRequest())
+                .andExpect(status().isNotFound())
                 .andReturn().getResponse();
 
         String responseContent = response.getContentAsString();
         assertThat(responseContent).isNotBlank();
-        assertThat(responseContent).isEqualTo("User does not exist");
+
+        ExceptionResponse exceptionResponse = objectMapper.readValue(responseContent, ExceptionResponse.class);
+        assertThat(exceptionResponse.message()).isEqualTo("User does not exist.");
+        assertThat(exceptionResponse.code()).isEqualTo(HttpStatus.NOT_FOUND.value());
     }
 
     @Test
@@ -129,6 +144,9 @@ public class JwtAuthFilterIntegrationTest {
         String responseContent = response.getContentAsString();
 
         assertThat(responseContent).isNotBlank();
-        assertThat(responseContent).isEqualTo("Token has expired");
+
+        ExceptionResponse exceptionResponse = objectMapper.readValue(responseContent, ExceptionResponse.class);
+        assertThat(exceptionResponse.message()).isEqualTo("Token has expired");
+        assertThat(exceptionResponse.code()).isEqualTo(HttpStatus.UNAUTHORIZED.value());
     }
 }

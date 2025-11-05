@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.vendo.domain.user.common.type.UserStatus;
 import com.vendo.user_service.common.builder.AuthRequestDataBuilder;
 import com.vendo.user_service.common.builder.UserDataBuilder;
+import com.vendo.user_service.common.exception.ExceptionResponse;
 import com.vendo.user_service.common.type.UserRole;
 import com.vendo.user_service.system.redis.common.dto.ValidateRequest;
 import com.vendo.user_service.system.redis.common.namespace.otp.EmailVerificationOtpNamespace;
@@ -23,6 +24,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockHttpServletResponse;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -112,7 +114,7 @@ class AuthControllerIntegrationTest {
     }
 
     @Test
-    void signUp_shouldReturnBadRequest_whenUserAlreadyExists() throws Exception {
+    void signUp_shouldReturnConflict_whenUserAlreadyExists() throws Exception {
         AuthRequest authRequest = AuthRequestDataBuilder.buildUserWithRequiredFields().build();
         User user = User.builder()
                 .email(authRequest.email())
@@ -125,9 +127,12 @@ class AuthControllerIntegrationTest {
                 .content(objectMapper.writeValueAsString(authRequest))
         ).andExpect(status().isConflict()).andReturn().getResponse();
 
-        String responseMessage = response.getContentAsString();
-        assertThat(responseMessage).isNotBlank();
-        assertThat(responseMessage).isEqualTo("User with this email already exists.");
+        String responseContent = response.getContentAsString();
+        assertThat(responseContent).isNotBlank();
+
+        ExceptionResponse exceptionResponse = objectMapper.readValue(responseContent, ExceptionResponse.class);
+        assertThat(exceptionResponse.message()).isEqualTo("User with this email already exists.");
+        assertThat(exceptionResponse.code()).isEqualTo(HttpStatus.CONFLICT.value());
     }
 
     @Test
@@ -160,17 +165,20 @@ class AuthControllerIntegrationTest {
     }
 
     @Test
-    void signIn_shouldReturnBadRequest_whenUserDoesNotExist() throws Exception {
+    void signIn_shouldReturnNotFound_whenUserNotFound() throws Exception {
         AuthRequest authRequest = AuthRequestDataBuilder.buildUserWithRequiredFields().build();
 
         MockHttpServletResponse response = mockMvc.perform(post("/auth/sign-in")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(authRequest))
-        ).andExpect(status().isBadRequest()).andReturn().getResponse();
+        ).andExpect(status().isNotFound()).andReturn().getResponse();
 
-        String responseMessage = response.getContentAsString();
-        assertThat(responseMessage).isNotBlank();
-        assertThat(responseMessage).isEqualTo("User not found.");
+        String responseContent = response.getContentAsString();
+        assertThat(responseContent).isNotBlank();
+
+        ExceptionResponse exceptionResponse = objectMapper.readValue(responseContent, ExceptionResponse.class);
+        assertThat(exceptionResponse.message()).isEqualTo("User not found.");
+        assertThat(exceptionResponse.code()).isEqualTo(HttpStatus.NOT_FOUND.value());
     }
 
     @Test
@@ -191,7 +199,10 @@ class AuthControllerIntegrationTest {
 
         String responseContent = response.getContentAsString();
         assertThat(responseContent).isNotBlank();
-        assertThat(responseContent).isEqualTo("User is unactive.");
+
+        ExceptionResponse exceptionResponse = objectMapper.readValue(responseContent, ExceptionResponse.class);
+        assertThat(exceptionResponse.message()).isEqualTo("User is unactive.");
+        assertThat(exceptionResponse.code()).isEqualTo(HttpStatus.FORBIDDEN.value());
     }
 
     @Test
@@ -212,7 +223,10 @@ class AuthControllerIntegrationTest {
 
         String responseContent = response.getContentAsString();
         assertThat(responseContent).isNotBlank();
-        assertThat(responseContent).isEqualTo("User is unactive.");
+
+        ExceptionResponse exceptionResponse = objectMapper.readValue(responseContent, ExceptionResponse.class);
+        assertThat(exceptionResponse.message()).isEqualTo("User is unactive.");
+        assertThat(exceptionResponse.code()).isEqualTo(HttpStatus.FORBIDDEN.value());
     }
 
     @Test
@@ -241,7 +255,7 @@ class AuthControllerIntegrationTest {
     }
 
     @Test
-    void refresh_shouldReturnForbidden_whenUserDoesNotExist() throws Exception {
+    void refresh_shouldReturnNotFound_whenUserNotFound() throws Exception {
         User user = UserDataBuilder.buildUserWithRequiredFields().build();
         String refreshToken = jwtService.generateRefreshToken(user);
         RefreshRequest refreshRequest = RefreshRequest.builder().refreshToken(refreshToken).build();
@@ -249,15 +263,18 @@ class AuthControllerIntegrationTest {
         MockHttpServletResponse response = mockMvc.perform(post("/auth/refresh")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(refreshRequest))
-        ).andExpect(status().isBadRequest()).andReturn().getResponse();
+        ).andExpect(status().isNotFound()).andReturn().getResponse();
 
         String responseContent = response.getContentAsString();
         assertThat(responseContent).isNotBlank();
-        assertThat(responseContent).isEqualTo("User does not exist");
+
+        ExceptionResponse exceptionResponse = objectMapper.readValue(responseContent, ExceptionResponse.class);
+        assertThat(exceptionResponse.message()).isEqualTo("User does not exist.");
+        assertThat(exceptionResponse.code()).isEqualTo(HttpStatus.NOT_FOUND.value());
     }
 
     @Test
-    void refresh_shouldReturnForbidden_whenTokenIsNotValid() throws Exception {
+    void refresh_shouldReturnUnauthorized_whenTokenIsNotValid() throws Exception {
         User user = UserDataBuilder.buildUserWithRequiredFields().build();
         userRepository.save(user);
         String expiredRefreshToken = jwtService.generateTokenWithExpiration(user, 0);
@@ -270,7 +287,10 @@ class AuthControllerIntegrationTest {
 
         String responseContent = response.getContentAsString();
         assertThat(responseContent).isNotBlank();
-        assertThat(responseContent).isEqualTo("Token has expired");
+
+        ExceptionResponse exceptionResponse = objectMapper.readValue(responseContent, ExceptionResponse.class);
+        assertThat(exceptionResponse.message()).isEqualTo("Token has expired");
+        assertThat(exceptionResponse.code()).isEqualTo(HttpStatus.UNAUTHORIZED.value());
     }
 
     @Test
@@ -314,7 +334,10 @@ class AuthControllerIntegrationTest {
                 .getContentAsString();
 
         assertThat(responseContent).isNotNull();
-        assertThat(responseContent).isEqualTo("Otp has already sent to the email.");
+
+        ExceptionResponse exceptionResponse = objectMapper.readValue(responseContent, ExceptionResponse.class);
+        assertThat(exceptionResponse.message()).isEqualTo("Otp has already sent to the email.");
+        assertThat(exceptionResponse.code()).isEqualTo(HttpStatus.CONFLICT.value());
 
         Optional<String> otpOptional = redisService.getValue(emailVerificationOtpNamespace.getEmail().buildPrefix(user.getEmail()));
         assertThat(otpOptional).isPresent();
@@ -324,18 +347,21 @@ class AuthControllerIntegrationTest {
     }
 
     @Test
-    void sendOtp_shouldReturnBadRequest_whenUserNotFound() throws Exception {
+    void sendOtp_shouldReturnNotFound_whenUserNotFound() throws Exception {
         User user = UserDataBuilder.buildUserWithRequiredFields().build();
 
         String responseContent = mockMvc.perform(post("/auth/send-otp")
                         .contentType(MediaType.APPLICATION_JSON).param("email", user.getEmail()))
-                .andExpect(status().isBadRequest())
+                .andExpect(status().isNotFound())
                 .andReturn()
                 .getResponse()
                 .getContentAsString();
 
         assertThat(responseContent).isNotNull();
-        assertThat(responseContent).isEqualTo("User not found.");
+
+        ExceptionResponse exceptionResponse = objectMapper.readValue(responseContent, ExceptionResponse.class);
+        assertThat(exceptionResponse.message()).isEqualTo("User not found.");
+        assertThat(exceptionResponse.code()).isEqualTo(HttpStatus.NOT_FOUND.value());
 
         Optional<String> otp = redisService.getValue(emailVerificationOtpNamespace.getEmail().buildPrefix(user.getEmail()));
         assertThat(otp).isEmpty();
@@ -390,7 +416,7 @@ class AuthControllerIntegrationTest {
     }
 
     @Test
-    void resendOtp_shouldReturnBadRequest_whenUserNotFound() throws Exception {
+    void resendOtp_shouldReturnNotFound_whenUserNotFound() throws Exception {
         User user = UserDataBuilder.buildUserWithRequiredFields().build();
         String otp = "123456";
         redisService.saveValue(
@@ -401,13 +427,16 @@ class AuthControllerIntegrationTest {
 
         String responseContent = mockMvc.perform(post("/auth/resend-otp").param("email", user.getEmail())
                         .contentType(MediaType.APPLICATION_JSON))
-                .andExpect(status().isBadRequest())
+                .andExpect(status().isNotFound())
                 .andReturn()
                 .getResponse()
                 .getContentAsString();
 
         assertThat(responseContent).isNotNull();
-        assertThat(responseContent).isEqualTo("User not found.");
+
+        ExceptionResponse exceptionResponse = objectMapper.readValue(responseContent, ExceptionResponse.class);
+        assertThat(exceptionResponse.message()).isEqualTo("User not found.");
+        assertThat(exceptionResponse.code()).isEqualTo(HttpStatus.NOT_FOUND.value());
 
         Optional<User> optionalUser = userRepository.findByEmail(user.getEmail());
         assertThat(optionalUser).isNotPresent();
@@ -498,7 +527,10 @@ class AuthControllerIntegrationTest {
                 .getContentAsString();
 
         assertThat(responseContent).isNotNull();
-        assertThat(responseContent).isEqualTo("Reached maximum attempts for resending otp code.");
+
+        ExceptionResponse exceptionResponse = objectMapper.readValue(responseContent, ExceptionResponse.class);
+        assertThat(exceptionResponse.message()).isEqualTo("Reached maximum attempts for resending otp code.");
+        assertThat(exceptionResponse.code()).isEqualTo(HttpStatus.TOO_MANY_REQUESTS.value());
 
         Optional<String> attemptsOptional = redisService.getValue(emailVerificationOtpNamespace.getAttempts().buildPrefix(user.getEmail()));
         assertThat(attemptsOptional).isPresent();
@@ -564,7 +596,7 @@ class AuthControllerIntegrationTest {
     }
 
     @Test
-    void validate_shouldReturnBadRequest_whenOtpDoesNotMatchEmail() throws Exception {
+    void validate_shouldReturnGone_whenOtpDoesNotMatchEmail() throws Exception {
         User user = UserDataBuilder.buildUserWithRequiredFields().build();
         userRepository.save(user);
         String otp = "123456";
@@ -586,7 +618,10 @@ class AuthControllerIntegrationTest {
                 .getContentAsString();
 
         assertThat(responseContent).isNotNull();
-        assertThat(responseContent).isEqualTo("Invalid otp.");
+
+        ExceptionResponse exceptionResponse = objectMapper.readValue(responseContent, ExceptionResponse.class);
+        assertThat(exceptionResponse.message()).isEqualTo("Invalid otp.");
+        assertThat(exceptionResponse.code()).isEqualTo(HttpStatus.GONE.value());
 
         Optional<User> optionalUser = userRepository.findByEmail(user.getEmail());
         assertThat(optionalUser).isPresent();

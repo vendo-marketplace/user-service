@@ -39,8 +39,8 @@ public class PasswordRecoveryService {
         emailOtpService.sendOtp(event, passwordRecoveryOtpNamespace);
     }
 
-    public void resetPassword(ResetPasswordRequest resetPasswordRequest) {
-        String email = redisService.getValue(passwordRecoveryOtpNamespace.getOtp().buildPrefix(String.valueOf(resetPasswordRequest.otp())))
+    public void resetPassword(String otp, ResetPasswordRequest resetPasswordRequest) {
+        String email = redisService.getValue(passwordRecoveryOtpNamespace.getOtp().buildPrefix(String.valueOf(otp)))
                 .orElseThrow(() -> new RedisValueExpiredException("Otp has expired."));
 
         User user = userService.findByEmailOrThrow(email);
@@ -49,7 +49,7 @@ public class PasswordRecoveryService {
                 .build());
 
         redisService.deleteValues(
-                passwordRecoveryOtpNamespace.getOtp().buildPrefix(String.valueOf(resetPasswordRequest.otp())),
+                passwordRecoveryOtpNamespace.getOtp().buildPrefix(String.valueOf(otp)),
                 passwordRecoveryOtpNamespace.getEmail().buildPrefix(email));
     }
 

@@ -2,6 +2,7 @@ package com.vendo.user_service.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.vendo.user_service.common.builder.UserDataBuilder;
+import com.vendo.user_service.common.exception.ExceptionResponse;
 import com.vendo.user_service.system.redis.common.dto.ResetPasswordRequest;
 import com.vendo.user_service.system.redis.common.namespace.otp.PasswordRecoveryOtpNamespace;
 import com.vendo.user_service.system.redis.service.RedisService;
@@ -15,6 +16,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.context.ActiveProfiles;
@@ -118,7 +120,10 @@ public class PasswordRecoveryControllerIntegrationTest {
                 .getContentAsString();
 
         assertThat(responseContent).isNotBlank();
-        assertThat(responseContent).isEqualTo("Otp has already sent to the email.");
+
+        ExceptionResponse exceptionResponse = objectMapper.readValue(responseContent, ExceptionResponse.class);
+        assertThat(exceptionResponse.message()).isEqualTo("Otp has already sent to the email.");
+        assertThat(exceptionResponse.code()).isEqualTo(HttpStatus.CONFLICT.value());
 
         Optional<String> otpOptional = redisService.getValue(passwordRecoveryOtpNamespace.getEmail().buildPrefix(user.getEmail()));
         assertThat(otpOptional).isPresent();
@@ -128,18 +133,21 @@ public class PasswordRecoveryControllerIntegrationTest {
     }
 
     @Test
-    void forgotPassword_shouldReturnBadRequest_whenUserNotFound() throws Exception {
+    void forgotPassword_shouldReturnNotFound_whenUserNotFound() throws Exception {
         User user = UserDataBuilder.buildUserWithRequiredFields().build();
 
         String responseContent = mockMvc.perform(post("/password/forgot")
                         .contentType(MediaType.APPLICATION_JSON).param("email", user.getEmail()))
-                .andExpect(status().isBadRequest())
+                .andExpect(status().isNotFound())
                 .andReturn()
                 .getResponse()
                 .getContentAsString();
 
         assertThat(responseContent).isNotBlank();
-        assertThat(responseContent).isEqualTo("User not found.");
+
+        ExceptionResponse exceptionResponse = objectMapper.readValue(responseContent, ExceptionResponse.class);
+        assertThat(exceptionResponse.message()).isEqualTo("User not found.");
+        assertThat(exceptionResponse.code()).isEqualTo(HttpStatus.NOT_FOUND.value());
 
         Optional<String> otp = redisService.getValue(passwordRecoveryOtpNamespace.getEmail().buildPrefix((user.getEmail())));
         assertThat(otp).isEmpty();
@@ -151,7 +159,6 @@ public class PasswordRecoveryControllerIntegrationTest {
         String newPassword = "newTestPassword1234@";
         User user = UserDataBuilder.buildUserWithRequiredFields().build();
         ResetPasswordRequest resetPasswordRequest = ResetPasswordRequest.builder()
-                .otp(otp)
                 .password(newPassword).build();
         redisService.saveValue(
                 passwordRecoveryOtpNamespace.getOtp().buildPrefix(otp),
@@ -160,7 +167,7 @@ public class PasswordRecoveryControllerIntegrationTest {
         );
         userRepository.save(user);
 
-        mockMvc.perform(put("/password/reset")
+        mockMvc.perform(put("/password/reset").param("otp", otp)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(resetPasswordRequest)))
                 .andExpect(status().isOk());
@@ -178,10 +185,10 @@ public class PasswordRecoveryControllerIntegrationTest {
         String otp = "123456";
         String newPassword = "newTestPassword1234@";
         User user = UserDataBuilder.buildUserWithRequiredFields().build();
-        ResetPasswordRequest resetPasswordRequest = ResetPasswordRequest.builder().otp(otp).password(newPassword).build();
+        ResetPasswordRequest resetPasswordRequest = ResetPasswordRequest.builder().password(newPassword).build();
         userRepository.save(user);
 
-        String responseContent = mockMvc.perform(put("/password/reset")
+        String responseContent = mockMvc.perform(put("/password/reset").param("otp", otp)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(resetPasswordRequest)))
                 .andExpect(status().isGone())
@@ -198,27 +205,30 @@ public class PasswordRecoveryControllerIntegrationTest {
     }
 
     @Test
-    void resetPassword_shouldReturnBadRequest_whenUserNotFound() throws Exception {
+    void resetPassword_shouldReturnNotFound_whenUserNotFound() throws Exception {
         String otp = "123456";
         String newPassword = "newTestPassword1234@";
         User user = UserDataBuilder.buildUserWithRequiredFields().build();
-        ResetPasswordRequest resetPasswordRequest = ResetPasswordRequest.builder().otp(otp).password(newPassword).build();
+        ResetPasswordRequest resetPasswordRequest = ResetPasswordRequest.builder().password(newPassword).build();
         redisService.saveValue(
                 passwordRecoveryOtpNamespace.getOtp().buildPrefix(otp),
                 user.getEmail(),
                 passwordRecoveryOtpNamespace.getOtp().getTtl()
         );
 
-        String responseContent = mockMvc.perform(put("/password/reset")
+        String responseContent = mockMvc.perform(put("/password/reset").param("otp", otp)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(resetPasswordRequest)))
-                .andExpect(status().isBadRequest())
+                .andExpect(status().isNotFound())
                 .andReturn()
                 .getResponse()
                 .getContentAsString();
 
         assertThat(responseContent).isNotBlank();
-        assertThat(responseContent).isEqualTo("User not found.");
+
+        ExceptionResponse exceptionResponse = objectMapper.readValue(responseContent, ExceptionResponse.class);
+        assertThat(exceptionResponse.message()).isEqualTo("User not found.");
+        assertThat(exceptionResponse.code()).isEqualTo(HttpStatus.NOT_FOUND.value());
 
         Optional<User> optionalUser = userRepository.findByEmail(user.getEmail());
         assertThat(optionalUser).isNotPresent();
@@ -276,7 +286,7 @@ public class PasswordRecoveryControllerIntegrationTest {
     }
 
     @Test
-    void resendOtp_shouldReturnBadRequest_whenUserNotFound() throws Exception {
+    void resendOtp_shouldReturnNotFound_whenUserNotFound() throws Exception {
         User user = UserDataBuilder.buildUserWithRequiredFields().build();
         String otp = "123456";
         redisService.saveValue(
@@ -287,13 +297,16 @@ public class PasswordRecoveryControllerIntegrationTest {
 
         String responseContent = mockMvc.perform(put("/password/resend-otp").param("email", user.getEmail())
                         .contentType(MediaType.APPLICATION_JSON))
-                .andExpect(status().isBadRequest())
+                .andExpect(status().isNotFound())
                 .andReturn()
                 .getResponse()
                 .getContentAsString();
 
         assertThat(responseContent).isNotNull();
-        assertThat(responseContent).isEqualTo("User not found.");
+
+        ExceptionResponse exceptionResponse = objectMapper.readValue(responseContent, ExceptionResponse.class);
+        assertThat(exceptionResponse.message()).isEqualTo("User not found.");
+        assertThat(exceptionResponse.code()).isEqualTo(HttpStatus.NOT_FOUND.value());
 
         Optional<User> optionalUser = userRepository.findByEmail(user.getEmail());
         assertThat(optionalUser).isNotPresent();
@@ -381,7 +394,10 @@ public class PasswordRecoveryControllerIntegrationTest {
                 .getContentAsString();
 
         assertThat(responseContent).isNotNull();
-        assertThat(responseContent).isEqualTo("Reached maximum attempts for resending otp code.");
+
+        ExceptionResponse exceptionResponse = objectMapper.readValue(responseContent, ExceptionResponse.class);
+        assertThat(exceptionResponse.message()).isEqualTo("Reached maximum attempts for resending otp code.");
+        assertThat(exceptionResponse.code()).isEqualTo(HttpStatus.TOO_MANY_REQUESTS.value());
 
         Optional<String> attempts = redisService.getValue(passwordRecoveryOtpNamespace.getAttempts().buildPrefix(user.getEmail()));
         assertThat(attempts).isPresent();
