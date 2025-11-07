@@ -1,9 +1,9 @@
 package com.vendo.user_service.security.common.exception.handler;
 
+import com.vendo.common.exception.ExceptionResponse;
 import org.springframework.http.HttpStatus;
 import com.vendo.security.common.exception.AccessDeniedException;
 import com.vendo.security.common.exception.InvalidTokenException;
-import com.vendo.user_service.common.exception.ExceptionResponse;
 import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.JwtException;
 import jakarta.servlet.http.HttpServletRequest;

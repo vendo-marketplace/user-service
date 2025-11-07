@@ -1,8 +1,8 @@
 package com.vendo.user_service.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.vendo.common.exception.ExceptionResponse;
 import com.vendo.user_service.common.builder.UserDataBuilder;
-import com.vendo.user_service.common.exception.ExceptionResponse;
 import com.vendo.user_service.system.redis.common.dto.ResetPasswordRequest;
 import com.vendo.user_service.system.redis.common.namespace.otp.PasswordRecoveryOtpNamespace;
 import com.vendo.user_service.system.redis.service.RedisService;

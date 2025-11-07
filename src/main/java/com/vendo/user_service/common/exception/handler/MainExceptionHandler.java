@@ -1,6 +1,6 @@
 package com.vendo.user_service.common.exception.handler;
 
-import com.vendo.user_service.common.exception.ExceptionResponse;
+import com.vendo.common.exception.ExceptionResponse;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.ConstraintViolationException;

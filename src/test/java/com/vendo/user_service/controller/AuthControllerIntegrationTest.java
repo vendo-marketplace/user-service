@@ -4,7 +4,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.vendo.domain.user.common.type.UserStatus;
 import com.vendo.user_service.common.builder.AuthRequestDataBuilder;
 import com.vendo.user_service.common.builder.UserDataBuilder;
-import com.vendo.user_service.common.exception.ExceptionResponse;
 import com.vendo.user_service.common.type.UserRole;
 import com.vendo.user_service.system.redis.common.dto.ValidateRequest;
 import com.vendo.user_service.system.redis.common.namespace.otp.EmailVerificationOtpNamespace;

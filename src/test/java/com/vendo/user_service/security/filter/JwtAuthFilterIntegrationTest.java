@@ -1,9 +1,9 @@
 package com.vendo.user_service.security.filter;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.vendo.common.exception.ExceptionResponse;
 import com.vendo.domain.user.common.type.UserStatus;
 import com.vendo.user_service.common.builder.UserDataBuilder;
-import com.vendo.user_service.common.exception.ExceptionResponse;
 import com.vendo.user_service.model.User;
 import com.vendo.user_service.repository.UserRepository;
 import com.vendo.user_service.security.service.JwtService;

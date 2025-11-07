@@ -1,5 +1,6 @@
 package com.vendo.user_service.common.exception.handler;
 
+import com.vendo.common.exception.ExceptionResponse;
 import com.vendo.user_service.common.exception.*;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.http.HttpStatus;
