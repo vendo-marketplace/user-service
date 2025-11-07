@@ -132,7 +132,7 @@ public class JwtAuthFilterIntegrationTest {
     }
 
     @Test
-    void doFilterInternal_shouldReturnUnauthorized_whenTokenIsNotValidValid() throws Exception {
+    void doFilterInternal_shouldReturnUnauthorized_whenTokenIsNotValid() throws Exception {
         User user = UserDataBuilder.buildUserWithRequiredFields().build();
         userRepository.save(user);
         String expiredToken = jwtService.generateTokenWithExpiration(user, 0);
