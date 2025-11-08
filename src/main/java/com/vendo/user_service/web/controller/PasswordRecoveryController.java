@@ -19,8 +19,11 @@ public class PasswordRecoveryController {
     }
 
     @PutMapping("/reset")
-    void resetPassword(@Valid @RequestBody ResetPasswordRequest resetPasswordRequest) {
-        passwordRecoveryService.resetPassword(resetPasswordRequest);
+    void resetPassword(
+            @RequestParam String otp,
+            @Valid @RequestBody ResetPasswordRequest resetPasswordRequest
+    ) {
+        passwordRecoveryService.resetPassword(otp ,resetPasswordRequest);
     }
 
     @PutMapping("/resend-otp")
