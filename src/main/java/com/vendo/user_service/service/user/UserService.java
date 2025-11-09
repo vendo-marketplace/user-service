@@ -16,11 +16,11 @@ public class UserService {
 
     private final UserRepository userRepository;
 
-    public void save(User user) {
+    public User save(User user) {
         findByEmail(user.getEmail()).ifPresent(userResponse -> {
             throw new UserAlreadyExistsException("User with this email already exists.");
         });
-        userRepository.save(user);
+        return userRepository.save(user);
     }
 
     public void update(String userId, User requestUser) {
