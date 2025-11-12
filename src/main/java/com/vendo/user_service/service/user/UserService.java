@@ -1,6 +1,9 @@
 package com.vendo.user_service.service.user;
 
+import com.vendo.domain.user.common.type.UserStatus;
 import com.vendo.user_service.common.exception.UserAlreadyExistsException;
+import com.vendo.user_service.common.type.Provider;
+import com.vendo.user_service.common.type.UserRole;
 import com.vendo.user_service.model.User;
 import com.vendo.user_service.repository.UserRepository;
 import jakarta.validation.constraints.NotNull;
@@ -28,8 +31,18 @@ public class UserService {
 
         Optional.ofNullable(requestUser.getPassword()).ifPresent(user::setPassword);
         Optional.ofNullable(requestUser.getStatus()).ifPresent(user::setStatus);
+        Optional.ofNullable(requestUser.getProvider()).ifPresent(user::setProvider);
 
         userRepository.save(user);
+    }
+
+    public User findUserByEmailOrSave(String email) {
+        return findByEmail(email).orElseGet(() -> save(User.builder()
+                        .email(email)
+                        .role(UserRole.USER)
+                        .status(UserStatus.ACTIVE)
+                        .provider(Provider.LOCAL)
+                        .build()));
     }
 
     public User findByUserIdOrThrow(@NotNull String userId) {

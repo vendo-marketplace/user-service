@@ -81,19 +81,13 @@ public class AuthService {
     public AuthResponse googleAuth(GoogleAuthRequest googleAuthRequest) {
         GoogleIdToken.Payload payload = googleOauthService.verify(googleAuthRequest.idToken());
 
-        User user = userService.findByEmail(payload.getEmail()).orElseGet(() -> userService.save(User.builder()
-                .email(payload.getEmail())
-                .role(UserRole.USER)
-                .status(UserStatus.ACTIVE)
-                .provider(Provider.GOOGLE)
-                .build()));
+        User user = userService.findUserByEmailOrSave(payload.getEmail());
+        updateUserGoogleAuthActivity(user);
 
-        String accessToken = jwtService.generateAccessToken(user);
-        String refreshToken = jwtService.generateRefreshToken(user);
-
+        TokenPayload tokenPayload = jwtUserDetailsService.generateTokenPayload(user);
         return AuthResponse.builder()
-                .accessToken(accessToken)
-                .refreshToken(refreshToken)
+                .accessToken(tokenPayload.accessToken())
+                .refreshToken(tokenPayload.refreshToken())
                 .build();
     }
 
@@ -102,5 +96,15 @@ public class AuthService {
         if (!matches) {
             throw new BadCredentialsException("Wrong credentials");
         }
+    }
+
+    private void updateUserGoogleAuthActivity(User user) {
+        if (user.getStatus() == UserStatus.INCOMPLETE) {
+            user.setStatus(UserStatus.ACTIVE);
+        }
+
+        user.setProvider(Provider.GOOGLE);
+
+        userService.update(user.getId(), user);
     }
 }
