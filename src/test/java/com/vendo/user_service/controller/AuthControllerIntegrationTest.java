@@ -3,12 +3,11 @@ package com.vendo.user_service.controller;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.vendo.common.exception.ExceptionResponse;
 import com.vendo.domain.user.common.type.UserStatus;
+import com.vendo.security.common.exception.AccessDeniedException;
 import com.vendo.user_service.common.builder.AuthRequestDataBuilder;
 import com.vendo.user_service.common.builder.UserDataBuilder;
+import com.vendo.user_service.common.exception.UserAlreadyExistsException;
 import com.vendo.user_service.common.type.UserRole;
-import com.vendo.user_service.system.redis.common.namespace.otp.EmailVerificationOtpNamespace;
-import com.vendo.user_service.system.redis.service.RedisService;
-import com.vendo.user_service.integration.kafka.consumer.TestConsumer;
 import com.vendo.user_service.model.User;
 import com.vendo.user_service.repository.UserRepository;
 import com.vendo.user_service.security.common.helper.JwtHelper;
@@ -16,6 +15,7 @@ import com.vendo.user_service.security.service.JwtService;
 import com.vendo.user_service.web.dto.AuthRequest;
 import com.vendo.user_service.web.dto.AuthResponse;
 import com.vendo.user_service.web.dto.RefreshRequest;
+import io.jsonwebtoken.ExpiredJwtException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -25,6 +25,7 @@ import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockHttpServletResponse;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.event.annotation.AfterTestClass;
@@ -117,8 +118,10 @@ class AuthControllerIntegrationTest {
         assertThat(responseContent).isNotBlank();
 
         ExceptionResponse exceptionResponse = objectMapper.readValue(responseContent, ExceptionResponse.class);
-        assertThat(exceptionResponse.message()).isEqualTo("User with this email already exists.");
+        assertThat(exceptionResponse.message()).isEqualTo("User already exists.");
         assertThat(exceptionResponse.code()).isEqualTo(HttpStatus.CONFLICT.value());
+        assertThat(exceptionResponse.path()).isEqualTo("/auth/sign-up");
+        assertThat(exceptionResponse.type()).isEqualTo(UserAlreadyExistsException.class.getSimpleName());
     }
 
     @Test
@@ -165,6 +168,8 @@ class AuthControllerIntegrationTest {
         ExceptionResponse exceptionResponse = objectMapper.readValue(responseContent, ExceptionResponse.class);
         assertThat(exceptionResponse.message()).isEqualTo("User not found.");
         assertThat(exceptionResponse.code()).isEqualTo(HttpStatus.NOT_FOUND.value());
+        assertThat(exceptionResponse.path()).isEqualTo("/auth/sign-in");
+        assertThat(exceptionResponse.type()).isEqualTo(UsernameNotFoundException.class.getSimpleName());
     }
 
     @Test
@@ -189,6 +194,8 @@ class AuthControllerIntegrationTest {
         ExceptionResponse exceptionResponse = objectMapper.readValue(responseContent, ExceptionResponse.class);
         assertThat(exceptionResponse.message()).isEqualTo("User is unactive.");
         assertThat(exceptionResponse.code()).isEqualTo(HttpStatus.FORBIDDEN.value());
+        assertThat(exceptionResponse.path()).isEqualTo("/auth/sign-in");
+        assertThat(exceptionResponse.type()).isEqualTo(AccessDeniedException.class.getSimpleName());
     }
 
     @Test
@@ -213,6 +220,8 @@ class AuthControllerIntegrationTest {
         ExceptionResponse exceptionResponse = objectMapper.readValue(responseContent, ExceptionResponse.class);
         assertThat(exceptionResponse.message()).isEqualTo("User is unactive.");
         assertThat(exceptionResponse.code()).isEqualTo(HttpStatus.FORBIDDEN.value());
+        assertThat(exceptionResponse.path()).isEqualTo("/auth/sign-in");
+        assertThat(exceptionResponse.type()).isEqualTo(AccessDeniedException.class.getSimpleName());
     }
 
     @Test
@@ -255,8 +264,10 @@ class AuthControllerIntegrationTest {
         assertThat(responseContent).isNotBlank();
 
         ExceptionResponse exceptionResponse = objectMapper.readValue(responseContent, ExceptionResponse.class);
-        assertThat(exceptionResponse.message()).isEqualTo("User does not exist.");
+        assertThat(exceptionResponse.message()).isEqualTo("User not found.");
         assertThat(exceptionResponse.code()).isEqualTo(HttpStatus.NOT_FOUND.value());
+        assertThat(exceptionResponse.path()).isEqualTo("/auth/refresh");
+        assertThat(exceptionResponse.type()).isEqualTo(UsernameNotFoundException.class.getSimpleName());
     }
 
     @Test
@@ -277,5 +288,7 @@ class AuthControllerIntegrationTest {
         ExceptionResponse exceptionResponse = objectMapper.readValue(responseContent, ExceptionResponse.class);
         assertThat(exceptionResponse.message()).isEqualTo("Token has expired");
         assertThat(exceptionResponse.code()).isEqualTo(HttpStatus.UNAUTHORIZED.value());
+        assertThat(exceptionResponse.path()).isEqualTo("/auth/refresh");
+        assertThat(exceptionResponse.type()).isEqualTo(ExpiredJwtException.class.getSimpleName());
     }
 }

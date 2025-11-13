@@ -3,7 +3,11 @@ package com.vendo.user_service.controller;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.vendo.common.exception.ExceptionResponse;
 import com.vendo.domain.user.common.type.UserStatus;
+import com.vendo.integration.redis.common.exception.RedisValueExpiredException;
 import com.vendo.user_service.common.builder.UserDataBuilder;
+import com.vendo.user_service.common.exception.OtpAlreadySentException;
+import com.vendo.user_service.common.exception.TooManyOtpRequestsException;
+import com.vendo.user_service.common.exception.UserAlreadyExistsException;
 import com.vendo.user_service.integration.kafka.consumer.TestConsumer;
 import com.vendo.user_service.model.User;
 import com.vendo.user_service.repository.UserRepository;
@@ -19,6 +23,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.event.annotation.AfterTestClass;
 import org.springframework.test.web.servlet.MockMvc;
@@ -119,8 +124,10 @@ public class EmailVerificationControllerIntegrationTest {
         assertThat(responseContent).isNotNull();
 
         ExceptionResponse exceptionResponse = objectMapper.readValue(responseContent, ExceptionResponse.class);
-        assertThat(exceptionResponse.message()).isEqualTo("Otp has already sent to the email.");
+        assertThat(exceptionResponse.message()).isEqualTo("Otp has already sent.");
         assertThat(exceptionResponse.code()).isEqualTo(HttpStatus.CONFLICT.value());
+        assertThat(exceptionResponse.path()).isEqualTo("/verification/send-otp");
+        assertThat(exceptionResponse.type()).isEqualTo(OtpAlreadySentException.class.getSimpleName());
 
         Optional<String> otpOptional = redisService.getValue(emailVerificationOtpNamespace.getEmail().buildPrefix(user.getEmail()));
         assertThat(otpOptional).isPresent();
@@ -145,6 +152,8 @@ public class EmailVerificationControllerIntegrationTest {
         ExceptionResponse exceptionResponse = objectMapper.readValue(responseContent, ExceptionResponse.class);
         assertThat(exceptionResponse.message()).isEqualTo("User not found.");
         assertThat(exceptionResponse.code()).isEqualTo(HttpStatus.NOT_FOUND.value());
+        assertThat(exceptionResponse.path()).isEqualTo("/verification/send-otp");
+        assertThat(exceptionResponse.type()).isEqualTo(UsernameNotFoundException.class.getSimpleName());
 
         Optional<String> otp = redisService.getValue(emailVerificationOtpNamespace.getEmail().buildPrefix(user.getEmail()));
         assertThat(otp).isEmpty();
@@ -220,6 +229,8 @@ public class EmailVerificationControllerIntegrationTest {
         ExceptionResponse exceptionResponse = objectMapper.readValue(responseContent, ExceptionResponse.class);
         assertThat(exceptionResponse.message()).isEqualTo("User not found.");
         assertThat(exceptionResponse.code()).isEqualTo(HttpStatus.NOT_FOUND.value());
+        assertThat(exceptionResponse.path()).isEqualTo("/verification/resend-otp");
+        assertThat(exceptionResponse.type()).isEqualTo(UsernameNotFoundException.class.getSimpleName());
 
         Optional<User> optionalUser = userRepository.findByEmail(user.getEmail());
         assertThat(optionalUser).isNotPresent();
@@ -312,8 +323,10 @@ public class EmailVerificationControllerIntegrationTest {
         assertThat(responseContent).isNotNull();
 
         ExceptionResponse exceptionResponse = objectMapper.readValue(responseContent, ExceptionResponse.class);
-        assertThat(exceptionResponse.message()).isEqualTo("Reached maximum attempts for resending otp code.");
+        assertThat(exceptionResponse.message()).isEqualTo("Reached maximum attempts.");
         assertThat(exceptionResponse.code()).isEqualTo(HttpStatus.TOO_MANY_REQUESTS.value());
+        assertThat(exceptionResponse.path()).isEqualTo("/verification/resend-otp");
+        assertThat(exceptionResponse.type()).isEqualTo(TooManyOtpRequestsException.class.getSimpleName());
 
         Optional<String> attemptsOptional = redisService.getValue(emailVerificationOtpNamespace.getAttempts().buildPrefix(user.getEmail()));
         assertThat(attemptsOptional).isPresent();
@@ -335,7 +348,12 @@ public class EmailVerificationControllerIntegrationTest {
                 .getContentAsString();
 
         assertThat(responseContent).isNotNull();
-        assertThat(responseContent).isEqualTo("Otp session expired.");
+
+        ExceptionResponse exceptionResponse = objectMapper.readValue(responseContent, ExceptionResponse.class);
+        assertThat(exceptionResponse.message()).isEqualTo("Otp session expired.");
+        assertThat(exceptionResponse.code()).isEqualTo(HttpStatus.GONE.value());
+        assertThat(exceptionResponse.path()).isEqualTo("/verification/resend-otp");
+        assertThat(exceptionResponse.type()).isEqualTo(RedisValueExpiredException.class.getSimpleName());
 
         Optional<String> otp = redisService.getValue(emailVerificationOtpNamespace.getEmail().buildPrefix(user.getEmail()));
         assertThat(otp).isNotPresent();
@@ -432,7 +450,11 @@ public class EmailVerificationControllerIntegrationTest {
                 .getContentAsString();
 
         assertThat(responseContent).isNotNull();
-        assertThat(responseContent).isEqualTo("Otp has expired.");
+
+        ExceptionResponse exceptionResponse = objectMapper.readValue(responseContent, ExceptionResponse.class);
+        assertThat(exceptionResponse.message()).isEqualTo("Otp session expired.");
+        assertThat(exceptionResponse.code()).isEqualTo(HttpStatus.GONE.value());
+        assertThat(exceptionResponse.path()).isEqualTo("/verification/validate");
 
         User updateUser = userRepository.findByEmail(user.getEmail()).orElseThrow();
         assertThat(updateUser.getStatus()).isEqualTo(UserStatus.INCOMPLETE);

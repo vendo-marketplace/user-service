@@ -27,7 +27,7 @@ public class MainExceptionHandler {
 
         ExceptionResponse exceptionResponse = ExceptionResponse.builder()
                 .message(invalidFields)
-                .type("ConstraintViolationException")
+                .type(ConstraintViolationException.class.getSimpleName())
                 .code(HttpStatus.BAD_REQUEST.value())
                 .path(request.getRequestURI())
                 .build();
@@ -46,7 +46,7 @@ public class MainExceptionHandler {
 
         ExceptionResponse exceptionResponse = ExceptionResponse.builder()
                 .message(invalidFields)
-                .type("MethodArgumentNotValidException")
+                .type(MethodArgumentNotValidException.class.getSimpleName())
                 .code(HttpStatus.BAD_REQUEST.value())
                 .path(request.getRequestURI())
                 .build();

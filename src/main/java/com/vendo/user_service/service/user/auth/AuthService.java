@@ -54,7 +54,7 @@ public class AuthService {
 
     public void signUp(AuthRequest authRequest) {
         userService.findByEmail(authRequest.email()).ifPresent(user -> {
-            throw new UserAlreadyExistsException("User with this email already exists.");
+            throw new UserAlreadyExistsException("User already exists.");
         });
 
         String encodedPassword = passwordEncoder.encode(authRequest.password());

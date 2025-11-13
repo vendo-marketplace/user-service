@@ -27,7 +27,7 @@ public class EmailOtpService {
 
     public void sendOtp(EmailOtpEvent event, OtpNamespace otpNamespace) {
         if (redisService.hasActiveKey(otpNamespace.getEmail().buildPrefix(event.getEmail()))) {
-            throw new OtpAlreadySentException("Otp has already sent to the email.");
+            throw new OtpAlreadySentException("Otp has already sent.");
         }
 
         String otp = otpGenerator.generateSixDigitOtp();
@@ -53,7 +53,8 @@ public class EmailOtpService {
 
     public void verifyOtp(String otp, String email, OtpNamespace otpNamespace) {
         String redisEmail = redisService.getValue(otpNamespace.getOtp().buildPrefix(otp))
-                .orElseThrow(() -> new RedisValueExpiredException("Otp has expired."));
+                // TODO change to OtpExpiredException
+                .orElseThrow(() -> new RedisValueExpiredException("Otp session expired."));
 
         if (!redisEmail.equals(email)) {
             throw new InvalidOtpException("Invalid otp.");
@@ -71,7 +72,7 @@ public class EmailOtpService {
         int attempt = attempts.map(Integer::parseInt).orElse(0);
 
         if (attempt >= 3) {
-            throw new TooManyOtpRequestsException("Reached maximum attempts for resending otp code.");
+            throw new TooManyOtpRequestsException("Reached maximum attempts.");
         }
 
         redisService.saveValue(

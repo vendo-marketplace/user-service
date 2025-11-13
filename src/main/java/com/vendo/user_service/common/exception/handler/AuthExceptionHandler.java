@@ -17,7 +17,7 @@ public class AuthExceptionHandler {
     public ResponseEntity<ExceptionResponse> handleUserAlreadyExistsException(UserAlreadyExistsException e, HttpServletRequest request) {
         ExceptionResponse exceptionResponse = ExceptionResponse.builder()
                 .message(e.getMessage())
-                .type("UserAlreadyExistsException")
+                .type(UserAlreadyExistsException.class.getSimpleName())
                 .code(HttpStatus.CONFLICT.value())
                 .path(request.getRequestURI())
                 .build();
@@ -28,7 +28,7 @@ public class AuthExceptionHandler {
     public ResponseEntity<ExceptionResponse> handleUsernameNotFoundException(UsernameNotFoundException e, HttpServletRequest request) {
         ExceptionResponse exceptionResponse = ExceptionResponse.builder()
                 .message(e.getMessage())
-                .type("UsernameNotFoundException")
+                .type(UsernameNotFoundException.class.getSimpleName())
                 .code(HttpStatus.NOT_FOUND.value())
                 .path(request.getRequestURI())
                 .build();
@@ -39,7 +39,7 @@ public class AuthExceptionHandler {
     public ResponseEntity<ExceptionResponse> handleBadCredentialsException(BadCredentialsException e, HttpServletRequest request) {
         ExceptionResponse exceptionResponse = ExceptionResponse.builder()
                 .message(e.getMessage())
-                .type("BadCredentialsException")
+                .type(BadCredentialsException.class.getSimpleName())
                 .code(HttpStatus.UNAUTHORIZED.value())
                 .path(request.getRequestURI())
                 .build();
@@ -50,7 +50,7 @@ public class AuthExceptionHandler {
     public ResponseEntity<ExceptionResponse> handlePasswordRecoveryEventAlreadySentException(OtpAlreadySentException e, HttpServletRequest request) {
         ExceptionResponse exceptionResponse = ExceptionResponse.builder()
                 .message(e.getMessage())
-                .type("OtpAlreadySentException")
+                .type(OtpAlreadySentException.class.getSimpleName())
                 .code(HttpStatus.CONFLICT.value())
                 .path(request.getRequestURI())
                 .build();
@@ -61,7 +61,7 @@ public class AuthExceptionHandler {
     public ResponseEntity<ExceptionResponse> handleOtpTooManyRequestsException(TooManyOtpRequestsException e, HttpServletRequest request) {
         ExceptionResponse exceptionResponse = ExceptionResponse.builder()
                 .message(e.getMessage())
-                .type("TooManyOtpRequestsException")
+                .type(TooManyOtpRequestsException.class.getSimpleName())
                 .code(HttpStatus.TOO_MANY_REQUESTS.value())
                 .path(request.getRequestURI())
                 .build();
@@ -72,7 +72,7 @@ public class AuthExceptionHandler {
     public ResponseEntity<ExceptionResponse> handleInvalidOtpForEmailException(InvalidOtpException e, HttpServletRequest request) {
         ExceptionResponse exceptionResponse = ExceptionResponse.builder()
                 .message(e.getMessage())
-                .type("InvalidOtpException")
+                .type(InvalidOtpException.class.getSimpleName())
                 .code(HttpStatus.GONE.value())
                 .path(request.getRequestURI())
                 .build();
