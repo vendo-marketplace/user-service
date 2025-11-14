@@ -1,11 +1,11 @@
 package com.vendo.user_service.service;
 
 import com.google.api.client.googleapis.auth.oauth2.GoogleIdToken;
+import com.vendo.domain.user.common.type.ProviderType;
 import com.vendo.domain.user.common.type.UserStatus;
 import com.vendo.security.common.exception.AccessDeniedException;
 import com.vendo.user_service.common.builder.TokenPayloadDataBuilder;
 import com.vendo.user_service.common.builder.UserDataBuilder;
-import com.vendo.user_service.common.type.Provider;
 import com.vendo.user_service.model.User;
 import com.vendo.user_service.security.common.dto.TokenPayload;
 import com.vendo.user_service.security.service.JwtUserDetailsService;
@@ -91,7 +91,7 @@ public class AuthServiceTest {
 
         User captorValue = userCaptor.getValue();
         assertThat(captorValue.getStatus()).isEqualTo(UserStatus.ACTIVE);
-        assertThat(captorValue.getProvider()).isEqualTo(Provider.GOOGLE);
+        assertThat(captorValue.getProviderType()).isEqualTo(ProviderType.GOOGLE);
 
         verify(googleOauthService).verify(idToken);
         verify(userService).findUserByEmailOrSave(email);

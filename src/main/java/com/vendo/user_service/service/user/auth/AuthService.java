@@ -1,10 +1,10 @@
 package com.vendo.user_service.service.user.auth;
 
 import com.google.api.client.googleapis.auth.oauth2.GoogleIdToken;
+import com.vendo.domain.user.common.type.ProviderType;
 import com.vendo.domain.user.common.type.UserStatus;
 import com.vendo.security.common.exception.AccessDeniedException;
 import com.vendo.user_service.common.exception.UserAlreadyExistsException;
-import com.vendo.user_service.common.type.Provider;
 import com.vendo.user_service.common.type.UserRole;
 import com.vendo.user_service.model.User;
 import com.vendo.user_service.security.common.dto.TokenPayload;
@@ -63,7 +63,7 @@ public class AuthService {
                 .email(authRequest.email())
                 .role(UserRole.USER)
                 .status(UserStatus.INCOMPLETE)
-                .provider(Provider.LOCAL)
+                .providerType(ProviderType.LOCAL)
                 .password(encodedPassword)
                 .build());
     }
@@ -103,7 +103,7 @@ public class AuthService {
             user.setStatus(UserStatus.ACTIVE);
         }
 
-        user.setProvider(Provider.GOOGLE);
+        user.setProviderType(ProviderType.GOOGLE);
 
         userService.update(user.getId(), user);
     }

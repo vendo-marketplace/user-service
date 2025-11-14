@@ -2,7 +2,7 @@ package com.vendo.user_service.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.vendo.common.exception.ExceptionResponse;
-import com.vendo.integration.redis.common.exception.RedisValueExpiredException;
+import com.vendo.integration.redis.common.exception.OtpExpiredException;
 import com.vendo.user_service.common.builder.UserDataBuilder;
 import com.vendo.user_service.common.exception.TooManyOtpRequestsException;
 import com.vendo.user_service.system.redis.common.dto.ResetPasswordRequest;
@@ -436,7 +436,7 @@ public class PasswordRecoveryControllerIntegrationTest {
         assertThat(exceptionResponse.message()).isEqualTo("Otp session expired.");
         assertThat(exceptionResponse.code()).isEqualTo(HttpStatus.GONE.value());
         assertThat(exceptionResponse.path()).isEqualTo("/password/resend-otp");
-        assertThat(exceptionResponse.type()).isEqualTo(RedisValueExpiredException.class.getSimpleName());
+        assertThat(exceptionResponse.type()).isEqualTo(OtpExpiredException.class.getSimpleName());
 
         Optional<User> optionalUser = userRepository.findByEmail(user.getEmail());
         assertThat(optionalUser).isPresent();

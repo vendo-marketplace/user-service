@@ -2,6 +2,7 @@ package com.vendo.user_service.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.vendo.common.exception.ExceptionResponse;
+import com.vendo.domain.user.common.type.ProviderType;
 import com.vendo.domain.user.common.type.UserStatus;
 import com.vendo.security.common.exception.AccessDeniedException;
 import com.vendo.user_service.common.builder.AuthRequestDataBuilder;
@@ -98,6 +99,7 @@ class AuthControllerIntegrationTest {
         assertThat(passwordEncoder.matches(authRequest.password(), user.getPassword())).isTrue();
         assertThat(user.getRole()).isEqualTo(UserRole.USER);
         assertThat(user.getStatus()).isEqualTo(UserStatus.INCOMPLETE);
+        assertThat(user.getProviderType()).isEqualTo(ProviderType.LOCAL);
     }
 
     @Test

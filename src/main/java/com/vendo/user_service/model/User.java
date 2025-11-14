@@ -1,7 +1,7 @@
 package com.vendo.user_service.model;
 
+import com.vendo.domain.user.common.type.ProviderType;
 import com.vendo.domain.user.common.type.UserStatus;
-import com.vendo.user_service.common.type.Provider;
 import com.vendo.user_service.common.type.UserRole;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Past;
@@ -35,7 +35,7 @@ public class User implements UserDetails {
     private UserStatus status;
 
     @NotNull(message = "Provider is required")
-    private Provider provider;
+    private ProviderType providerType;
 
     @NotNull(message = "Password is required")
     @Pattern(regexp = "^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[!@#$%^&*()_+\\-=\\[\\]{};':\"\\\\|,.<>\\/?]).{8,}$", message = "Invalid password. Should include minimum 8 characters, 1 uppercase character, 1 lowercase character, 1 special symbol")

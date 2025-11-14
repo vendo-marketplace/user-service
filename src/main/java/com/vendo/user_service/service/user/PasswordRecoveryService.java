@@ -1,7 +1,7 @@
 package com.vendo.user_service.service.user;
 
 import com.vendo.integration.kafka.event.EmailOtpEvent;
-import com.vendo.integration.redis.common.exception.RedisValueExpiredException;
+import com.vendo.integration.redis.common.exception.OtpExpiredException;
 import com.vendo.user_service.system.redis.common.dto.ResetPasswordRequest;
 import com.vendo.user_service.system.redis.common.namespace.otp.PasswordRecoveryOtpNamespace;
 import com.vendo.user_service.system.redis.service.RedisService;
@@ -41,7 +41,7 @@ public class PasswordRecoveryService {
 
     public void resetPassword(String otp, ResetPasswordRequest resetPasswordRequest) {
         String email = redisService.getValue(passwordRecoveryOtpNamespace.getOtp().buildPrefix(String.valueOf(otp)))
-                .orElseThrow(() -> new RedisValueExpiredException("Otp session expired."));
+                .orElseThrow(() -> new OtpExpiredException("Otp session expired."));
 
         User user = userService.findByEmailOrThrow(email);
         userService.update(user.getId(), User.builder()

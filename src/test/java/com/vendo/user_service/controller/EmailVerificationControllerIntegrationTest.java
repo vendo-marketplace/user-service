@@ -3,11 +3,10 @@ package com.vendo.user_service.controller;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.vendo.common.exception.ExceptionResponse;
 import com.vendo.domain.user.common.type.UserStatus;
-import com.vendo.integration.redis.common.exception.RedisValueExpiredException;
+import com.vendo.integration.redis.common.exception.OtpExpiredException;
 import com.vendo.user_service.common.builder.UserDataBuilder;
 import com.vendo.user_service.common.exception.OtpAlreadySentException;
 import com.vendo.user_service.common.exception.TooManyOtpRequestsException;
-import com.vendo.user_service.common.exception.UserAlreadyExistsException;
 import com.vendo.user_service.integration.kafka.consumer.TestConsumer;
 import com.vendo.user_service.model.User;
 import com.vendo.user_service.repository.UserRepository;
@@ -353,7 +352,7 @@ public class EmailVerificationControllerIntegrationTest {
         assertThat(exceptionResponse.message()).isEqualTo("Otp session expired.");
         assertThat(exceptionResponse.code()).isEqualTo(HttpStatus.GONE.value());
         assertThat(exceptionResponse.path()).isEqualTo("/verification/resend-otp");
-        assertThat(exceptionResponse.type()).isEqualTo(RedisValueExpiredException.class.getSimpleName());
+        assertThat(exceptionResponse.type()).isEqualTo(OtpExpiredException.class.getSimpleName());
 
         Optional<String> otp = redisService.getValue(emailVerificationOtpNamespace.getEmail().buildPrefix(user.getEmail()));
         assertThat(otp).isNotPresent();

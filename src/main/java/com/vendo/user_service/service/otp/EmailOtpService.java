@@ -1,7 +1,7 @@
 package com.vendo.user_service.service.otp;
 
 import com.vendo.integration.kafka.event.EmailOtpEvent;
-import com.vendo.integration.redis.common.exception.RedisValueExpiredException;
+import com.vendo.integration.redis.common.exception.OtpExpiredException;
 import com.vendo.user_service.common.exception.InvalidOtpException;
 import com.vendo.user_service.common.exception.OtpAlreadySentException;
 import com.vendo.user_service.common.exception.TooManyOtpRequestsException;
@@ -41,7 +41,7 @@ public class EmailOtpService {
 
     public void resendOtp(EmailOtpEvent event,OtpNamespace otpNamespace) {
         redisService.getValue(otpNamespace.getEmail().buildPrefix(event.getEmail()))
-                .orElseThrow(() -> new RedisValueExpiredException("Otp session expired."));
+                .orElseThrow(() -> new OtpExpiredException("Otp session expired."));
 
         increaseResendAttemptsOrThrow(event.getEmail(), otpNamespace);
 
@@ -53,8 +53,7 @@ public class EmailOtpService {
 
     public void verifyOtp(String otp, String email, OtpNamespace otpNamespace) {
         String redisEmail = redisService.getValue(otpNamespace.getOtp().buildPrefix(otp))
-                // TODO change to OtpExpiredException
-                .orElseThrow(() -> new RedisValueExpiredException("Otp session expired."));
+                .orElseThrow(() -> new OtpExpiredException("Otp session expired."));
 
         if (!redisEmail.equals(email)) {
             throw new InvalidOtpException("Invalid otp.");
