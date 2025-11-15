@@ -56,7 +56,7 @@ public class AuthServiceTest {
         when(userService.findUserByEmailOrSave(email)).thenReturn(user);
         when(jwtUserDetailsService.generateTokenPayload(user)).thenReturn(tokenPayload);
 
-        verify(userService, times(0)).save(user);
+        verify(userService, never()).save(user);
         AuthResponse authResponse = authService.googleAuth(googleAuthRequest);
         assertThat(authResponse).isNotNull();
         assertThat(authResponse.accessToken()).isEqualTo(tokenPayload.accessToken());
