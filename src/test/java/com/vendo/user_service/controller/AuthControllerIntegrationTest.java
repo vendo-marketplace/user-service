@@ -5,6 +5,7 @@ import com.vendo.common.exception.ExceptionResponse;
 import com.vendo.domain.user.common.type.ProviderType;
 import com.vendo.domain.user.common.type.UserStatus;
 import com.vendo.security.common.exception.AccessDeniedException;
+import com.vendo.security.common.exception.InvalidTokenException;
 import com.vendo.user_service.common.builder.AuthRequestDataBuilder;
 import com.vendo.user_service.common.builder.UserDataBuilder;
 import com.vendo.user_service.common.exception.UserAlreadyExistsException;
@@ -34,6 +35,7 @@ import org.springframework.test.web.servlet.MockMvc;
 
 import java.util.Optional;
 
+import static com.vendo.security.common.constants.AuthConstants.BEARER_PREFIX;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -231,7 +233,7 @@ class AuthControllerIntegrationTest {
         User user = UserDataBuilder.buildUserWithRequiredFields().build();
         userRepository.save(user);
         String refreshToken = jwtService.generateRefreshToken(user);
-        RefreshRequest refreshRequest = RefreshRequest.builder().refreshToken(refreshToken).build();
+        RefreshRequest refreshRequest = RefreshRequest.builder().refreshToken(BEARER_PREFIX + refreshToken).build();
 
         MockHttpServletResponse response = mockMvc.perform(post("/auth/refresh")
                 .contentType(MediaType.APPLICATION_JSON)
@@ -255,7 +257,7 @@ class AuthControllerIntegrationTest {
     void refresh_shouldReturnNotFound_whenUserNotFound() throws Exception {
         User user = UserDataBuilder.buildUserWithRequiredFields().build();
         String refreshToken = jwtService.generateRefreshToken(user);
-        RefreshRequest refreshRequest = RefreshRequest.builder().refreshToken(refreshToken).build();
+        RefreshRequest refreshRequest = RefreshRequest.builder().refreshToken(BEARER_PREFIX + refreshToken).build();
 
         MockHttpServletResponse response = mockMvc.perform(post("/auth/refresh")
                 .contentType(MediaType.APPLICATION_JSON)
@@ -273,11 +275,13 @@ class AuthControllerIntegrationTest {
     }
 
     @Test
-    void refresh_shouldReturnUnauthorized_whenTokenIsNotValid() throws Exception {
+    void refresh_shouldReturnUnauthorized_whenTokenWithoutBearerPrefix() throws Exception {
         User user = UserDataBuilder.buildUserWithRequiredFields().build();
         userRepository.save(user);
-        String expiredRefreshToken = jwtService.generateTokenWithExpiration(user, 0);
-        RefreshRequest refreshRequest = RefreshRequest.builder().refreshToken(expiredRefreshToken).build();
+        String refreshToken = jwtService.generateRefreshToken(user);
+        refreshToken = refreshToken.substring(BEARER_PREFIX.length() + 1);
+
+        RefreshRequest refreshRequest = RefreshRequest.builder().refreshToken(refreshToken).build();
 
         MockHttpServletResponse response = mockMvc.perform(post("/auth/refresh")
                 .contentType(MediaType.APPLICATION_JSON)
@@ -288,7 +292,29 @@ class AuthControllerIntegrationTest {
         assertThat(responseContent).isNotBlank();
 
         ExceptionResponse exceptionResponse = objectMapper.readValue(responseContent, ExceptionResponse.class);
-        assertThat(exceptionResponse.message()).isEqualTo("Token has expired");
+        assertThat(exceptionResponse.message()).isEqualTo("Invalid token.");
+        assertThat(exceptionResponse.code()).isEqualTo(HttpStatus.UNAUTHORIZED.value());
+        assertThat(exceptionResponse.path()).isEqualTo("/auth/refresh");
+        assertThat(exceptionResponse.type()).isEqualTo(InvalidTokenException.class.getSimpleName());
+    }
+
+    @Test
+    void refresh_shouldReturnUnauthorized_whenTokenIsExpired() throws Exception {
+        User user = UserDataBuilder.buildUserWithRequiredFields().build();
+        userRepository.save(user);
+        String expiredRefreshToken = jwtService.generateTokenWithExpiration(user, 0);
+        RefreshRequest refreshRequest = RefreshRequest.builder().refreshToken(BEARER_PREFIX + expiredRefreshToken).build();
+
+        MockHttpServletResponse response = mockMvc.perform(post("/auth/refresh")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(refreshRequest))
+        ).andExpect(status().isUnauthorized()).andReturn().getResponse();
+
+        String responseContent = response.getContentAsString();
+        assertThat(responseContent).isNotBlank();
+
+        ExceptionResponse exceptionResponse = objectMapper.readValue(responseContent, ExceptionResponse.class);
+        assertThat(exceptionResponse.message()).isEqualTo("Token has expired.");
         assertThat(exceptionResponse.code()).isEqualTo(HttpStatus.UNAUTHORIZED.value());
         assertThat(exceptionResponse.path()).isEqualTo("/auth/refresh");
         assertThat(exceptionResponse.type()).isEqualTo(ExpiredJwtException.class.getSimpleName());

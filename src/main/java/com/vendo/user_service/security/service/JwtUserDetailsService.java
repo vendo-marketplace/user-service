@@ -1,5 +1,6 @@
 package com.vendo.user_service.security.service;
 
+import com.vendo.security.common.exception.InvalidTokenException;
 import com.vendo.user_service.security.common.dto.TokenPayload;
 import com.vendo.user_service.security.common.helper.JwtHelper;
 import io.jsonwebtoken.Claims;
@@ -7,6 +8,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.stereotype.Service;
+
+import static com.vendo.security.common.constants.AuthConstants.BEARER_PREFIX;
 
 @Service
 @RequiredArgsConstructor
@@ -20,7 +23,7 @@ public class JwtUserDetailsService {
 
     public TokenPayload generateTokenPayload(UserDetails userDetails) {
         if (userDetails == null) {
-            throw new IllegalArgumentException("User details not present");
+            throw new IllegalArgumentException("User details is required.");
         }
 
         String accessToken = jwtService.generateAccessToken(userDetails);

@@ -4,6 +4,7 @@ import com.google.api.client.googleapis.auth.oauth2.GoogleIdToken;
 import com.vendo.domain.user.common.type.ProviderType;
 import com.vendo.domain.user.common.type.UserStatus;
 import com.vendo.security.common.exception.AccessDeniedException;
+import com.vendo.security.common.exception.InvalidTokenException;
 import com.vendo.user_service.common.exception.UserAlreadyExistsException;
 import com.vendo.user_service.common.type.UserRole;
 import com.vendo.user_service.model.User;
@@ -20,6 +21,8 @@ import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+
+import static com.vendo.security.common.constants.AuthConstants.BEARER_PREFIX;
 
 @Service
 @RequiredArgsConstructor
@@ -69,7 +72,12 @@ public class AuthService {
     }
 
     public AuthResponse refresh(RefreshRequest refreshRequest) {
-        UserDetails userDetails = jwtUserDetailsService.retrieveUserDetails(refreshRequest.refreshToken());
+        if (!refreshRequest.refreshToken().startsWith(BEARER_PREFIX)) {
+            throw new InvalidTokenException("Invalid token.");
+        }
+        String token = refreshRequest.refreshToken().substring(BEARER_PREFIX.length());
+
+        UserDetails userDetails = jwtUserDetailsService.retrieveUserDetails(token);
         TokenPayload tokenPayload = jwtUserDetailsService.generateTokenPayload(userDetails);
 
         return AuthResponse.builder()

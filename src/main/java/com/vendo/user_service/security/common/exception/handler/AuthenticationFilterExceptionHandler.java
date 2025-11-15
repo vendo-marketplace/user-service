@@ -41,7 +41,7 @@ public class AuthenticationFilterExceptionHandler {
     @ExceptionHandler(ExpiredJwtException.class)
     public ResponseEntity<ExceptionResponse> handleExpiredJwtException(ExpiredJwtException e, HttpServletRequest request) {
         ExceptionResponse exceptionResponse = ExceptionResponse.builder()
-                .message("Token has expired")
+                .message("Token has expired.")
                 .type(ExpiredJwtException.class.getSimpleName())
                 .code(HttpStatus.UNAUTHORIZED.value())
                 .path(request.getRequestURI())
