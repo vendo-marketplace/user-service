@@ -1,6 +1,9 @@
 package com.vendo.user_service.service.user;
 
+import com.vendo.domain.user.common.type.ProviderType;
+import com.vendo.domain.user.common.type.UserStatus;
 import com.vendo.user_service.common.exception.UserAlreadyExistsException;
+import com.vendo.user_service.common.type.UserRole;
 import com.vendo.user_service.model.User;
 import com.vendo.user_service.repository.UserRepository;
 import jakarta.validation.constraints.NotNull;
@@ -16,11 +19,11 @@ public class UserService {
 
     private final UserRepository userRepository;
 
-    public void save(User user) {
+    public User save(User user) {
         findByEmail(user.getEmail()).ifPresent(userResponse -> {
-            throw new UserAlreadyExistsException("User with this email already exists.");
+            throw new UserAlreadyExistsException("User already exists.");
         });
-        userRepository.save(user);
+        return userRepository.save(user);
     }
 
     public void update(String userId, User requestUser) {
@@ -28,8 +31,18 @@ public class UserService {
 
         Optional.ofNullable(requestUser.getPassword()).ifPresent(user::setPassword);
         Optional.ofNullable(requestUser.getStatus()).ifPresent(user::setStatus);
+        Optional.ofNullable(requestUser.getProviderType()).ifPresent(user::setProviderType);
 
         userRepository.save(user);
+    }
+
+    public User findUserByEmailOrSave(String email) {
+        return findByEmail(email).orElseGet(() -> save(User.builder()
+                        .email(email)
+                        .role(UserRole.USER)
+                        .status(UserStatus.ACTIVE)
+                        .providerType(ProviderType.LOCAL)
+                        .build()));
     }
 
     public User findByUserIdOrThrow(@NotNull String userId) {

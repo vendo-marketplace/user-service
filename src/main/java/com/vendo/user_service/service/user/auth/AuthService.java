@@ -1,27 +1,25 @@
-package com.vendo.user_service.service.user;
+package com.vendo.user_service.service.user.auth;
 
+import com.google.api.client.googleapis.auth.oauth2.GoogleIdToken;
+import com.vendo.domain.user.common.type.ProviderType;
 import com.vendo.domain.user.common.type.UserStatus;
-import com.vendo.integration.kafka.event.EmailOtpEvent;
 import com.vendo.security.common.exception.AccessDeniedException;
 import com.vendo.user_service.common.exception.UserAlreadyExistsException;
 import com.vendo.user_service.common.type.UserRole;
-import com.vendo.user_service.system.redis.common.dto.ValidateRequest;
-import com.vendo.user_service.system.redis.common.namespace.otp.EmailVerificationOtpNamespace;
 import com.vendo.user_service.model.User;
 import com.vendo.user_service.security.common.dto.TokenPayload;
 import com.vendo.user_service.security.service.JwtService;
 import com.vendo.user_service.security.service.JwtUserDetailsService;
-import com.vendo.user_service.service.otp.EmailOtpService;
+import com.vendo.user_service.service.user.UserService;
 import com.vendo.user_service.web.dto.AuthRequest;
 import com.vendo.user_service.web.dto.AuthResponse;
+import com.vendo.user_service.web.dto.GoogleAuthRequest;
 import com.vendo.user_service.web.dto.RefreshRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
-
-import static com.vendo.integration.kafka.event.EmailOtpEvent.OtpEventType.EMAIL_VERIFICATION;
 
 @Service
 @RequiredArgsConstructor
@@ -35,9 +33,7 @@ public class AuthService {
 
     private final JwtUserDetailsService jwtUserDetailsService;
 
-    private final EmailOtpService emailOtpService;
-
-    private final EmailVerificationOtpNamespace emailVerificationOtpNamespace;
+    private final GoogleOauthService googleOauthService;
 
     public AuthResponse signIn(AuthRequest authRequest) {
         User user = userService.findByEmailOrThrow(authRequest.email());
@@ -58,7 +54,7 @@ public class AuthService {
 
     public void signUp(AuthRequest authRequest) {
         userService.findByEmail(authRequest.email()).ifPresent(user -> {
-            throw new UserAlreadyExistsException("User with this email already exists.");
+            throw new UserAlreadyExistsException("User already exists.");
         });
 
         String encodedPassword = passwordEncoder.encode(authRequest.password());
@@ -67,6 +63,7 @@ public class AuthService {
                 .email(authRequest.email())
                 .role(UserRole.USER)
                 .status(UserStatus.INCOMPLETE)
+                .providerType(ProviderType.LOCAL)
                 .password(encodedPassword)
                 .build());
     }
@@ -81,34 +78,17 @@ public class AuthService {
                 .build();
     }
 
-    public void sendOtp(String email) {
-        userService.findByEmailOrThrow(email);
+    public AuthResponse googleAuth(GoogleAuthRequest googleAuthRequest) {
+        GoogleIdToken.Payload payload = googleOauthService.verify(googleAuthRequest.idToken());
 
-        EmailOtpEvent event = EmailOtpEvent.builder()
-                .email(email)
-                .otpEventType(EMAIL_VERIFICATION)
+        User user = userService.findUserByEmailOrSave(payload.getEmail());
+        updateUserGoogleAuthActivity(user);
+
+        TokenPayload tokenPayload = jwtUserDetailsService.generateTokenPayload(user);
+        return AuthResponse.builder()
+                .accessToken(tokenPayload.accessToken())
+                .refreshToken(tokenPayload.refreshToken())
                 .build();
-        emailOtpService.sendOtp(event, emailVerificationOtpNamespace);
-    }
-
-    public void resendOtp(String email) {
-        userService.findByEmailOrThrow(email);
-
-        EmailOtpEvent event = EmailOtpEvent.builder()
-                .email(email)
-                .otpEventType(EMAIL_VERIFICATION)
-                .build();
-        emailOtpService.resendOtp(event, emailVerificationOtpNamespace);
-    }
-
-    public void validate(String otp, ValidateRequest validateRequest) {
-        User user = userService.findByEmailOrThrow(validateRequest.email());
-
-        emailOtpService.verifyOtp(otp, validateRequest.email(), emailVerificationOtpNamespace);
-
-        userService.update(user.getId(), User.builder()
-                .status(UserStatus.ACTIVE)
-                .build());
     }
 
     private void matchPasswordsOrThrow(String rawPassword, String encodedPassword) {
@@ -116,5 +96,15 @@ public class AuthService {
         if (!matches) {
             throw new BadCredentialsException("Wrong credentials");
         }
+    }
+
+    private void updateUserGoogleAuthActivity(User user) {
+        if (user.getStatus() == UserStatus.INCOMPLETE) {
+            user.setStatus(UserStatus.ACTIVE);
+        }
+
+        user.setProviderType(ProviderType.GOOGLE);
+
+        userService.update(user.getId(), user);
     }
 }

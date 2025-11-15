@@ -2,7 +2,9 @@ package com.vendo.user_service.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.vendo.common.exception.ExceptionResponse;
+import com.vendo.integration.redis.common.exception.OtpExpiredException;
 import com.vendo.user_service.common.builder.UserDataBuilder;
+import com.vendo.user_service.common.exception.TooManyOtpRequestsException;
 import com.vendo.user_service.system.redis.common.dto.ResetPasswordRequest;
 import com.vendo.user_service.system.redis.common.namespace.otp.PasswordRecoveryOtpNamespace;
 import com.vendo.user_service.system.redis.service.RedisService;
@@ -122,8 +124,9 @@ public class PasswordRecoveryControllerIntegrationTest {
         assertThat(responseContent).isNotBlank();
 
         ExceptionResponse exceptionResponse = objectMapper.readValue(responseContent, ExceptionResponse.class);
-        assertThat(exceptionResponse.message()).isEqualTo("Otp has already sent to the email.");
+        assertThat(exceptionResponse.message()).isEqualTo("Otp has already sent.");
         assertThat(exceptionResponse.code()).isEqualTo(HttpStatus.CONFLICT.value());
+        assertThat(exceptionResponse.path()).isEqualTo("/password/forgot");
 
         Optional<String> otpOptional = redisService.getValue(passwordRecoveryOtpNamespace.getEmail().buildPrefix(user.getEmail()));
         assertThat(otpOptional).isPresent();
@@ -148,6 +151,7 @@ public class PasswordRecoveryControllerIntegrationTest {
         ExceptionResponse exceptionResponse = objectMapper.readValue(responseContent, ExceptionResponse.class);
         assertThat(exceptionResponse.message()).isEqualTo("User not found.");
         assertThat(exceptionResponse.code()).isEqualTo(HttpStatus.NOT_FOUND.value());
+        assertThat(exceptionResponse.path()).isEqualTo("/password/forgot");
 
         Optional<String> otp = redisService.getValue(passwordRecoveryOtpNamespace.getEmail().buildPrefix((user.getEmail())));
         assertThat(otp).isEmpty();
@@ -197,7 +201,11 @@ public class PasswordRecoveryControllerIntegrationTest {
                 .getContentAsString();
 
         assertThat(responseContent).isNotBlank();
-        assertThat(responseContent).isEqualTo("Otp has expired.");
+
+        ExceptionResponse exceptionResponse = objectMapper.readValue(responseContent, ExceptionResponse.class);
+        assertThat(exceptionResponse.message()).isEqualTo("Otp session expired.");
+        assertThat(exceptionResponse.code()).isEqualTo(HttpStatus.GONE.value());
+        assertThat(exceptionResponse.path()).isEqualTo("/password/reset");
 
         Optional<User> optionalUser = userRepository.findByEmail(user.getEmail());
         assertThat(optionalUser).isPresent();
@@ -229,6 +237,7 @@ public class PasswordRecoveryControllerIntegrationTest {
         ExceptionResponse exceptionResponse = objectMapper.readValue(responseContent, ExceptionResponse.class);
         assertThat(exceptionResponse.message()).isEqualTo("User not found.");
         assertThat(exceptionResponse.code()).isEqualTo(HttpStatus.NOT_FOUND.value());
+        assertThat(exceptionResponse.path()).isEqualTo("/password/reset");
 
         Optional<User> optionalUser = userRepository.findByEmail(user.getEmail());
         assertThat(optionalUser).isNotPresent();
@@ -307,6 +316,7 @@ public class PasswordRecoveryControllerIntegrationTest {
         ExceptionResponse exceptionResponse = objectMapper.readValue(responseContent, ExceptionResponse.class);
         assertThat(exceptionResponse.message()).isEqualTo("User not found.");
         assertThat(exceptionResponse.code()).isEqualTo(HttpStatus.NOT_FOUND.value());
+        assertThat(exceptionResponse.path()).isEqualTo("/password/resend-otp");
 
         Optional<User> optionalUser = userRepository.findByEmail(user.getEmail());
         assertThat(optionalUser).isNotPresent();
@@ -396,8 +406,10 @@ public class PasswordRecoveryControllerIntegrationTest {
         assertThat(responseContent).isNotNull();
 
         ExceptionResponse exceptionResponse = objectMapper.readValue(responseContent, ExceptionResponse.class);
-        assertThat(exceptionResponse.message()).isEqualTo("Reached maximum attempts for resending otp code.");
+        assertThat(exceptionResponse.message()).isEqualTo("Reached maximum attempts.");
         assertThat(exceptionResponse.code()).isEqualTo(HttpStatus.TOO_MANY_REQUESTS.value());
+        assertThat(exceptionResponse.path()).isEqualTo("/password/resend-otp");
+        assertThat(exceptionResponse.type()).isEqualTo(TooManyOtpRequestsException.class.getSimpleName());
 
         Optional<String> attempts = redisService.getValue(passwordRecoveryOtpNamespace.getAttempts().buildPrefix(user.getEmail()));
         assertThat(attempts).isPresent();
@@ -419,7 +431,12 @@ public class PasswordRecoveryControllerIntegrationTest {
                 .getContentAsString();
 
         assertThat(responseContent).isNotNull();
-        assertThat(responseContent).isEqualTo("Otp session expired.");
+
+        ExceptionResponse exceptionResponse = objectMapper.readValue(responseContent, ExceptionResponse.class);
+        assertThat(exceptionResponse.message()).isEqualTo("Otp session expired.");
+        assertThat(exceptionResponse.code()).isEqualTo(HttpStatus.GONE.value());
+        assertThat(exceptionResponse.path()).isEqualTo("/password/resend-otp");
+        assertThat(exceptionResponse.type()).isEqualTo(OtpExpiredException.class.getSimpleName());
 
         Optional<User> optionalUser = userRepository.findByEmail(user.getEmail());
         assertThat(optionalUser).isPresent();

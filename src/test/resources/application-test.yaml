@@ -1,5 +1,7 @@
 server:
   url: server_test_url
+client:
+  url: client_test_url
 spring:
   kafka:
     bootstrap-servers: localhost:9092
@@ -10,6 +12,9 @@ spring:
     mongodb:
       uri: mongodb://root:secret@localhost:27017/mydatabase?authSource=admin&authMechanism=SCRAM-SHA-256
       authentication-database: admin
+
+google:
+  client_id: test_google_client_id
 
 security:
   jwt:

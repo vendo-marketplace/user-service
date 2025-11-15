@@ -1,7 +1,7 @@
 package com.vendo.user_service.service.otp;
 
 import com.vendo.integration.kafka.event.EmailOtpEvent;
-import com.vendo.integration.redis.common.exception.RedisValueExpiredException;
+import com.vendo.integration.redis.common.exception.OtpExpiredException;
 import com.vendo.user_service.common.exception.InvalidOtpException;
 import com.vendo.user_service.common.exception.OtpAlreadySentException;
 import com.vendo.user_service.common.exception.TooManyOtpRequestsException;
@@ -27,7 +27,7 @@ public class EmailOtpService {
 
     public void sendOtp(EmailOtpEvent event, OtpNamespace otpNamespace) {
         if (redisService.hasActiveKey(otpNamespace.getEmail().buildPrefix(event.getEmail()))) {
-            throw new OtpAlreadySentException("Otp has already sent to the email.");
+            throw new OtpAlreadySentException("Otp has already sent.");
         }
 
         String otp = otpGenerator.generateSixDigitOtp();
@@ -41,7 +41,7 @@ public class EmailOtpService {
 
     public void resendOtp(EmailOtpEvent event,OtpNamespace otpNamespace) {
         redisService.getValue(otpNamespace.getEmail().buildPrefix(event.getEmail()))
-                .orElseThrow(() -> new RedisValueExpiredException("Otp session expired."));
+                .orElseThrow(() -> new OtpExpiredException("Otp session expired."));
 
         increaseResendAttemptsOrThrow(event.getEmail(), otpNamespace);
 
@@ -53,7 +53,7 @@ public class EmailOtpService {
 
     public void verifyOtp(String otp, String email, OtpNamespace otpNamespace) {
         String redisEmail = redisService.getValue(otpNamespace.getOtp().buildPrefix(otp))
-                .orElseThrow(() -> new RedisValueExpiredException("Otp has expired."));
+                .orElseThrow(() -> new OtpExpiredException("Otp session expired."));
 
         if (!redisEmail.equals(email)) {
             throw new InvalidOtpException("Invalid otp.");
@@ -71,7 +71,7 @@ public class EmailOtpService {
         int attempt = attempts.map(Integer::parseInt).orElse(0);
 
         if (attempt >= 3) {
-            throw new TooManyOtpRequestsException("Reached maximum attempts for resending otp code.");
+            throw new TooManyOtpRequestsException("Reached maximum attempts.");
         }
 
         redisService.saveValue(

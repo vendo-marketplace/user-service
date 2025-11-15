@@ -1,5 +1,6 @@
 package com.vendo.user_service.common.builder;
 
+import com.vendo.domain.user.common.type.ProviderType;
 import com.vendo.domain.user.common.type.UserStatus;
 import com.vendo.user_service.common.type.UserRole;
 import com.vendo.user_service.model.User;
@@ -11,6 +12,7 @@ public class UserDataBuilder {
                 .email("test@gmail.com")
                 .password("Qwerty1234@")
                 .role(UserRole.USER)
+                .providerType(ProviderType.LOCAL)
                 .status(UserStatus.INCOMPLETE);
     }
 
