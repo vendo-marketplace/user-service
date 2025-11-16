@@ -11,6 +11,7 @@ import org.junit.jupiter.api.Test;
 import java.time.LocalDate;
 import java.util.Set;
 
+import static org.assertj.core.api.Assertions.as;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class UserTest {
@@ -45,28 +46,28 @@ class UserTest {
     void whenEmailIsNotPresent_thenValidationFails() {
         User user = UserDataBuilder.buildUserWithRequiredFields().email(null).build();
 
-        validateUserField(user, "Email is required");
+        validateUserField(user, "Email is required.");
     }
 
     @Test
     void whenEmailHasIncorrectFormat_thenValidationFalls() {
         User user = UserDataBuilder.buildUserWithRequiredFields().email("testgmail.com").build();
 
-        validateUserField(user, "Invalid email");
+        validateUserField(user, "Invalid email.");
     }
 
     @Test
     void whenStatusIsNotPresent_thenValidationFalls() {
         User user = UserDataBuilder.buildUserWithRequiredFields().status(null).build();
 
-        validateUserField(user, "Status is required");
+        validateUserField(user, "Status is required.");
     }
 
     @Test
     void whenRoleIsNotPresent_thenValidationFalls() {
         User user = UserDataBuilder.buildUserWithRequiredFields().role(null).build();
 
-        validateUserField(user, "Role is required");
+        validateUserField(user, "Role is required.");
     }
 
     @Test
@@ -82,14 +83,14 @@ class UserTest {
     void whenPasswordIsNotPresent_thenValidationFalls() {
         User user = UserDataBuilder.buildUserWithRequiredFields().password(null).build();
 
-        validateUserField(user, "Password is required");
+        validateUserField(user, "Password is required.");
     }
 
     @Test
     void whenPasswordHasIncorrectFormat_thenValidationFalls() {
         User user = UserDataBuilder.buildUserWithRequiredFields().password("qwerty1234").build();
 
-        validateUserField(user, "Invalid password. Should include minimum 8 characters, 1 uppercase character, 1 lowercase character, 1 special symbol");
+        validateUserField(user, "Invalid password. Should include minimum 8 characters, 1 uppercase character, 1 lowercase character, 1 special symbol.");
     }
 
     @Test
@@ -114,14 +115,14 @@ class UserTest {
     void whenBirthDateIsToday_thenViolationsFalls() {
         User user = UserDataBuilder.buildUserWithRequiredFields().birthDate(LocalDate.now()).build();
 
-        validateUserField(user, "Birth date must be in the past");
+        validateUserField(user, "Birth date must be in the past.");
     }
 
     @Test
     void whenBirthDateIsInFuture_thenValidationFalls() {
         User user = UserDataBuilder.buildUserWithRequiredFields().birthDate(LocalDate.now().plusDays(1)).build();
 
-        validateUserField(user, "Birth date must be in the past");
+        validateUserField(user, "Birth date must be in the past.");
     }
 
     @Test
@@ -155,40 +156,48 @@ class UserTest {
     void whenFullNameStartsWithLowercase_thenValidationFails() {
         User user = UserDataBuilder.buildUserWithRequiredFields().fullName("john Smith").build();
 
-        validateUserField(user, "Invalid full name. Should contain 2-3 words, each starting with capital letter");
+        validateUserField(user, "Invalid full name. Should contain 2-3 words, each starting with capital letter.");
     }
 
     @Test
     void whenFullNameHasOnlyOneWord_thenValidationFails() {
         User user = UserDataBuilder.buildUserWithRequiredFields().fullName("John").build();
 
-        validateUserField(user, "Invalid full name. Should contain 2-3 words, each starting with capital letter");
+        validateUserField(user, "Invalid full name. Should contain 2-3 words, each starting with capital letter.");
     }
 
     @Test
     void whenFullNameHasFourWords_thenValidationFails() {
         User user = UserDataBuilder.buildUserWithRequiredFields().fullName("John Smith Junior Senior").build();
 
-        validateUserField(user, "Invalid full name. Should contain 2-3 words, each starting with capital letter");
+        validateUserField(user, "Invalid full name. Should contain 2-3 words, each starting with capital letter.");
     }
 
     @Test
     void whenFullNameContainsDigits_thenValidationFails() {
         User user = UserDataBuilder.buildUserWithRequiredFields().fullName("John Smith2").build();
 
-        validateUserField(user, "Invalid full name. Should contain 2-3 words, each starting with capital letter");
+        validateUserField(user, "Invalid full name. Should contain 2-3 words, each starting with capital letter.");
     }
 
     @Test
     void whenFullNameContainsDoubleSpaces_thenValidationFails() {
         User user = UserDataBuilder.buildUserWithRequiredFields().fullName("John  Smith").build();
 
-        validateUserField(user, "Invalid full name. Should contain 2-3 words, each starting with capital letter");
+        validateUserField(user, "Invalid full name. Should contain 2-3 words, each starting with capital letter.");
+    }
+
+    @Test
+    void whenProviderTypeIsNull_thenViolationFails() {
+        User user = UserDataBuilder.buildUserWithRequiredFields().providerType(null).build();
+
+        validateUserField(user, "Provider is required.");
     }
 
     private void validateUserField(User user, String validationMessage) {
         Set<ConstraintViolation<User>> constraintViolations = validator.validate(user);
 
+        System.out.println(constraintViolations);
         assertThat(constraintViolations.size()).isEqualTo(1);
         assertThat(constraintViolations.stream()
                 .anyMatch(cv -> cv.getMessage().equals(validationMessage)))

@@ -13,7 +13,7 @@ public class UserDataBuilder {
                 .password("Qwerty1234@")
                 .role(UserRole.USER)
                 .providerType(ProviderType.LOCAL)
-                .status(UserStatus.INCOMPLETE);
+                .status(UserStatus.ACTIVE);
     }
 
 }

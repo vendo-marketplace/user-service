@@ -46,7 +46,7 @@ public class AuthServiceTest {
     void googleAuth_shouldReturnTokenPayload() {
         TokenPayload tokenPayload = TokenPayloadDataBuilder.buildTokenPayloadWithAllFields().build();
         GoogleAuthRequest googleAuthRequest = new GoogleAuthRequest("test_id_token");
-        User user = UserDataBuilder.buildUserWithRequiredFields().build();
+        User user = UserDataBuilder.buildUserWithRequiredFields().status(UserStatus.INCOMPLETE).build();
         String idToken = "test_id_token";
         String email = "test_email";
         GoogleIdToken.Payload mockPayload = mock(GoogleIdToken.Payload.class);
@@ -65,6 +65,7 @@ public class AuthServiceTest {
         verify(googleOauthService).verify(idToken);
         verify(userService).findUserByEmailOrSave(email);
         verify(jwtUserDetailsService).generateTokenPayload(user);
+        verify(userService).update(user.getId(), user);
     }
 
     @Test
@@ -86,17 +87,42 @@ public class AuthServiceTest {
         assertThat(authResponse).isNotNull();
         assertThat(authResponse.accessToken()).isEqualTo(tokenPayload.accessToken());
         assertThat(authResponse.refreshToken()).isEqualTo(tokenPayload.refreshToken());
+
         ArgumentCaptor<User> userCaptor = ArgumentCaptor.forClass(User.class);
+        verify(googleOauthService).verify(idToken);
+        verify(userService).findUserByEmailOrSave(email);
+        verify(jwtUserDetailsService).generateTokenPayload(user);
         verify(userService).update(eq(user.getId()), userCaptor.capture());
 
         User captorValue = userCaptor.getValue();
         assertThat(captorValue.getStatus()).isEqualTo(UserStatus.ACTIVE);
         assertThat(captorValue.getProviderType()).isEqualTo(ProviderType.GOOGLE);
+    }
+
+    @Test
+    void googleAuth_shouldNotUpdateProviderTypeToGoogle_whenUserIsActive() {
+        TokenPayload tokenPayload = TokenPayloadDataBuilder.buildTokenPayloadWithAllFields().build();
+        GoogleAuthRequest googleAuthRequest = new GoogleAuthRequest("test_id_token");
+        User user = UserDataBuilder.buildUserWithRequiredFields().build();
+        String idToken = "test_id_token";
+        String email = "test_email";
+        GoogleIdToken.Payload mockPayload = mock(GoogleIdToken.Payload.class);
+
+        when(googleOauthService.verify(idToken)).thenReturn(mockPayload);
+        when(mockPayload.getEmail()).thenReturn(email);
+        when(userService.findUserByEmailOrSave(email)).thenReturn(user);
+        when(jwtUserDetailsService.generateTokenPayload(user)).thenReturn(tokenPayload);
+
+        AuthResponse authResponse = authService.googleAuth(googleAuthRequest);
+
+        assertThat(authResponse).isNotNull();
+        assertThat(authResponse.accessToken()).isEqualTo(tokenPayload.accessToken());
+        assertThat(authResponse.refreshToken()).isEqualTo(tokenPayload.refreshToken());
 
         verify(googleOauthService).verify(idToken);
         verify(userService).findUserByEmailOrSave(email);
         verify(jwtUserDetailsService).generateTokenPayload(user);
-        verify(userService).update(user.getId(), user);
+        verify(userService, never()).update(user.getId(), user);
     }
 
     @Test

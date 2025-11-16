@@ -109,10 +109,8 @@ public class AuthService {
     private void updateUserGoogleAuthActivity(User user) {
         if (user.getStatus() == UserStatus.INCOMPLETE) {
             user.setStatus(UserStatus.ACTIVE);
+            user.setProviderType(ProviderType.GOOGLE);
+            userService.update(user.getId(), user);
         }
-
-        user.setProviderType(ProviderType.GOOGLE);
-
-        userService.update(user.getId(), user);
     }
 }
