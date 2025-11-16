@@ -46,7 +46,7 @@ public class AuthServiceTest {
     void googleAuth_shouldReturnTokenPayload() {
         TokenPayload tokenPayload = TokenPayloadDataBuilder.buildTokenPayloadWithAllFields().build();
         GoogleAuthRequest googleAuthRequest = new GoogleAuthRequest("test_id_token");
-        User user = UserDataBuilder.buildUserWithRequiredFields().status(UserStatus.INCOMPLETE).build();
+        User user = UserDataBuilder.buildUserWithRequiredFields().build();
         String idToken = "test_id_token";
         String email = "test_email";
         GoogleIdToken.Payload mockPayload = mock(GoogleIdToken.Payload.class);
@@ -72,7 +72,7 @@ public class AuthServiceTest {
     void googleAuth_shouldActivateIncompletedUser_andReturnTokenPayload() {
         TokenPayload tokenPayload = TokenPayloadDataBuilder.buildTokenPayloadWithAllFields().build();
         GoogleAuthRequest googleAuthRequest = new GoogleAuthRequest("test_id_token");
-        User user = UserDataBuilder.buildUserWithRequiredFields().status(UserStatus.INCOMPLETE).build();
+        User user = UserDataBuilder.buildUserWithRequiredFields().build();
         String idToken = "test_id_token";
         String email = "test_email";
         GoogleIdToken.Payload mockPayload = mock(GoogleIdToken.Payload.class);
@@ -103,7 +103,7 @@ public class AuthServiceTest {
     void googleAuth_shouldNotUpdateProviderTypeToGoogle_whenUserIsActive() {
         TokenPayload tokenPayload = TokenPayloadDataBuilder.buildTokenPayloadWithAllFields().build();
         GoogleAuthRequest googleAuthRequest = new GoogleAuthRequest("test_id_token");
-        User user = UserDataBuilder.buildUserWithRequiredFields().build();
+        User user = UserDataBuilder.buildUserWithRequiredFields().status(UserStatus.ACTIVE).build();
         String idToken = "test_id_token";
         String email = "test_email";
         GoogleIdToken.Payload mockPayload = mock(GoogleIdToken.Payload.class);
