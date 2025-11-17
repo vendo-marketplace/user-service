@@ -1,7 +1,7 @@
-package com.vendo.user_service.audit;
+package com.vendo.user_service.model;
 
 import com.vendo.user_service.common.builder.UserDataBuilder;
-import com.vendo.user_service.model.User;
+import com.vendo.user_service.common.util.WaitUtil;
 import com.vendo.user_service.repository.UserRepository;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -19,7 +19,7 @@ class UserAuditingTest {
     private UserRepository userRepository;
 
     @Test
-    void shouldSetCreatedAtAndUpdatedAtOnCreated() {
+    void shouldSetCreatedAtAndUpdatedAt_whenUserSaved() {
         User user = UserDataBuilder.buildUserWithRequiredFields().build();
 
         User saved = userRepository.save(user);
@@ -30,7 +30,7 @@ class UserAuditingTest {
     }
 
     @Test
-    void shouldUpdateFieldUpdatedAtOnModify() throws InterruptedException {
+    void shouldUpdateFieldUpdatedAt_whenUserModified() {
         User user = UserDataBuilder.buildUserWithRequiredFields().build();
 
         User saved = userRepository.save(user);
@@ -38,7 +38,7 @@ class UserAuditingTest {
         Instant createdAt = saved.getCreatedAt();
         Instant updatedAt = saved.getCreatedAt();
 
-        Thread.sleep(10);
+        WaitUtil.waitSafely(10);
 
         saved.setEmail("testupdate@gmail.com");
         User updated = userRepository.save(saved);
