@@ -32,6 +32,8 @@ public class UserService {
         Optional.ofNullable(requestUser.getPassword()).ifPresent(user::setPassword);
         Optional.ofNullable(requestUser.getStatus()).ifPresent(user::setStatus);
         Optional.ofNullable(requestUser.getProviderType()).ifPresent(user::setProviderType);
+        Optional.ofNullable(requestUser.getFullName()).ifPresent(user::setFullName);
+        Optional.ofNullable(requestUser.getBirthDate()).ifPresent(user::setBirthDate);
 
         userRepository.save(user);
     }

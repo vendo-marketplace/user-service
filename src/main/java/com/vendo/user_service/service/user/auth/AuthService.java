@@ -12,10 +12,7 @@ import com.vendo.user_service.security.common.dto.TokenPayload;
 import com.vendo.user_service.security.service.JwtService;
 import com.vendo.user_service.security.service.JwtUserDetailsService;
 import com.vendo.user_service.service.user.UserService;
-import com.vendo.user_service.web.dto.AuthRequest;
-import com.vendo.user_service.web.dto.AuthResponse;
-import com.vendo.user_service.web.dto.GoogleAuthRequest;
-import com.vendo.user_service.web.dto.RefreshRequest;
+import com.vendo.user_service.web.dto.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -68,6 +65,25 @@ public class AuthService {
                 .status(UserStatus.INCOMPLETE)
                 .providerType(ProviderType.LOCAL)
                 .password(encodedPassword)
+                .build());
+    }
+
+    public void completeProfile(String email, CompleteProfileRequest completeProfileRequest) {
+        if (completeProfileRequest.birthDate().getYear() < 18) {
+            throw new RuntimeException("Too young");
+        }
+
+        User user = userService.findByEmailOrThrow(email);
+        if (user.getStatus() == UserStatus.BLOCKED) {
+            throw new RuntimeException("Blocked");
+        } else if (user.getStatus() == UserStatus.ACTIVE) {
+            throw new RuntimeException("Already active");
+        }
+
+        userService.update(user.getId(), user.toBuilder()
+                .status(UserStatus.ACTIVE)
+                .fullName(completeProfileRequest.fullName())
+                .birthDate(completeProfileRequest.birthDate())
                 .build());
     }
 
