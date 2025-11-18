@@ -9,6 +9,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
 
 import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 
@@ -43,8 +44,11 @@ class UserAuditingTest {
         saved.setEmail("testupdate@gmail.com");
         User updated = userRepository.save(saved);
 
-        assertThat(updated.getCreatedAt()).isEqualTo(createdAt);
-        assertThat(updated.getUpdatedAt()).isAfter(updatedAt);
+        assertThat(updated.getCreatedAt().truncatedTo(ChronoUnit.MILLIS))
+                .isEqualTo(createdAt.truncatedTo(ChronoUnit.MILLIS));
+
+        assertThat(updated.getUpdatedAt().truncatedTo(ChronoUnit.MILLIS))
+                .isAfter(updatedAt.truncatedTo(ChronoUnit.MILLIS));
 
     }
 }
