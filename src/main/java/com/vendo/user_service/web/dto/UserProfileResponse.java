@@ -4,6 +4,7 @@ import com.vendo.domain.user.common.type.ProviderType;
 import com.vendo.domain.user.common.type.UserStatus;
 import com.vendo.user_service.common.type.UserRole;
 
+import java.time.Instant;
 import java.time.LocalDate;
 
 public record UserProfileResponse(
@@ -13,6 +14,8 @@ public record UserProfileResponse(
         UserStatus status,
         ProviderType providerType,
         LocalDate birthDate,
-        String fullName
+        String fullName,
+        Instant createdAt,
+        Instant updatedAt
 ) {
 }
