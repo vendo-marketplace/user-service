@@ -19,8 +19,6 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
-import java.time.LocalDate;
-
 import static com.vendo.security.common.constants.AuthConstants.BEARER_PREFIX;
 
 @Service
@@ -71,23 +69,16 @@ public class AuthService {
     }
 
     public void completeProfile(String email, CompleteProfileRequest completeProfileRequest) {
-        LocalDate localDate = LocalDate.parse(completeProfileRequest.birthDate());
-
-        if (localDate.getYear() < 18) {
-            throw new RuntimeException("Too young");
-        }
-
         User user = userService.findByEmailOrThrow(email);
-        if (user.getStatus() == UserStatus.BLOCKED) {
-            throw new RuntimeException("Blocked");
-        } else if (user.getStatus() == UserStatus.ACTIVE) {
-            throw new RuntimeException("Already active");
+
+        if (user.getStatus() != UserStatus.INCOMPLETE) {
+            throw new IllegalStateException("Unable to complete registration.");
         }
 
         userService.update(user.getId(), user.toBuilder()
                 .status(UserStatus.ACTIVE)
                 .fullName(completeProfileRequest.fullName())
-                .birthDate(localDate)
+                .birthDate(completeProfileRequest.birthDate())
                 .build());
     }
 

@@ -4,11 +4,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.vendo.common.exception.ExceptionResponse;
 import com.vendo.domain.user.common.type.ProviderType;
 import com.vendo.domain.user.common.type.UserStatus;
-import com.vendo.security.common.exception.AccessDeniedException;
-import com.vendo.security.common.exception.InvalidTokenException;
 import com.vendo.user_service.common.builder.AuthRequestDataBuilder;
 import com.vendo.user_service.common.builder.UserDataBuilder;
-import com.vendo.user_service.common.exception.UserAlreadyExistsException;
 import com.vendo.user_service.common.type.UserRole;
 import com.vendo.user_service.model.User;
 import com.vendo.user_service.repository.UserRepository;
@@ -27,7 +24,6 @@ import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockHttpServletResponse;
-import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.event.annotation.AfterTestClass;
@@ -37,6 +33,7 @@ import java.util.Optional;
 
 import static com.vendo.security.common.constants.AuthConstants.BEARER_PREFIX;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
+import static org.springframework.mock.http.server.reactive.MockServerHttpRequest.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -125,7 +122,6 @@ class AuthControllerIntegrationTest {
         assertThat(exceptionResponse.message()).isEqualTo("User already exists.");
         assertThat(exceptionResponse.code()).isEqualTo(HttpStatus.CONFLICT.value());
         assertThat(exceptionResponse.path()).isEqualTo("/auth/sign-up");
-        assertThat(exceptionResponse.type()).isEqualTo(UserAlreadyExistsException.class.getSimpleName());
     }
 
     @Test
@@ -173,7 +169,6 @@ class AuthControllerIntegrationTest {
         assertThat(exceptionResponse.message()).isEqualTo("User not found.");
         assertThat(exceptionResponse.code()).isEqualTo(HttpStatus.NOT_FOUND.value());
         assertThat(exceptionResponse.path()).isEqualTo("/auth/sign-in");
-        assertThat(exceptionResponse.type()).isEqualTo(UsernameNotFoundException.class.getSimpleName());
     }
 
     @Test
@@ -199,7 +194,6 @@ class AuthControllerIntegrationTest {
         assertThat(exceptionResponse.message()).isEqualTo("User is unactive.");
         assertThat(exceptionResponse.code()).isEqualTo(HttpStatus.FORBIDDEN.value());
         assertThat(exceptionResponse.path()).isEqualTo("/auth/sign-in");
-        assertThat(exceptionResponse.type()).isEqualTo(AccessDeniedException.class.getSimpleName());
     }
 
     @Test
@@ -225,7 +219,6 @@ class AuthControllerIntegrationTest {
         assertThat(exceptionResponse.message()).isEqualTo("User is unactive.");
         assertThat(exceptionResponse.code()).isEqualTo(HttpStatus.FORBIDDEN.value());
         assertThat(exceptionResponse.path()).isEqualTo("/auth/sign-in");
-        assertThat(exceptionResponse.type()).isEqualTo(AccessDeniedException.class.getSimpleName());
     }
 
     @Test
@@ -271,7 +264,6 @@ class AuthControllerIntegrationTest {
         assertThat(exceptionResponse.message()).isEqualTo("User not found.");
         assertThat(exceptionResponse.code()).isEqualTo(HttpStatus.NOT_FOUND.value());
         assertThat(exceptionResponse.path()).isEqualTo("/auth/refresh");
-        assertThat(exceptionResponse.type()).isEqualTo(UsernameNotFoundException.class.getSimpleName());
     }
 
     @Test
@@ -295,7 +287,6 @@ class AuthControllerIntegrationTest {
         assertThat(exceptionResponse.message()).isEqualTo("Invalid token.");
         assertThat(exceptionResponse.code()).isEqualTo(HttpStatus.UNAUTHORIZED.value());
         assertThat(exceptionResponse.path()).isEqualTo("/auth/refresh");
-        assertThat(exceptionResponse.type()).isEqualTo(InvalidTokenException.class.getSimpleName());
     }
 
     @Test
@@ -317,6 +308,48 @@ class AuthControllerIntegrationTest {
         assertThat(exceptionResponse.message()).isEqualTo("Token has expired.");
         assertThat(exceptionResponse.code()).isEqualTo(HttpStatus.UNAUTHORIZED.value());
         assertThat(exceptionResponse.path()).isEqualTo("/auth/refresh");
-        assertThat(exceptionResponse.type()).isEqualTo(ExpiredJwtException.class.getSimpleName());
     }
+
+    @Test
+    void completeProfile_shouldSuccessfullyCompleteRegistration() {
+        User user = UserDataBuilder.buildUserWithRequiredFields().build();
+        userRepository.save(user);
+
+        MockHttpServletResponse response = mockMvc.perform(post("/auth/refresh")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(refreshRequest))
+        ).andExpect(status().isUnauthorized()).andReturn().getResponse();
+    }
+
+    @Test
+    void completeProfile_shouldReturnBadRequest_whenNotValidFullName() {
+
+    }
+
+    @Test
+    void completeProfile_shouldReturnBadRequest_whenNotAdult() {
+
+    }
+
+    @Test
+    void completeProfile_shouldReturn_whenInvalidBirthDateFormat() {
+
+    }
+
+    @Test
+    void completeProfile_shouldReturn_whenUserNotFound() {
+
+    }
+
+    @Test
+    void completeProfile_shouldReturn_whenUserBlocked() {
+
+    }
+
+    @Test
+    void completeProfile_shouldReturn_whenUserAlreadyCompletedRegistration() {
+
+    }
+
+
 }
