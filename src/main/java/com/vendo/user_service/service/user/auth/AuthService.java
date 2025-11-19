@@ -19,6 +19,8 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDate;
+
 import static com.vendo.security.common.constants.AuthConstants.BEARER_PREFIX;
 
 @Service
@@ -69,7 +71,9 @@ public class AuthService {
     }
 
     public void completeProfile(String email, CompleteProfileRequest completeProfileRequest) {
-        if (completeProfileRequest.birthDate().getYear() < 18) {
+        LocalDate localDate = LocalDate.parse(completeProfileRequest.birthDate());
+
+        if (localDate.getYear() < 18) {
             throw new RuntimeException("Too young");
         }
 
@@ -83,7 +87,7 @@ public class AuthService {
         userService.update(user.getId(), user.toBuilder()
                 .status(UserStatus.ACTIVE)
                 .fullName(completeProfileRequest.fullName())
-                .birthDate(completeProfileRequest.birthDate())
+                .birthDate(localDate)
                 .build());
     }
 

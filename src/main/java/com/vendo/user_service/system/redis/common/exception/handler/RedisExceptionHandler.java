@@ -15,7 +15,6 @@ public class RedisExceptionHandler {
     public ResponseEntity<ExceptionResponse> handleRedisValueExpiredException(OtpExpiredException e, HttpServletRequest request) {
         ExceptionResponse exceptionResponse = ExceptionResponse.builder()
                 .message(e.getMessage())
-                .type(OtpExpiredException.class.getSimpleName())
                 .code(HttpStatus.GONE.value())
                 .path(request.getRequestURI())
                 .build();
