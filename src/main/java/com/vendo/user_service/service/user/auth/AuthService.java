@@ -6,12 +6,14 @@ import com.vendo.domain.user.common.type.UserStatus;
 import com.vendo.security.common.exception.AccessDeniedException;
 import com.vendo.security.common.exception.InvalidTokenException;
 import com.vendo.user_service.common.exception.UserAlreadyExistsException;
+import com.vendo.user_service.common.exception.UserBlockedException;
 import com.vendo.user_service.common.type.UserRole;
 import com.vendo.user_service.model.User;
 import com.vendo.user_service.security.common.dto.TokenPayload;
 import com.vendo.user_service.security.service.JwtService;
 import com.vendo.user_service.security.service.JwtUserDetailsService;
 import com.vendo.user_service.service.user.UserService;
+import com.vendo.user_service.service.user.auth.common.exception.UserAlreadyActivatedException;
 import com.vendo.user_service.web.dto.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.BadCredentialsException;
@@ -68,17 +70,19 @@ public class AuthService {
                 .build());
     }
 
-    public void completeProfile(String email, CompleteProfileRequest completeProfileRequest) {
+    public void completeAuth(String email, CompleteAuthRequest completeAuthRequest) {
         User user = userService.findByEmailOrThrow(email);
 
-        if (user.getStatus() != UserStatus.INCOMPLETE) {
-            throw new IllegalStateException("Unable to complete registration.");
+        if (user.getStatus() == UserStatus.BLOCKED) {
+            throw new UserBlockedException("Your account is blocked.");
+        } else if (user.getStatus() == UserStatus.ACTIVE) {
+            throw new UserAlreadyActivatedException("Your account is already activated.");
         }
 
         userService.update(user.getId(), user.toBuilder()
                 .status(UserStatus.ACTIVE)
-                .fullName(completeProfileRequest.fullName())
-                .birthDate(completeProfileRequest.birthDate())
+                .fullName(completeAuthRequest.fullName())
+                .birthDate(completeAuthRequest.birthDate())
                 .build());
     }
 

@@ -24,12 +24,12 @@ public class AuthController {
         authService.signUp(authRequest);
     }
 
-    @PatchMapping("/complete-profile")
-    void completeProfile(
+    @PatchMapping("/complete-auth")
+    void completeAuth(
             @RequestParam String email,
-            @Valid @RequestBody CompleteProfileRequest completeProfileRequest
+            @Valid @RequestBody CompleteAuthRequest completeAuthRequest
     ) {
-        authService.completeProfile(email, completeProfileRequest);
+        authService.completeAuth(email, completeAuthRequest);
     }
 
     @PostMapping("/refresh")
