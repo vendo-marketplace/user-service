@@ -11,10 +11,9 @@ import org.junit.jupiter.api.Test;
 import java.time.LocalDate;
 import java.util.Set;
 
-import static org.assertj.core.api.Assertions.as;
 import static org.assertj.core.api.Assertions.assertThat;
 
-class UserTest {
+class UserValidationTest {
 
     Validator validator;
 
