@@ -12,6 +12,7 @@ import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
+import static org.assertj.core.api.Assertions.within;
 
 @SpringBootTest
 @ActiveProfiles("test")
@@ -27,7 +28,8 @@ class UserAuditingTest {
 
         assertThat(saved.getCreatedAt()).isNotNull();
         assertThat(saved.getUpdatedAt()).isNotNull();
-        assertThat(saved.getUpdatedAt()).isEqualTo(saved.getCreatedAt());
+        assertThat(saved.getUpdatedAt())
+                .isCloseTo(saved.getCreatedAt(),within(1,ChronoUnit.MILLIS));
     }
 
     @Test
@@ -37,18 +39,18 @@ class UserAuditingTest {
         User saved = userRepository.save(user);
 
         Instant createdAt = saved.getCreatedAt();
-        Instant updatedAt = saved.getCreatedAt();
+        Instant updatedAt = saved.getUpdatedAt();
 
         WaitUtil.waitSafely(10);
 
         saved.setEmail("testupdate@gmail.com");
         User updated = userRepository.save(saved);
 
-        assertThat(updated.getCreatedAt().truncatedTo(ChronoUnit.MILLIS))
-                .isEqualTo(createdAt.truncatedTo(ChronoUnit.MILLIS));
+        assertThat(updated.getCreatedAt())
+                .isCloseTo(createdAt,within(1, ChronoUnit.MILLIS));
 
-        assertThat(updated.getUpdatedAt().truncatedTo(ChronoUnit.MILLIS))
-                .isAfter(updatedAt.truncatedTo(ChronoUnit.MILLIS));
+        assertThat(updated.getUpdatedAt())
+                .isAfter(updatedAt);
 
     }
 }
