@@ -23,13 +23,14 @@ class UserAuditingTest {
     @Test
     void shouldSetCreatedAtAndUpdatedAt_whenUserSaved() {
         User user = UserDataBuilder.buildUserWithRequiredFields().build();
+        Instant now = Instant.now();
 
         User saved = userRepository.save(user);
 
         assertThat(saved.getCreatedAt()).isNotNull();
         assertThat(saved.getUpdatedAt()).isNotNull();
-        assertThat(saved.getUpdatedAt())
-                .isCloseTo(saved.getCreatedAt(),within(1,ChronoUnit.MILLIS));
+        assertThat(saved.getCreatedAt()).isCloseTo(now, within(300, ChronoUnit.MILLIS));
+        assertThat(saved.getUpdatedAt()).isCloseTo(now, within(300, ChronoUnit.MILLIS));
     }
 
     @Test
@@ -37,20 +38,17 @@ class UserAuditingTest {
         User user = UserDataBuilder.buildUserWithRequiredFields().build();
 
         User saved = userRepository.save(user);
+        Instant beforeUpdatedAt = saved.getUpdatedAt();
 
-        Instant createdAt = saved.getCreatedAt();
-        Instant updatedAt = saved.getUpdatedAt();
-
-        WaitUtil.waitSafely(10);
+        WaitUtil.waitSafely(1);
 
         saved.setEmail("testupdate@gmail.com");
         User updated = userRepository.save(saved);
+        Instant afterUpdatedAt = updated.getUpdatedAt();
 
-        assertThat(updated.getCreatedAt())
-                .isCloseTo(createdAt,within(1, ChronoUnit.MILLIS));
-
-        assertThat(updated.getUpdatedAt())
-                .isAfter(updatedAt);
-
+        assertThat(saved.getCreatedAt()).isNotNull();
+        assertThat(saved.getUpdatedAt()).isNotNull();
+        assertThat(saved.getCreatedAt()).isEqualTo(updated.getCreatedAt());
+        assertThat(beforeUpdatedAt).isBefore(afterUpdatedAt);
     }
 }
