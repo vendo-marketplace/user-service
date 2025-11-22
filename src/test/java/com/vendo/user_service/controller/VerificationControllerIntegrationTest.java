@@ -35,7 +35,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @SpringBootTest
 @AutoConfigureMockMvc
 @ActiveProfiles("test")
-public class EmailVerificationControllerIntegrationTest {
+public class VerificationControllerIntegrationTest {
 
     @Autowired
     private MockMvc mockMvc;
