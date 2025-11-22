@@ -16,7 +16,7 @@ import java.util.stream.Collectors;
 
 @Slf4j
 @ControllerAdvice
-public class MainExceptionHandler {
+public class CommonExceptionHandler {
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
     protected ResponseEntity<ExceptionResponse> handleMethodArgumentNotValidException(MethodArgumentNotValidException e, HttpServletRequest request) {

@@ -355,7 +355,9 @@ class AuthControllerIntegrationTest {
     void completeProfile_shouldReturnBadRequest_whenNotAdult() throws Exception {
         User user = UserDataBuilder.buildUserWithRequiredFields().build();
         userRepository.save(user);
-        CompleteAuthRequest completeAuthRequest = CompleteAuthRequestDataBuilder.buildCompleteAuthRequestWithAllFields().build();
+        CompleteAuthRequest completeAuthRequest = CompleteAuthRequestDataBuilder.buildCompleteAuthRequestWithAllFields()
+                .birthDate(LocalDate.now())
+                .build();
 
         MockHttpServletResponse response = mockMvc.perform(patch("/auth/complete-auth")
                         .param("email", user.getEmail())
@@ -426,15 +428,49 @@ class AuthControllerIntegrationTest {
     }
 
     @Test
-    void completeProfile_shouldReturn_whenUserBlocked() {
+    void completeProfile_shouldReturn_whenUserBlocked() throws Exception {
+        User user = UserDataBuilder.buildUserWithRequiredFields().status(UserStatus.BLOCKED).build();
+        userRepository.save(user);
+        CompleteAuthRequest completeAuthRequest = CompleteAuthRequestDataBuilder.buildCompleteAuthRequestWithAllFields().build();
 
+        String content = mockMvc.perform(patch("/auth/complete-auth")
+                        .param("email", user.getEmail())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(completeAuthRequest)))
+                .andExpect(status().isForbidden())
+                .andReturn().getResponse().getContentAsString();
+
+        assertThat(content).isNotNull();
+
+        ExceptionResponse exceptionResponse = objectMapper.readValue(content, ExceptionResponse.class);
+        assertThat(exceptionResponse).isNotNull();
+        assertThat(exceptionResponse.path()).isEqualTo("/auth/complete-auth");
+        assertThat(exceptionResponse.code()).isEqualTo(HttpStatus.FORBIDDEN.value());
+        assertThat(exceptionResponse.errors()).isNull();
+        assertThat(exceptionResponse.message()).isEqualTo("Your account is blocked.");
 
     }
 
     @Test
-    void completeProfile_shouldReturn_whenUserAlreadyCompletedRegistration() {
+    void completeProfile_shouldReturn_whenUserAlreadyCompletedRegistration() throws Exception {
+        User user = UserDataBuilder.buildUserWithRequiredFields().status(UserStatus.ACTIVE).build();
+        userRepository.save(user);
+        CompleteAuthRequest completeAuthRequest = CompleteAuthRequestDataBuilder.buildCompleteAuthRequestWithAllFields().build();
 
+        String content = mockMvc.perform(patch("/auth/complete-auth")
+                        .param("email", user.getEmail())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(completeAuthRequest)))
+                .andExpect(status().isConflict())
+                .andReturn().getResponse().getContentAsString();
+
+        assertThat(content).isNotNull();
+
+        ExceptionResponse exceptionResponse = objectMapper.readValue(content, ExceptionResponse.class);
+        assertThat(exceptionResponse).isNotNull();
+        assertThat(exceptionResponse.path()).isEqualTo("/auth/complete-auth");
+        assertThat(exceptionResponse.code()).isEqualTo(HttpStatus.CONFLICT.value());
+        assertThat(exceptionResponse.errors()).isNull();
+        assertThat(exceptionResponse.message()).isEqualTo("Your account is already activated.");
     }
-
-
 }

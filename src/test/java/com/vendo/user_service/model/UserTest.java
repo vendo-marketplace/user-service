@@ -102,8 +102,8 @@ class UserTest {
     }
 
     @Test
-    void whenBirthDateIsInPast_thenNoViolations() {
-        User user = UserDataBuilder.buildUserWithRequiredFields().birthDate(LocalDate.of(2000, 2, 20)).build();
+    void whenAdult_thenNoViolations() {
+        User user = UserDataBuilder.buildUserWithRequiredFields().birthDate(LocalDate.of(2000, 1, 1)).build();
 
         Set<ConstraintViolation<User>> violations = validator.validate(user);
 
@@ -111,17 +111,10 @@ class UserTest {
     }
 
     @Test
-    void whenBirthDateIsToday_thenViolationsFalls() {
+    void whenNotAdult_thenViolationsFalls() {
         User user = UserDataBuilder.buildUserWithRequiredFields().birthDate(LocalDate.now()).build();
 
-        validateUserField(user, "Birth date must be in the past");
-    }
-
-    @Test
-    void whenBirthDateIsInFuture_thenValidationFalls() {
-        User user = UserDataBuilder.buildUserWithRequiredFields().birthDate(LocalDate.now().plusDays(1)).build();
-
-        validateUserField(user, "Birth date must be in the past");
+        validateUserField(user, "User should be at least 18 years old.");
     }
 
     @Test
@@ -134,7 +127,7 @@ class UserTest {
     }
 
     @Test
-    void whenFullNameIsTwoWordsValid_thenNoViolations() {
+    void whenFullNameIsTwoWords_thenNoViolations() {
         User user = UserDataBuilder.buildUserWithRequiredFields().fullName("John Smith").build();
 
         Set<ConstraintViolation<User>> violations = validator.validate(user);
@@ -143,47 +136,39 @@ class UserTest {
     }
 
     @Test
-    void whenFullNameIsThreeWordsValid_thenNoViolations() {
+    void whenFullNameIsThreeWords_ValidationFails() {
         User user = UserDataBuilder.buildUserWithRequiredFields().fullName("John Smith Junior").build();
 
-        Set<ConstraintViolation<User>> violations = validator.validate(user);
+        validateUserField(user, "Full name must contain two words, each starting with an uppercase letter and followed by lowercase letters.");
 
-        assertThat(violations).isEmpty();
     }
 
     @Test
     void whenFullNameStartsWithLowercase_thenValidationFails() {
         User user = UserDataBuilder.buildUserWithRequiredFields().fullName("john Smith").build();
 
-        validateUserField(user, "Invalid full name. Should contain 2-3 words, each starting with capital letter");
+        validateUserField(user, "Full name must contain two words, each starting with an uppercase letter and followed by lowercase letters.");
     }
 
     @Test
     void whenFullNameHasOnlyOneWord_thenValidationFails() {
         User user = UserDataBuilder.buildUserWithRequiredFields().fullName("John").build();
 
-        validateUserField(user, "Invalid full name. Should contain 2-3 words, each starting with capital letter");
-    }
-
-    @Test
-    void whenFullNameHasFourWords_thenValidationFails() {
-        User user = UserDataBuilder.buildUserWithRequiredFields().fullName("John Smith Junior Senior").build();
-
-        validateUserField(user, "Invalid full name. Should contain 2-3 words, each starting with capital letter");
+        validateUserField(user, "Full name must contain two words, each starting with an uppercase letter and followed by lowercase letters.");
     }
 
     @Test
     void whenFullNameContainsDigits_thenValidationFails() {
         User user = UserDataBuilder.buildUserWithRequiredFields().fullName("John Smith2").build();
 
-        validateUserField(user, "Invalid full name. Should contain 2-3 words, each starting with capital letter");
+        validateUserField(user, "Full name must contain two words, each starting with an uppercase letter and followed by lowercase letters.");
     }
 
     @Test
     void whenFullNameContainsDoubleSpaces_thenValidationFails() {
         User user = UserDataBuilder.buildUserWithRequiredFields().fullName("John  Smith").build();
 
-        validateUserField(user, "Invalid full name. Should contain 2-3 words, each starting with capital letter");
+        validateUserField(user, "Full name must contain two words, each starting with an uppercase letter and followed by lowercase letters.");
     }
 
     private void validateUserField(User user, String validationMessage) {
