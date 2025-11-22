@@ -5,17 +5,16 @@ import com.vendo.domain.user.common.type.ProviderType;
 import com.vendo.domain.user.common.type.UserStatus;
 import com.vendo.security.common.exception.AccessDeniedException;
 import com.vendo.security.common.exception.InvalidTokenException;
-import com.vendo.user_service.common.exception.UserAlreadyExistsException;
+import com.vendo.user_service.service.user.common.exception.UserAlreadyExistsException;
+import com.vendo.user_service.service.user.common.exception.UserBlockedException;
 import com.vendo.user_service.common.type.UserRole;
 import com.vendo.user_service.model.User;
 import com.vendo.user_service.security.common.dto.TokenPayload;
 import com.vendo.user_service.security.service.JwtService;
 import com.vendo.user_service.security.service.JwtUserDetailsService;
 import com.vendo.user_service.service.user.UserService;
-import com.vendo.user_service.web.dto.AuthRequest;
-import com.vendo.user_service.web.dto.AuthResponse;
-import com.vendo.user_service.web.dto.GoogleAuthRequest;
-import com.vendo.user_service.web.dto.RefreshRequest;
+import com.vendo.user_service.service.user.common.exception.UserAlreadyActivatedException;
+import com.vendo.user_service.web.dto.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -71,6 +70,22 @@ public class AuthService {
                 .build());
     }
 
+    public void completeAuth(String email, CompleteAuthRequest completeAuthRequest) {
+        User user = userService.findByEmailOrThrow(email);
+
+        if (user.getStatus() == UserStatus.BLOCKED) {
+            throw new UserBlockedException("Your account is blocked.");
+        } else if (user.getStatus() == UserStatus.ACTIVE) {
+            throw new UserAlreadyActivatedException("Your account is already activated.");
+        }
+
+        userService.update(user.getId(), user.toBuilder()
+                .status(UserStatus.ACTIVE)
+                .fullName(completeAuthRequest.fullName())
+                .birthDate(completeAuthRequest.birthDate())
+                .build());
+    }
+
     public AuthResponse refresh(RefreshRequest refreshRequest) {
         if (!refreshRequest.refreshToken().startsWith(BEARER_PREFIX)) {
             throw new InvalidTokenException("Invalid token.");
@@ -109,10 +124,8 @@ public class AuthService {
     private void updateUserGoogleAuthActivity(User user) {
         if (user.getStatus() == UserStatus.INCOMPLETE) {
             user.setStatus(UserStatus.ACTIVE);
+            user.setProviderType(ProviderType.GOOGLE);
+            userService.update(user.getId(), user);
         }
-
-        user.setProviderType(ProviderType.GOOGLE);
-
-        userService.update(user.getId(), user);
     }
 }

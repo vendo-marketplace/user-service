@@ -3,12 +3,10 @@ package com.vendo.user_service.security.filter;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.vendo.common.exception.ExceptionResponse;
 import com.vendo.domain.user.common.type.UserStatus;
-import com.vendo.security.common.exception.InvalidTokenException;
 import com.vendo.user_service.common.builder.UserDataBuilder;
 import com.vendo.user_service.model.User;
 import com.vendo.user_service.repository.UserRepository;
 import com.vendo.user_service.security.service.JwtService;
-import io.jsonwebtoken.ExpiredJwtException;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -19,7 +17,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.mock.web.MockHttpServletResponse;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 
@@ -86,7 +83,6 @@ public class JwtAuthFilterIntegrationTest {
         ExceptionResponse exceptionResponse = objectMapper.readValue(responseContent, ExceptionResponse.class);
         assertThat(exceptionResponse.message()).isEqualTo("Invalid token.");
         assertThat(exceptionResponse.code()).isEqualTo(HttpStatus.UNAUTHORIZED.value());
-        assertThat(exceptionResponse.type()).isEqualTo(InvalidTokenException.class.getSimpleName());
     }
 
     @Test
@@ -117,7 +113,6 @@ public class JwtAuthFilterIntegrationTest {
         assertThat(exceptionResponse.message()).isEqualTo("Invalid token.");
         assertThat(exceptionResponse.code()).isEqualTo(HttpStatus.UNAUTHORIZED.value());
         assertThat(exceptionResponse.path()).isEqualTo("/test/ping");
-        assertThat(exceptionResponse.type()).isEqualTo(InvalidTokenException.class.getSimpleName());
 
     }
 
@@ -137,7 +132,6 @@ public class JwtAuthFilterIntegrationTest {
         assertThat(exceptionResponse.message()).isEqualTo("User not found.");
         assertThat(exceptionResponse.code()).isEqualTo(HttpStatus.NOT_FOUND.value());
         assertThat(exceptionResponse.path()).isEqualTo("/test/ping");
-        assertThat(exceptionResponse.type()).isEqualTo(UsernameNotFoundException.class.getSimpleName());
     }
 
     @Test
@@ -158,6 +152,5 @@ public class JwtAuthFilterIntegrationTest {
         assertThat(exceptionResponse.message()).isEqualTo("Token has expired.");
         assertThat(exceptionResponse.code()).isEqualTo(HttpStatus.UNAUTHORIZED.value());
         assertThat(exceptionResponse.path()).isEqualTo("/test/ping");
-        assertThat(exceptionResponse.type()).isEqualTo(ExpiredJwtException.class.getSimpleName());
     }
 }

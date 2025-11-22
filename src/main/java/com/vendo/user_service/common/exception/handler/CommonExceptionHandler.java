@@ -2,52 +2,32 @@ package com.vendo.user_service.common.exception.handler;
 
 import com.vendo.common.exception.ExceptionResponse;
 import jakarta.servlet.http.HttpServletRequest;
-import jakarta.validation.ConstraintViolation;
-import jakarta.validation.ConstraintViolationException;
+import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationCredentialsNotFoundException;
+import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 
+import java.util.Map;
 import java.util.stream.Collectors;
 
-import static com.vendo.common.constants.Delimiters.COLON_DELIMITER;
-import static com.vendo.common.constants.Delimiters.COMMA_DELIMITER;
-
+@Slf4j
 @ControllerAdvice
-public class MainExceptionHandler {
-
-    @ExceptionHandler(ConstraintViolationException.class)
-    public ResponseEntity<ExceptionResponse> handleConstraintViolationException(ConstraintViolationException e, HttpServletRequest request) {
-
-        String invalidFields = e.getConstraintViolations().stream()
-                .map(ConstraintViolation::getMessage)
-                .collect(Collectors.joining(COMMA_DELIMITER));
-
-        ExceptionResponse exceptionResponse = ExceptionResponse.builder()
-                .message(invalidFields)
-                .type(ConstraintViolationException.class.getSimpleName())
-                .code(HttpStatus.BAD_REQUEST.value())
-                .path(request.getRequestURI())
-                .build();
-
-        return ResponseEntity.badRequest().body(exceptionResponse);
-    }
+public class CommonExceptionHandler {
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
     protected ResponseEntity<ExceptionResponse> handleMethodArgumentNotValidException(MethodArgumentNotValidException e, HttpServletRequest request) {
-
-        String invalidFields = e.getBindingResult()
+        Map<String, String> errors = e.getBindingResult()
                 .getFieldErrors()
-                .stream()
-                .map(fieldError -> fieldError.getField() + COLON_DELIMITER + fieldError.getDefaultMessage())
-                .collect(Collectors.joining(COMMA_DELIMITER));
+                .stream().collect(Collectors.toMap(FieldError::getField, fieldError -> StringUtils.defaultIfEmpty(fieldError.getDefaultMessage(), "")));
 
         ExceptionResponse exceptionResponse = ExceptionResponse.builder()
-                .message(invalidFields)
-                .type(MethodArgumentNotValidException.class.getSimpleName())
+                .message("Validation failed.")
+                .errors(errors)
                 .code(HttpStatus.BAD_REQUEST.value())
                 .path(request.getRequestURI())
                 .build();
@@ -59,12 +39,10 @@ public class MainExceptionHandler {
     public ResponseEntity<ExceptionResponse> handleAuthenticationCredentialsNotFoundException(AuthenticationCredentialsNotFoundException e, HttpServletRequest request) {
         ExceptionResponse exceptionResponse = ExceptionResponse.builder()
                 .message(e.getMessage())
-                .type(AuthenticationCredentialsNotFoundException.class.getSimpleName())
                 .code(HttpStatus.UNAUTHORIZED.value())
                 .path(request.getRequestURI())
                 .build();
 
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(exceptionResponse);
     }
-
 }

@@ -2,9 +2,7 @@ package com.vendo.user_service.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.vendo.common.exception.ExceptionResponse;
-import com.vendo.integration.redis.common.exception.OtpExpiredException;
 import com.vendo.user_service.common.builder.UserDataBuilder;
-import com.vendo.user_service.common.exception.TooManyOtpRequestsException;
 import com.vendo.user_service.system.redis.common.dto.ResetPasswordRequest;
 import com.vendo.user_service.system.redis.common.namespace.otp.PasswordRecoveryOtpNamespace;
 import com.vendo.user_service.system.redis.service.RedisService;
@@ -37,7 +35,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @SpringBootTest
 @AutoConfigureMockMvc
 @ActiveProfiles("test")
-public class PasswordRecoveryControllerIntegrationTest {
+public class PasswordControllerIntegrationTest {
 
     @Autowired
     private RedisTemplate<String, String> redisTemplate;
@@ -409,7 +407,6 @@ public class PasswordRecoveryControllerIntegrationTest {
         assertThat(exceptionResponse.message()).isEqualTo("Reached maximum attempts.");
         assertThat(exceptionResponse.code()).isEqualTo(HttpStatus.TOO_MANY_REQUESTS.value());
         assertThat(exceptionResponse.path()).isEqualTo("/password/resend-otp");
-        assertThat(exceptionResponse.type()).isEqualTo(TooManyOtpRequestsException.class.getSimpleName());
 
         Optional<String> attempts = redisService.getValue(passwordRecoveryOtpNamespace.getAttempts().buildPrefix(user.getEmail()));
         assertThat(attempts).isPresent();
@@ -436,7 +433,6 @@ public class PasswordRecoveryControllerIntegrationTest {
         assertThat(exceptionResponse.message()).isEqualTo("Otp session expired.");
         assertThat(exceptionResponse.code()).isEqualTo(HttpStatus.GONE.value());
         assertThat(exceptionResponse.path()).isEqualTo("/password/resend-otp");
-        assertThat(exceptionResponse.type()).isEqualTo(OtpExpiredException.class.getSimpleName());
 
         Optional<User> optionalUser = userRepository.findByEmail(user.getEmail());
         assertThat(optionalUser).isPresent();

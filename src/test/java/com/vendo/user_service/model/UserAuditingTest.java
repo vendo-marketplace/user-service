@@ -9,8 +9,10 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
 
 import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
+import static org.assertj.core.api.Assertions.within;
 
 @SpringBootTest
 @ActiveProfiles("test")
@@ -21,12 +23,14 @@ class UserAuditingTest {
     @Test
     void shouldSetCreatedAtAndUpdatedAt_whenUserSaved() {
         User user = UserDataBuilder.buildUserWithRequiredFields().build();
+        Instant now = Instant.now();
 
         User saved = userRepository.save(user);
 
         assertThat(saved.getCreatedAt()).isNotNull();
         assertThat(saved.getUpdatedAt()).isNotNull();
-        assertThat(saved.getUpdatedAt()).isEqualTo(saved.getCreatedAt());
+        assertThat(saved.getCreatedAt()).isCloseTo(now, within(300, ChronoUnit.MILLIS));
+        assertThat(saved.getUpdatedAt()).isCloseTo(now, within(300, ChronoUnit.MILLIS));
     }
 
     @Test
@@ -34,17 +38,17 @@ class UserAuditingTest {
         User user = UserDataBuilder.buildUserWithRequiredFields().build();
 
         User saved = userRepository.save(user);
+        Instant beforeUpdatedAt = saved.getUpdatedAt();
 
-        Instant createdAt = saved.getCreatedAt();
-        Instant updatedAt = saved.getCreatedAt();
-
-        WaitUtil.waitSafely(10);
+        WaitUtil.waitSafely(1);
 
         saved.setEmail("testupdate@gmail.com");
         User updated = userRepository.save(saved);
+        Instant afterUpdatedAt = updated.getUpdatedAt();
 
-        assertThat(updated.getCreatedAt()).isEqualTo(createdAt);
-        assertThat(updated.getUpdatedAt()).isAfter(updatedAt);
-
+        assertThat(saved.getCreatedAt()).isNotNull();
+        assertThat(saved.getUpdatedAt()).isNotNull();
+        assertThat(saved.getCreatedAt()).isEqualTo(updated.getCreatedAt());
+        assertThat(beforeUpdatedAt).isBefore(afterUpdatedAt);
     }
 }

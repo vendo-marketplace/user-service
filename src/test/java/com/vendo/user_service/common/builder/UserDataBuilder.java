@@ -9,6 +9,8 @@ import com.vendo.user_service.web.dto.UserProfileResponse;
 import java.time.Instant;
 import java.time.LocalDate;
 
+import java.time.LocalDate;
+
 public class UserDataBuilder {
 
     public static User.UserBuilder buildUserWithRequiredFields() {
@@ -17,6 +19,8 @@ public class UserDataBuilder {
                 .email("test@gmail.com")
                 .password("Qwerty1234@")
                 .role(UserRole.USER)
+                .fullName("Test Name")
+                .birthDate(LocalDate.of(2000, 1, 1))
                 .providerType(ProviderType.LOCAL)
                 .status(UserStatus.INCOMPLETE)
                 .birthDate(LocalDate.of(1990, 1, 1))

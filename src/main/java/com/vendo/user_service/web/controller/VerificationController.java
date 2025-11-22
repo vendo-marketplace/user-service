@@ -9,12 +9,12 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/verification")
-public class EmailVerificationController {
+public class VerificationController {
 
     private final EmailVerificationService emailVerificationService;
 
     @PostMapping("/send-otp")
-    void sendVerificationCode(@RequestParam String email) {
+    void sendOtp(@RequestParam String email) {
         emailVerificationService.sendOtp(email);
     }
 
