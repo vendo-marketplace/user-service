@@ -26,21 +26,21 @@ public class User implements UserDetails {
     @Id
     private String id;
 
-    @NotNull(message = "Email is required")
-    @Pattern(regexp = "^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$", message = "Invalid email")
+    @NotNull(message = "Email is required.")
+    @Pattern(regexp = "^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$", message = "Invalid email.")
     private String email;
 
-    @NotNull(message = "Role is required")
+    @NotNull(message = "Role is required.")
     private UserRole role;
 
-    @NotNull(message = "Status is required")
+    @NotNull(message = "Status is required.")
     private UserStatus status;
 
-    @NotNull(message = "Provider is required")
+    @NotNull(message = "Provider is required.")
     private ProviderType providerType;
 
-    @NotNull(message = "Password is required")
-    @Pattern(regexp = "^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[!@#$%^&*()_+\\-=\\[\\]{};':\"\\\\|,.<>/?]).{8,}$", message = "Invalid password. Should include minimum 8 characters, 1 uppercase character, 1 lowercase character, 1 special symbol")
+    @NotNull(message = "Password is required.")
+    @Pattern(regexp = "^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[!@#$%^&*()_+\\-=\\[\\]{};':\"\\\\|,.<>/?]).{8,}$", message = "Invalid password. Should include minimum 8 characters, 1 uppercase character, 1 lowercase character, 1 special symbol.")
     private String password;
 
     @Adult(message = "User should be at least 18 years old.")

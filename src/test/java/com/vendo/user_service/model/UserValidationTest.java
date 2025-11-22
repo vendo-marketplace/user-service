@@ -45,28 +45,28 @@ class UserValidationTest {
     void whenEmailIsNotPresent_thenValidationFails() {
         User user = UserDataBuilder.buildUserWithRequiredFields().email(null).build();
 
-        validateUserField(user, "Email is required");
+        validateUserField(user, "Email is required.");
     }
 
     @Test
     void whenEmailHasIncorrectFormat_thenValidationFalls() {
         User user = UserDataBuilder.buildUserWithRequiredFields().email("testgmail.com").build();
 
-        validateUserField(user, "Invalid email");
+        validateUserField(user, "Invalid email.");
     }
 
     @Test
     void whenStatusIsNotPresent_thenValidationFalls() {
         User user = UserDataBuilder.buildUserWithRequiredFields().status(null).build();
 
-        validateUserField(user, "Status is required");
+        validateUserField(user, "Status is required.");
     }
 
     @Test
     void whenRoleIsNotPresent_thenValidationFalls() {
         User user = UserDataBuilder.buildUserWithRequiredFields().role(null).build();
 
-        validateUserField(user, "Role is required");
+        validateUserField(user, "Role is required.");
     }
 
     @Test
@@ -82,14 +82,14 @@ class UserValidationTest {
     void whenPasswordIsNotPresent_thenValidationFalls() {
         User user = UserDataBuilder.buildUserWithRequiredFields().password(null).build();
 
-        validateUserField(user, "Password is required");
+        validateUserField(user, "Password is required.");
     }
 
     @Test
     void whenPasswordHasIncorrectFormat_thenValidationFalls() {
         User user = UserDataBuilder.buildUserWithRequiredFields().password("qwerty1234").build();
 
-        validateUserField(user, "Invalid password. Should include minimum 8 characters, 1 uppercase character, 1 lowercase character, 1 special symbol");
+        validateUserField(user, "Invalid password. Should include minimum 8 characters, 1 uppercase character, 1 lowercase character, 1 special symbol.");
     }
 
     @Test
