@@ -2,9 +2,9 @@ package com.vendo.user_service.service.otp;
 
 import com.vendo.integration.kafka.event.EmailOtpEvent;
 import com.vendo.integration.redis.common.exception.OtpExpiredException;
-import com.vendo.user_service.common.exception.InvalidOtpException;
-import com.vendo.user_service.common.exception.OtpAlreadySentException;
-import com.vendo.user_service.common.exception.TooManyOtpRequestsException;
+import com.vendo.user_service.service.otp.common.exception.InvalidOtpException;
+import com.vendo.user_service.service.otp.common.exception.OtpAlreadySentException;
+import com.vendo.user_service.service.otp.common.exception.TooManyOtpRequestsException;
 import com.vendo.user_service.system.kafka.producer.EmailOtpEventProducer;
 import com.vendo.user_service.system.redis.common.namespace.otp.OtpNamespace;
 import com.vendo.user_service.system.redis.service.RedisService;

@@ -1,4 +1,4 @@
-package com.vendo.user_service.common.exception;
+package com.vendo.user_service.service.user.common.exception;
 
 public class UserAlreadyExistsException extends RuntimeException {
     public UserAlreadyExistsException(String message) {

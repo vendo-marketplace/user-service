@@ -24,6 +24,14 @@ public class AuthController {
         authService.signUp(authRequest);
     }
 
+    @PatchMapping("/complete-auth")
+    void completeAuth(
+            @RequestParam String email,
+            @Valid @RequestBody CompleteAuthRequest completeAuthRequest
+    ) {
+        authService.completeAuth(email, completeAuthRequest);
+    }
+
     @PostMapping("/refresh")
     ResponseEntity<AuthResponse> refresh(@Valid @RequestBody RefreshRequest refreshRequest) {
         return ResponseEntity.ok(authService.refresh(refreshRequest));

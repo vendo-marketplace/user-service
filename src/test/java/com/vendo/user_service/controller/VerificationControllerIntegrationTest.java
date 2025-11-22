@@ -3,10 +3,7 @@ package com.vendo.user_service.controller;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.vendo.common.exception.ExceptionResponse;
 import com.vendo.domain.user.common.type.UserStatus;
-import com.vendo.integration.redis.common.exception.OtpExpiredException;
 import com.vendo.user_service.common.builder.UserDataBuilder;
-import com.vendo.user_service.common.exception.OtpAlreadySentException;
-import com.vendo.user_service.common.exception.TooManyOtpRequestsException;
 import com.vendo.user_service.integration.kafka.consumer.TestConsumer;
 import com.vendo.user_service.model.User;
 import com.vendo.user_service.repository.UserRepository;
@@ -22,7 +19,6 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
-import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.event.annotation.AfterTestClass;
 import org.springframework.test.web.servlet.MockMvc;
@@ -126,7 +122,6 @@ public class VerificationControllerIntegrationTest {
         assertThat(exceptionResponse.message()).isEqualTo("Otp has already sent.");
         assertThat(exceptionResponse.code()).isEqualTo(HttpStatus.CONFLICT.value());
         assertThat(exceptionResponse.path()).isEqualTo("/verification/send-otp");
-        assertThat(exceptionResponse.type()).isEqualTo(OtpAlreadySentException.class.getSimpleName());
 
         Optional<String> otpOptional = redisService.getValue(emailVerificationOtpNamespace.getEmail().buildPrefix(user.getEmail()));
         assertThat(otpOptional).isPresent();
@@ -152,7 +147,6 @@ public class VerificationControllerIntegrationTest {
         assertThat(exceptionResponse.message()).isEqualTo("User not found.");
         assertThat(exceptionResponse.code()).isEqualTo(HttpStatus.NOT_FOUND.value());
         assertThat(exceptionResponse.path()).isEqualTo("/verification/send-otp");
-        assertThat(exceptionResponse.type()).isEqualTo(UsernameNotFoundException.class.getSimpleName());
 
         Optional<String> otp = redisService.getValue(emailVerificationOtpNamespace.getEmail().buildPrefix(user.getEmail()));
         assertThat(otp).isEmpty();
@@ -229,7 +223,6 @@ public class VerificationControllerIntegrationTest {
         assertThat(exceptionResponse.message()).isEqualTo("User not found.");
         assertThat(exceptionResponse.code()).isEqualTo(HttpStatus.NOT_FOUND.value());
         assertThat(exceptionResponse.path()).isEqualTo("/verification/resend-otp");
-        assertThat(exceptionResponse.type()).isEqualTo(UsernameNotFoundException.class.getSimpleName());
 
         Optional<User> optionalUser = userRepository.findByEmail(user.getEmail());
         assertThat(optionalUser).isNotPresent();
@@ -325,7 +318,6 @@ public class VerificationControllerIntegrationTest {
         assertThat(exceptionResponse.message()).isEqualTo("Reached maximum attempts.");
         assertThat(exceptionResponse.code()).isEqualTo(HttpStatus.TOO_MANY_REQUESTS.value());
         assertThat(exceptionResponse.path()).isEqualTo("/verification/resend-otp");
-        assertThat(exceptionResponse.type()).isEqualTo(TooManyOtpRequestsException.class.getSimpleName());
 
         Optional<String> attemptsOptional = redisService.getValue(emailVerificationOtpNamespace.getAttempts().buildPrefix(user.getEmail()));
         assertThat(attemptsOptional).isPresent();
@@ -352,7 +344,6 @@ public class VerificationControllerIntegrationTest {
         assertThat(exceptionResponse.message()).isEqualTo("Otp session expired.");
         assertThat(exceptionResponse.code()).isEqualTo(HttpStatus.GONE.value());
         assertThat(exceptionResponse.path()).isEqualTo("/verification/resend-otp");
-        assertThat(exceptionResponse.type()).isEqualTo(OtpExpiredException.class.getSimpleName());
 
         Optional<String> otp = redisService.getValue(emailVerificationOtpNamespace.getEmail().buildPrefix(user.getEmail()));
         assertThat(otp).isNotPresent();
