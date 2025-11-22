@@ -14,7 +14,7 @@ public class EmailVerificationController {
     private final EmailVerificationService emailVerificationService;
 
     @PostMapping("/send-otp")
-    void sendVerificationCode(@RequestParam String email) {
+    void sendOtp(@RequestParam String email) {
         emailVerificationService.sendOtp(email);
     }
 
