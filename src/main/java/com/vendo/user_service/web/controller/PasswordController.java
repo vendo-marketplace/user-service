@@ -9,7 +9,7 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/password")
-public class PasswordRecoveryController {
+public class PasswordController {
 
     private final PasswordRecoveryService passwordRecoveryService;
 

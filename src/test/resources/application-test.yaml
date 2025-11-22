@@ -1,7 +1,9 @@
 server:
   url: server_test_url
+
 client:
   url: client_test_url
+
 spring:
   kafka:
     bootstrap-servers: localhost:9092
