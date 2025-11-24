@@ -2,17 +2,16 @@ package com.vendo.user_service.service.user;
 
 import com.vendo.domain.user.common.type.ProviderType;
 import com.vendo.domain.user.common.type.UserStatus;
-import com.vendo.user_service.service.user.common.exception.UserAlreadyExistsException;
 import com.vendo.user_service.common.type.UserRole;
-import com.vendo.user_service.service.user.common.mapper.UserMapper;
 import com.vendo.user_service.model.User;
 import com.vendo.user_service.repository.UserRepository;
+import com.vendo.user_service.security.service.JwtUserDetailsService;
+import com.vendo.user_service.service.user.common.exception.UserAlreadyExistsException;
+import com.vendo.user_service.service.user.common.mapper.UserMapper;
 import com.vendo.user_service.web.dto.UserProfileResponse;
 import jakarta.validation.constraints.NotNull;
 import lombok.RequiredArgsConstructor;
-import org.springframework.security.authentication.AuthenticationCredentialsNotFoundException;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 
@@ -23,6 +22,7 @@ import java.util.Optional;
 public class UserService {
 
     private final UserRepository userRepository;
+
     private final UserMapper userMapper;
 
     private final JwtUserDetailsService jwtUserDetailsService;
