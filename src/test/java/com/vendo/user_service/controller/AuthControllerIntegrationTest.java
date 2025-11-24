@@ -1,6 +1,5 @@
 package com.vendo.user_service.controller;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.vendo.common.exception.ExceptionResponse;
 import com.vendo.domain.user.common.type.ProviderType;
@@ -13,10 +12,8 @@ import com.vendo.user_service.model.User;
 import com.vendo.user_service.repository.UserRepository;
 import com.vendo.user_service.security.common.helper.JwtHelper;
 import com.vendo.user_service.security.service.JwtService;
-import com.vendo.user_service.web.dto.AuthRequest;
-import com.vendo.user_service.web.dto.AuthResponse;
-import com.vendo.user_service.web.dto.CompleteAuthRequest;
-import com.vendo.user_service.web.dto.RefreshRequest;
+import com.vendo.user_service.web.dto.*;
+import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -26,19 +23,20 @@ import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockHttpServletResponse;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.event.annotation.AfterTestClass;
 import org.springframework.test.web.servlet.MockMvc;
 
-import java.io.UnsupportedEncodingException;
 import java.time.LocalDate;
 import java.util.Optional;
 
 import static com.vendo.security.common.constants.AuthConstants.BEARER_PREFIX;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @SpringBootTest
@@ -84,8 +82,8 @@ class AuthControllerIntegrationTest {
         AuthRequest authRequest = AuthRequestDataBuilder.buildUserWithRequiredFields().build();
 
         mockMvc.perform(post("/auth/sign-up")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(authRequest)))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(authRequest)))
                 .andExpect(status().isOk());
 
         Optional<User> optionalUser = userRepository.findByEmail(authRequest.email());
@@ -106,8 +104,8 @@ class AuthControllerIntegrationTest {
         userRepository.save(user);
 
         MockHttpServletResponse response = mockMvc.perform(post("/auth/sign-up")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(authRequest)))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(authRequest)))
                 .andExpect(status().isConflict()).andReturn().getResponse();
 
         String responseContent = response.getContentAsString();
@@ -130,8 +128,8 @@ class AuthControllerIntegrationTest {
         userRepository.save(user);
 
         MockHttpServletResponse response = mockMvc.perform(post("/auth/sign-in")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(authRequest)))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(authRequest)))
                 .andExpect(status().isOk()).andReturn().getResponse();
 
         String responseContent = response.getContentAsString();
@@ -152,8 +150,8 @@ class AuthControllerIntegrationTest {
         AuthRequest authRequest = AuthRequestDataBuilder.buildUserWithRequiredFields().build();
 
         MockHttpServletResponse response = mockMvc.perform(post("/auth/sign-in")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(authRequest)))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(authRequest)))
                 .andExpect(status().isNotFound()).andReturn().getResponse();
 
         String responseContent = response.getContentAsString();
@@ -177,8 +175,8 @@ class AuthControllerIntegrationTest {
         userRepository.save(user);
 
         MockHttpServletResponse response = mockMvc.perform(post("/auth/sign-in")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(authRequest)))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(authRequest)))
                 .andExpect(status().isForbidden()).andReturn().getResponse();
 
         String responseContent = response.getContentAsString();
@@ -202,8 +200,8 @@ class AuthControllerIntegrationTest {
         userRepository.save(user);
 
         MockHttpServletResponse response = mockMvc.perform(post("/auth/sign-in")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(authRequest)))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(authRequest)))
                 .andExpect(status().isForbidden()).andReturn().getResponse();
 
         String responseContent = response.getContentAsString();
@@ -223,8 +221,8 @@ class AuthControllerIntegrationTest {
         RefreshRequest refreshRequest = RefreshRequest.builder().refreshToken(BEARER_PREFIX + refreshToken).build();
 
         MockHttpServletResponse response = mockMvc.perform(post("/auth/refresh")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(refreshRequest)))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(refreshRequest)))
                 .andExpect(status().isOk())
                 .andReturn()
                 .getResponse();
@@ -249,8 +247,8 @@ class AuthControllerIntegrationTest {
         RefreshRequest refreshRequest = RefreshRequest.builder().refreshToken(BEARER_PREFIX + refreshToken).build();
 
         MockHttpServletResponse response = mockMvc.perform(post("/auth/refresh")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(refreshRequest)))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(refreshRequest)))
                 .andExpect(status().isNotFound()).andReturn().getResponse();
 
         String responseContent = response.getContentAsString();
@@ -272,8 +270,8 @@ class AuthControllerIntegrationTest {
         RefreshRequest refreshRequest = RefreshRequest.builder().refreshToken(refreshToken).build();
 
         MockHttpServletResponse response = mockMvc.perform(post("/auth/refresh")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(refreshRequest)))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(refreshRequest)))
                 .andExpect(status().isUnauthorized()).andReturn().getResponse();
 
         String responseContent = response.getContentAsString();
@@ -293,8 +291,8 @@ class AuthControllerIntegrationTest {
         RefreshRequest refreshRequest = RefreshRequest.builder().refreshToken(BEARER_PREFIX + expiredRefreshToken).build();
 
         MockHttpServletResponse response = mockMvc.perform(post("/auth/refresh")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(refreshRequest)))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(refreshRequest)))
                 .andExpect(status().isUnauthorized()).andReturn().getResponse();
 
         String responseContent = response.getContentAsString();
@@ -472,5 +470,52 @@ class AuthControllerIntegrationTest {
         assertThat(exceptionResponse.code()).isEqualTo(HttpStatus.CONFLICT.value());
         assertThat(exceptionResponse.errors()).isNull();
         assertThat(exceptionResponse.message()).isEqualTo("Your account is already activated.");
+    }
+
+    @Test
+    void getAuthenticatedUser_shouldReturnUserProfile() throws Exception {
+        User loggedUser = UserDataBuilder.buildUserWithRequiredFields()
+                .status(UserStatus.ACTIVE)
+                .build();
+        userRepository.save(loggedUser);
+
+        SecurityContextHolder.getContext().setAuthentication(
+                new UsernamePasswordAuthenticationToken(
+                        loggedUser, null, loggedUser.getAuthorities()
+                )
+        );
+
+        String response = mockMvc.perform(get("/auth/me")
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
+
+        UserProfileResponse responseDto = objectMapper.readValue(response, UserProfileResponse.class);
+
+        Assertions.assertThat(responseDto.id()).isEqualTo("1");
+        Assertions.assertThat(responseDto.email()).isEqualTo("test@gmail.com");
+        Assertions.assertThat(responseDto.fullName()).isEqualTo("John Doe");
+        Assertions.assertThat(responseDto.createdAt()).isNotNull();
+        Assertions.assertThat(responseDto.updatedAt()).isNotNull();
+    }
+
+    @Test
+    void getAuthenticatedUser_shouldReturnUnauthorized_whenNoAuthentication() throws Exception {
+        SecurityContextHolder.clearContext();
+
+        MockHttpServletResponse response = mockMvc.perform(get("/auth/me")
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isUnauthorized())
+                .andReturn()
+                .getResponse();
+
+        ExceptionResponse exceptionResponse = objectMapper.readValue(response.getContentAsString(), ExceptionResponse.class);
+
+        Assertions.assertThat(exceptionResponse.message()).isEqualTo("Unauthorized.");
+        Assertions.assertThat(exceptionResponse.code()).isEqualTo(HttpStatus.UNAUTHORIZED.value());
+        Assertions.assertThat(exceptionResponse.path()).isEqualTo("/auth/me");
     }
 }

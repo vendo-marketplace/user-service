@@ -4,7 +4,7 @@ import com.vendo.domain.user.common.type.ProviderType;
 import com.vendo.domain.user.common.type.UserStatus;
 import com.vendo.user_service.service.user.common.exception.UserAlreadyExistsException;
 import com.vendo.user_service.common.type.UserRole;
-import com.vendo.user_service.mapper.UserMapper;
+import com.vendo.user_service.service.user.common.mapper.UserMapper;
 import com.vendo.user_service.model.User;
 import com.vendo.user_service.repository.UserRepository;
 import com.vendo.user_service.web.dto.UserProfileResponse;
@@ -25,14 +25,13 @@ public class UserService {
     private final UserRepository userRepository;
     private final UserMapper userMapper;
 
-    public UserProfileResponse getCurrentUser() {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+    private final JwtUserDetailsService jwtUserDetailsService;
 
-        if (authentication == null) {
-            throw new AuthenticationCredentialsNotFoundException("User is not authenticated.");
-        }
+    public UserProfileResponse getAuthenticatedUser() {
+        UserDetails userDetails = jwtUserDetailsService.getUserDetailsFromContext();
 
-        return userMapper.toUserProfileResponse((User) authentication.getPrincipal());
+        User user = findByEmailOrThrow(userDetails.getUsername());
+        return userMapper.toUserProfileResponse(user);
     }
 
     public User save(User user) {

@@ -1,4 +1,4 @@
-package com.vendo.user_service.mapper;
+package com.vendo.user_service.service.user.common.mapper;
 
 import com.vendo.user_service.model.User;
 import com.vendo.user_service.web.dto.UserProfileResponse;

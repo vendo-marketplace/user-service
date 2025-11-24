@@ -3,12 +3,13 @@ package com.vendo.user_service.service;
 import com.vendo.domain.user.common.type.ProviderType;
 import com.vendo.domain.user.common.type.UserStatus;
 import com.vendo.user_service.common.builder.UserDataBuilder;
-import com.vendo.user_service.common.exception.UserAlreadyExistsException;
 import com.vendo.user_service.common.type.UserRole;
-import com.vendo.user_service.mapper.UserMapper;
+import com.vendo.user_service.service.user.common.mapper.UserMapper;
 import com.vendo.user_service.model.User;
 import com.vendo.user_service.repository.UserRepository;
+import com.vendo.user_service.security.service.JwtUserDetailsService;
 import com.vendo.user_service.service.user.UserService;
+import com.vendo.user_service.service.user.common.exception.UserAlreadyExistsException;
 import com.vendo.user_service.web.dto.UserProfileResponse;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -17,9 +18,6 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.authentication.AuthenticationCredentialsNotFoundException;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContext;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 
 import java.time.Instant;
@@ -33,9 +31,6 @@ import static org.mockito.Mockito.*;
 @ExtendWith(MockitoExtension.class)
 public class UserServiceTest {
 
-    @InjectMocks
-    private UserService userService;
-
     @Mock
     private UserMapper userMapper;
 
@@ -43,10 +38,10 @@ public class UserServiceTest {
     private UserRepository userRepository;
 
     @Mock
-    private SecurityContext securityContext;
+    private JwtUserDetailsService jwtUserDetailsService;
 
-    @Mock
-    private Authentication authentication;
+    @InjectMocks
+    private UserService userService;
 
     @Test
     void save_shouldSaveUser_whenEmailDoesNotExist() {
@@ -232,32 +227,42 @@ public class UserServiceTest {
                 .isInstanceOf(UsernameNotFoundException.class)
                 .hasMessage("User not found.");
     }
-
+    
     @Test
-    void getCurrentUser_shouldReturnUserProfile_whenAuthenticated() {
+    void getAuthenticatedUser_shouldReturnUserProfile_whenAuthenticated() {
         User user = UserDataBuilder.buildUserWithRequiredFields().build();
         UserProfileResponse expectedProfile = UserDataBuilder.buildUserProfileResponse(user);
 
-        when(securityContext.getAuthentication()).thenReturn(authentication);
-        when(authentication.getPrincipal()).thenReturn(user);
-        SecurityContextHolder.setContext(securityContext);
+        when(jwtUserDetailsService.getUserDetailsFromContext()).thenReturn(user);
+        when(userRepository.findByEmail(user.getEmail())).thenReturn(Optional.of(user));
         when(userMapper.toUserProfileResponse(user)).thenReturn(expectedProfile);
 
-        UserProfileResponse result = userService.getCurrentUser();
+        UserProfileResponse result = userService.getAuthenticatedUser();
 
         assertThat(result).isEqualTo(expectedProfile);
         assertThat(result.createdAt()).isEqualTo(user.getCreatedAt());
         assertThat(result.updatedAt()).isEqualTo(user.getUpdatedAt());
-
     }
 
     @Test
-    void getCurrentUser_shouldThrowException_whenAuthenticationIsNull() {
-        SecurityContextHolder.setContext(securityContext);
-        when(securityContext.getAuthentication()).thenReturn(null);
+    void getAuthenticatedUser_shouldThrowException_whenAuthenticationIsNull() {
+        when(jwtUserDetailsService.getUserDetailsFromContext())
+                .thenThrow(new AuthenticationCredentialsNotFoundException("Unauthorized."));
 
-        assertThatThrownBy(() -> userService.getCurrentUser())
+        assertThatThrownBy(() -> userService.getAuthenticatedUser())
                 .isInstanceOf(AuthenticationCredentialsNotFoundException.class)
-                .hasMessage("User is not authenticated.");
+                .hasMessage("Unauthorized.");
+    }
+
+    @Test
+    void getAuthenticatedUser_shouldThrowException_whenUserNotFoundInRepository() {
+        User user = UserDataBuilder.buildUserWithRequiredFields().build();
+
+        when(jwtUserDetailsService.getUserDetailsFromContext()).thenReturn(user);
+        when(userRepository.findByEmail(user.getEmail())).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> userService.getAuthenticatedUser())
+                .isInstanceOf(UsernameNotFoundException.class)
+                .hasMessage("User not found.");
     }
 }

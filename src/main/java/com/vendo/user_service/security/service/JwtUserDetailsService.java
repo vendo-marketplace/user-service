@@ -4,6 +4,9 @@ import com.vendo.user_service.security.common.dto.TokenPayload;
 import com.vendo.user_service.security.common.helper.JwtHelper;
 import io.jsonwebtoken.Claims;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.authentication.AuthenticationCredentialsNotFoundException;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.stereotype.Service;
@@ -32,7 +35,16 @@ public class JwtUserDetailsService {
                 .build();
     }
 
-    public UserDetails retrieveUserDetails(String token) {
+    public UserDetails getUserDetailsFromContext() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication == null || !(authentication.getPrincipal() instanceof UserDetails userDetails)) {
+            throw new AuthenticationCredentialsNotFoundException("Unauthorized.");
+        }
+
+        return userDetailsService.loadUserByUsername(userDetails.getUsername());
+    }
+
+    public UserDetails getUserDetailsByTokenSubject(String token) {
         Claims claims = jwtHelper.extractAllClaims(token);
         return userDetailsService.loadUserByUsername(claims.getSubject());
     }
