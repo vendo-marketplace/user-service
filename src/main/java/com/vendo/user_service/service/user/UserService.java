@@ -30,8 +30,7 @@ public class UserService {
     public UserProfileResponse getAuthenticatedUser() {
         UserDetails userDetails = jwtUserDetailsService.getUserDetailsFromContext();
 
-        User user = findByEmailOrThrow(userDetails.getUsername());
-        return userMapper.toUserProfileResponse(user);
+        return userMapper.toUserProfileResponse((User) userDetails);
     }
 
     public User save(User user) {
