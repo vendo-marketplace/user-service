@@ -3,13 +3,14 @@ package com.vendo.user_service.service;
 import com.vendo.domain.user.common.type.ProviderType;
 import com.vendo.domain.user.common.type.UserStatus;
 import com.vendo.user_service.common.builder.UserDataBuilder;
+import com.vendo.user_service.common.builder.UserProfileResponseBuilder;
 import com.vendo.user_service.common.type.UserRole;
-import com.vendo.user_service.service.user.common.mapper.UserMapper;
 import com.vendo.user_service.model.User;
 import com.vendo.user_service.repository.UserRepository;
 import com.vendo.user_service.security.service.JwtUserDetailsService;
 import com.vendo.user_service.service.user.UserService;
 import com.vendo.user_service.service.user.common.exception.UserAlreadyExistsException;
+import com.vendo.user_service.service.user.common.mapper.UserMapper;
 import com.vendo.user_service.web.dto.UserProfileResponse;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -227,14 +228,16 @@ public class UserServiceTest {
                 .isInstanceOf(UsernameNotFoundException.class)
                 .hasMessage("User not found.");
     }
-    
+
     @Test
     void getAuthenticatedUser_shouldReturnUserProfile_whenAuthenticated() {
         User user = UserDataBuilder.buildUserWithRequiredFields().build();
-        UserProfileResponse expectedProfile = UserDataBuilder.buildUserProfileResponse(user);
+        UserProfileResponse expectedProfile = UserProfileResponseBuilder.buildUserProfileResponse()
+                .createdAt(user.getCreatedAt())
+                .updatedAt(user.getUpdatedAt())
+                .build();
 
         when(jwtUserDetailsService.getUserDetailsFromContext()).thenReturn(user);
-        when(userRepository.findByEmail(user.getEmail())).thenReturn(Optional.of(user));
         when(userMapper.toUserProfileResponse(user)).thenReturn(expectedProfile);
 
         UserProfileResponse result = userService.getAuthenticatedUser();
@@ -255,14 +258,12 @@ public class UserServiceTest {
     }
 
     @Test
-    void getAuthenticatedUser_shouldThrowException_whenUserNotFoundInRepository() {
-        User user = UserDataBuilder.buildUserWithRequiredFields().build();
-
-        when(jwtUserDetailsService.getUserDetailsFromContext()).thenReturn(user);
-        when(userRepository.findByEmail(user.getEmail())).thenReturn(Optional.empty());
+    void getAuthenticatedUser_shouldThrowException_whenPrincipalIsNotUserDetails() {
+        when(jwtUserDetailsService.getUserDetailsFromContext())
+                .thenThrow(new AuthenticationCredentialsNotFoundException("Unauthorized."));
 
         assertThatThrownBy(() -> userService.getAuthenticatedUser())
-                .isInstanceOf(UsernameNotFoundException.class)
-                .hasMessage("User not found.");
+                .isInstanceOf(AuthenticationCredentialsNotFoundException.class)
+                .hasMessage("Unauthorized.");
     }
 }

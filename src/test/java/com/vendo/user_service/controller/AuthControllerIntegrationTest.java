@@ -13,7 +13,6 @@ import com.vendo.user_service.repository.UserRepository;
 import com.vendo.user_service.security.common.helper.JwtHelper;
 import com.vendo.user_service.security.service.JwtService;
 import com.vendo.user_service.web.dto.*;
-import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -404,7 +403,7 @@ class AuthControllerIntegrationTest {
     }
 
     @Test
-    void completeProfile_shouldReturn_whenUserNotFound() throws Exception {
+    void completeProfile_shouldReturnNotFound_whenUserNotFound() throws Exception {
         User user = UserDataBuilder.buildUserWithRequiredFields().build();
         CompleteAuthRequest completeAuthRequest = CompleteAuthRequestDataBuilder.buildCompleteAuthRequestWithAllFields().build();
 
@@ -426,7 +425,7 @@ class AuthControllerIntegrationTest {
     }
 
     @Test
-    void completeProfile_shouldReturn_whenUserBlocked() throws Exception {
+    void completeProfile_shouldReturnForbidden_whenUserBlocked() throws Exception {
         User user = UserDataBuilder.buildUserWithRequiredFields().status(UserStatus.BLOCKED).build();
         userRepository.save(user);
         CompleteAuthRequest completeAuthRequest = CompleteAuthRequestDataBuilder.buildCompleteAuthRequestWithAllFields().build();
@@ -450,7 +449,7 @@ class AuthControllerIntegrationTest {
     }
 
     @Test
-    void completeProfile_shouldReturn_whenUserAlreadyCompletedRegistration() throws Exception {
+    void completeProfile_shouldReturnConflict_whenUserAlreadyCompletedRegistration() throws Exception {
         User user = UserDataBuilder.buildUserWithRequiredFields().status(UserStatus.ACTIVE).build();
         userRepository.save(user);
         CompleteAuthRequest completeAuthRequest = CompleteAuthRequestDataBuilder.buildCompleteAuthRequestWithAllFields().build();
@@ -495,11 +494,16 @@ class AuthControllerIntegrationTest {
 
         UserProfileResponse responseDto = objectMapper.readValue(response, UserProfileResponse.class);
 
-        Assertions.assertThat(responseDto.id()).isEqualTo("1");
-        Assertions.assertThat(responseDto.email()).isEqualTo("test@gmail.com");
-        Assertions.assertThat(responseDto.fullName()).isEqualTo("John Doe");
-        Assertions.assertThat(responseDto.createdAt()).isNotNull();
-        Assertions.assertThat(responseDto.updatedAt()).isNotNull();
+        assertThat(response).doesNotContain("password");
+        assertThat(responseDto).isNotNull();
+        assertThat(responseDto.id()).isEqualTo("1");
+        assertThat(responseDto.email()).isEqualTo("test@gmail.com");
+        assertThat(responseDto.fullName()).isEqualTo("Test Name");
+        assertThat(responseDto.role()).isEqualTo(UserRole.USER);
+        assertThat(responseDto.status()).isEqualTo(UserStatus.ACTIVE);
+        assertThat(responseDto.providerType()).isEqualTo(ProviderType.LOCAL);
+        assertThat(responseDto.createdAt()).isNotNull();
+        assertThat(responseDto.updatedAt()).isNotNull();
     }
 
     @Test
@@ -514,8 +518,8 @@ class AuthControllerIntegrationTest {
 
         ExceptionResponse exceptionResponse = objectMapper.readValue(response.getContentAsString(), ExceptionResponse.class);
 
-        Assertions.assertThat(exceptionResponse.message()).isEqualTo("Unauthorized.");
-        Assertions.assertThat(exceptionResponse.code()).isEqualTo(HttpStatus.UNAUTHORIZED.value());
-        Assertions.assertThat(exceptionResponse.path()).isEqualTo("/auth/me");
+        assertThat(exceptionResponse.message()).isEqualTo("Unauthorized.");
+        assertThat(exceptionResponse.code()).isEqualTo(HttpStatus.UNAUTHORIZED.value());
+        assertThat(exceptionResponse.path()).isEqualTo("/auth/me");
     }
 }

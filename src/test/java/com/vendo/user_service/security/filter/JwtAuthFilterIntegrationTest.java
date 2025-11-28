@@ -112,6 +112,7 @@ public class JwtAuthFilterIntegrationTest {
         ExceptionResponse exceptionResponse = objectMapper.readValue(responseContent, ExceptionResponse.class);
         assertThat(exceptionResponse.message()).isEqualTo("Invalid token.");
         assertThat(exceptionResponse.code()).isEqualTo(HttpStatus.UNAUTHORIZED.value());
+        assertThat(exceptionResponse.path()).isEqualTo("/test/ping");
     }
 
     @Test
@@ -129,6 +130,7 @@ public class JwtAuthFilterIntegrationTest {
         ExceptionResponse exceptionResponse = objectMapper.readValue(responseContent, ExceptionResponse.class);
         assertThat(exceptionResponse.message()).isEqualTo("User not found.");
         assertThat(exceptionResponse.code()).isEqualTo(HttpStatus.NOT_FOUND.value());
+        assertThat(exceptionResponse.path()).isEqualTo("/test/ping");
     }
 
     @Test
@@ -148,5 +150,6 @@ public class JwtAuthFilterIntegrationTest {
         ExceptionResponse exceptionResponse = objectMapper.readValue(responseContent, ExceptionResponse.class);
         assertThat(exceptionResponse.message()).isEqualTo("Token has expired.");
         assertThat(exceptionResponse.code()).isEqualTo(HttpStatus.UNAUTHORIZED.value());
+        assertThat(exceptionResponse.path()).isEqualTo("/test/ping");
     }
 }
