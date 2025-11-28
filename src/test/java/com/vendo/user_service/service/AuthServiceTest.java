@@ -62,10 +62,16 @@ public class AuthServiceTest {
         assertThat(authResponse.accessToken()).isEqualTo(tokenPayload.accessToken());
         assertThat(authResponse.refreshToken()).isEqualTo(tokenPayload.refreshToken());
 
+        ArgumentCaptor<User> userArgumentCaptor = ArgumentCaptor.forClass(User.class);
         verify(googleOauthService).verify(idToken);
         verify(userService).findUserByEmailOrSave(email);
         verify(jwtUserDetailsService).generateTokenPayload(user);
-        verify(userService).update(user.getId(), user);
+        verify(userService).update(eq(user.getId()), userArgumentCaptor.capture());
+
+        User userCaptorValue = userArgumentCaptor.getValue();
+        assertThat(userCaptorValue).isNotNull();
+        assertThat(userCaptorValue.getStatus()).isEqualTo(UserStatus.ACTIVE);
+        assertThat(userCaptorValue.getProviderType()).isEqualTo(ProviderType.GOOGLE);
     }
 
     @Test
