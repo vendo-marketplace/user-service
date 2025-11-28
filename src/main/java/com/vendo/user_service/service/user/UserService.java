@@ -6,8 +6,8 @@ import com.vendo.user_service.common.type.UserRole;
 import com.vendo.user_service.model.User;
 import com.vendo.user_service.repository.UserRepository;
 import com.vendo.user_service.security.service.JwtUserDetailsService;
-import com.vendo.user_service.service.user.common.exception.UserAlreadyExistsException;
-import com.vendo.user_service.service.user.common.mapper.UserMapper;
+import com.vendo.user_service.common.exception.UserAlreadyExistsException;
+import com.vendo.user_service.common.mapper.UserMapper;
 import com.vendo.user_service.web.dto.UserProfileResponse;
 import jakarta.validation.constraints.NotNull;
 import lombok.RequiredArgsConstructor;
@@ -27,9 +27,8 @@ public class UserService {
 
     private final JwtUserDetailsService jwtUserDetailsService;
 
-    public UserProfileResponse getAuthenticatedUser() {
+    public UserProfileResponse getAuthenticatedUserProfile() {
         UserDetails userDetails = jwtUserDetailsService.getUserDetailsFromContext();
-
         return userMapper.toUserProfileResponse((User) userDetails);
     }
 

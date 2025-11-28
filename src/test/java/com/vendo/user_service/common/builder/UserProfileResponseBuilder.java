@@ -9,7 +9,7 @@ import java.time.Instant;
 import java.time.LocalDate;
 
 public class UserProfileResponseBuilder {
-    public static UserProfileResponse.UserProfileResponseBuilder buildUserProfileResponse() {
+    public static UserProfileResponse.UserProfileResponseBuilder buildUserProfileResponseWithAllFields() {
         return UserProfileResponse.builder()
                 .id("1")
                 .email("test@gmail.com")

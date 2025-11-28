@@ -1,4 +1,4 @@
-package com.vendo.user_service.service.user.common.mapper;
+package com.vendo.user_service.common.mapper;
 
 import com.vendo.user_service.common.config.MapStructConfig;
 import com.vendo.user_service.model.User;
@@ -9,4 +9,5 @@ import org.mapstruct.Mapper;
 public interface UserMapper {
 
     UserProfileResponse toUserProfileResponse(User user);
+
 }

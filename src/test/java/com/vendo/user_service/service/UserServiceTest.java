@@ -9,8 +9,8 @@ import com.vendo.user_service.model.User;
 import com.vendo.user_service.repository.UserRepository;
 import com.vendo.user_service.security.service.JwtUserDetailsService;
 import com.vendo.user_service.service.user.UserService;
-import com.vendo.user_service.service.user.common.exception.UserAlreadyExistsException;
-import com.vendo.user_service.service.user.common.mapper.UserMapper;
+import com.vendo.user_service.common.exception.UserAlreadyExistsException;
+import com.vendo.user_service.common.mapper.UserMapper;
 import com.vendo.user_service.web.dto.UserProfileResponse;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -46,7 +46,7 @@ public class UserServiceTest {
 
     @Test
     void save_shouldSaveUser_whenEmailDoesNotExist() {
-        User user = UserDataBuilder.buildUserWithRequiredFields().build();
+        User user = UserDataBuilder.buildUserAllFields().build();
 
         when(userRepository.findByEmail(user.getEmail())).thenReturn(Optional.empty());
         when(userRepository.save(user)).thenReturn(user);
@@ -61,7 +61,7 @@ public class UserServiceTest {
 
     @Test
     void save_shouldThrowUserAlreadyExistsException_whenEmailAlreadyExists() {
-        User user = UserDataBuilder.buildUserWithRequiredFields().build();
+        User user = UserDataBuilder.buildUserAllFields().build();
 
         when(userRepository.findByEmail(user.getEmail())).thenReturn(Optional.of(user));
 
@@ -74,8 +74,8 @@ public class UserServiceTest {
 
     @Test
     void update_shouldUpdateExistingUserFields() {
-        User existingUser = UserDataBuilder.buildUserWithRequiredFields().build();
-        User requestUser = UserDataBuilder.buildUserWithRequiredFields()
+        User existingUser = UserDataBuilder.buildUserAllFields().build();
+        User requestUser = UserDataBuilder.buildUserAllFields()
                 .status(UserStatus.ACTIVE)
                 .providerType(ProviderType.GOOGLE)
                 .password("AnotherPassword12345@")
@@ -97,7 +97,7 @@ public class UserServiceTest {
 
     @Test
     void update_shouldUpdatePartialFields_whenRequestHasPartialData() {
-        User existingUser = UserDataBuilder.buildUserWithRequiredFields().build();
+        User existingUser = UserDataBuilder.buildUserAllFields().build();
         User requestUser = User.builder()
                 .status(UserStatus.ACTIVE)
                 .build();
@@ -121,7 +121,7 @@ public class UserServiceTest {
 
     @Test
     void update_shouldThrowUsernameNotFoundException_whenUserDoesNotExist() {
-        User requestUser = UserDataBuilder.buildUserWithRequiredFields().build();
+        User requestUser = UserDataBuilder.buildUserAllFields().build();
 
         when(userRepository.findById("1")).thenReturn(Optional.empty());
 
@@ -134,7 +134,7 @@ public class UserServiceTest {
 
     @Test
     void findUserByEmailOrSave_shouldReturnExistingUser() {
-        User user = UserDataBuilder.buildUserWithRequiredFields().build();
+        User user = UserDataBuilder.buildUserAllFields().build();
 
         when(userRepository.findByEmail(user.getEmail())).thenReturn(Optional.of(user));
 
@@ -150,7 +150,7 @@ public class UserServiceTest {
 
     @Test
     void findByEmailOrSave_shouldSaveNewUser_whenNotFound() {
-        User user = UserDataBuilder.buildUserWithRequiredFields().build();
+        User user = UserDataBuilder.buildUserAllFields().build();
 
         when(userRepository.findByEmail(user.getEmail())).thenReturn(Optional.empty());
         when(userRepository.save(any(User.class))).thenAnswer(invocation -> {
@@ -183,7 +183,7 @@ public class UserServiceTest {
 
     @Test
     void findByUserIdOrThrow_shouldReturnUser_whenFound() {
-        User user = UserDataBuilder.buildUserWithRequiredFields().build();
+        User user = UserDataBuilder.buildUserAllFields().build();
         when(userRepository.findById(user.getId())).thenReturn(Optional.of(user));
 
         User result = userService.findByUserIdOrThrow("1");
@@ -211,7 +211,7 @@ public class UserServiceTest {
 
     @Test
     void findByEmailOrThrow_shouldReturnUser_whenFound() {
-        User user = UserDataBuilder.buildUserWithRequiredFields().build();
+        User user = UserDataBuilder.buildUserAllFields().build();
         when(userRepository.findByEmail(user.getEmail())).thenReturn(Optional.of(user));
 
         User result = userService.findByEmailOrThrow(user.getEmail());
@@ -230,9 +230,9 @@ public class UserServiceTest {
     }
 
     @Test
-    void getAuthenticatedUser_shouldReturnUserProfile_whenAuthenticated() {
-        User user = UserDataBuilder.buildUserWithRequiredFields().build();
-        UserProfileResponse expectedProfile = UserProfileResponseBuilder.buildUserProfileResponse()
+    void getAuthenticatedUser_shouldReturnUserProfile_whenAuthenticatedProfile() {
+        User user = UserDataBuilder.buildUserAllFields().build();
+        UserProfileResponse expectedProfile = UserProfileResponseBuilder.buildUserProfileResponseWithAllFields()
                 .createdAt(user.getCreatedAt())
                 .updatedAt(user.getUpdatedAt())
                 .build();
@@ -240,7 +240,7 @@ public class UserServiceTest {
         when(jwtUserDetailsService.getUserDetailsFromContext()).thenReturn(user);
         when(userMapper.toUserProfileResponse(user)).thenReturn(expectedProfile);
 
-        UserProfileResponse result = userService.getAuthenticatedUser();
+        UserProfileResponse result = userService.getAuthenticatedUserProfile();
 
         assertThat(result).isEqualTo(expectedProfile);
         assertThat(result.createdAt()).isEqualTo(user.getCreatedAt());
@@ -248,21 +248,21 @@ public class UserServiceTest {
     }
 
     @Test
-    void getAuthenticatedUser_shouldThrowException_whenAuthenticationIsNull() {
+    void getAuthenticatedUser_Profile_shouldThrowException_whenAuthenticationIsNull() {
         when(jwtUserDetailsService.getUserDetailsFromContext())
                 .thenThrow(new AuthenticationCredentialsNotFoundException("Unauthorized."));
 
-        assertThatThrownBy(() -> userService.getAuthenticatedUser())
+        assertThatThrownBy(() -> userService.getAuthenticatedUserProfile())
                 .isInstanceOf(AuthenticationCredentialsNotFoundException.class)
                 .hasMessage("Unauthorized.");
     }
 
     @Test
-    void getAuthenticatedUser_shouldThrowException_whenPrincipalIsNotUserDetails() {
+    void getAuthenticatedUser_shouldThrowException_whenPrincipalIsNotUserProfileDetails() {
         when(jwtUserDetailsService.getUserDetailsFromContext())
                 .thenThrow(new AuthenticationCredentialsNotFoundException("Unauthorized."));
 
-        assertThatThrownBy(() -> userService.getAuthenticatedUser())
+        assertThatThrownBy(() -> userService.getAuthenticatedUserProfile())
                 .isInstanceOf(AuthenticationCredentialsNotFoundException.class)
                 .hasMessage("Unauthorized.");
     }

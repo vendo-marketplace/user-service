@@ -18,6 +18,5 @@ public record UserProfileResponse(
         LocalDate birthDate,
         String fullName,
         Instant createdAt,
-        Instant updatedAt
-) {
+        Instant updatedAt) {
 }

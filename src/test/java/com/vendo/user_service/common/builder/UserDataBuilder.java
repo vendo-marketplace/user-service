@@ -10,7 +10,7 @@ import java.time.LocalDate;
 
 public class UserDataBuilder {
 
-    public static User.UserBuilder buildUserWithRequiredFields() {
+    public static User.UserBuilder buildUserAllFields() {
         return User.builder()
                 .id("1")
                 .email("test@gmail.com")

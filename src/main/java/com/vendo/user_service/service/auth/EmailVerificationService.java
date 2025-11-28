@@ -1,4 +1,4 @@
-package com.vendo.user_service.service.user.auth;
+package com.vendo.user_service.service.auth;
 
 import com.vendo.domain.user.common.type.UserStatus;
 import com.vendo.integration.kafka.event.EmailOtpEvent;

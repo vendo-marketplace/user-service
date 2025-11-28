@@ -1,19 +1,19 @@
-package com.vendo.user_service.service.user.auth;
+package com.vendo.user_service.service.auth;
 
 import com.google.api.client.googleapis.auth.oauth2.GoogleIdToken;
 import com.vendo.domain.user.common.type.ProviderType;
 import com.vendo.domain.user.common.type.UserStatus;
 import com.vendo.security.common.exception.AccessDeniedException;
 import com.vendo.security.common.exception.InvalidTokenException;
-import com.vendo.user_service.service.user.common.exception.UserAlreadyExistsException;
-import com.vendo.user_service.service.user.common.exception.UserBlockedException;
+import com.vendo.user_service.common.exception.UserAlreadyExistsException;
+import com.vendo.user_service.common.exception.UserBlockedException;
 import com.vendo.user_service.common.type.UserRole;
 import com.vendo.user_service.model.User;
 import com.vendo.user_service.security.common.dto.TokenPayload;
 import com.vendo.user_service.security.service.JwtService;
 import com.vendo.user_service.security.service.JwtUserDetailsService;
 import com.vendo.user_service.service.user.UserService;
-import com.vendo.user_service.service.user.common.exception.UserAlreadyActivatedException;
+import com.vendo.user_service.common.exception.UserAlreadyActivatedException;
 import com.vendo.user_service.web.dto.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.BadCredentialsException;
@@ -35,7 +35,7 @@ public class AuthService {
 
     private final JwtUserDetailsService jwtUserDetailsService;
 
-    private final GoogleOauthService googleOauthService;
+    private final GoogleOAuthService googleOauthService;
 
     public AuthResponse signIn(AuthRequest authRequest) {
         User user = userService.findByEmailOrThrow(authRequest.email());
@@ -105,7 +105,13 @@ public class AuthService {
         GoogleIdToken.Payload payload = googleOauthService.verify(googleAuthRequest.idToken());
 
         User user = userService.findUserByEmailOrSave(payload.getEmail());
-        updateUserGoogleAuthActivity(user);
+
+        if (user.getStatus() == UserStatus.INCOMPLETE) {
+            userService.update(user.getId(), user.toBuilder()
+                    .status(UserStatus.ACTIVE)
+                    .providerType(ProviderType.GOOGLE).build()
+            );
+        }
 
         TokenPayload tokenPayload = jwtUserDetailsService.generateTokenPayload(user);
         return AuthResponse.builder()
@@ -118,14 +124,6 @@ public class AuthService {
         boolean matches = passwordEncoder.matches(rawPassword, encodedPassword);
         if (!matches) {
             throw new BadCredentialsException("Wrong credentials");
-        }
-    }
-
-    private void updateUserGoogleAuthActivity(User user) {
-        if (user.getStatus() == UserStatus.INCOMPLETE) {
-            user.setStatus(UserStatus.ACTIVE);
-            user.setProviderType(ProviderType.GOOGLE);
-            userService.update(user.getId(), user);
         }
     }
 }

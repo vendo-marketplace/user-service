@@ -81,7 +81,7 @@ public class PasswordControllerIntegrationTest {
 
     @Test
     void forgotPassword_shouldSendForgotPasswordEventSuccessfully() throws Exception {
-        User user = UserDataBuilder.buildUserWithRequiredFields().build();
+        User user = UserDataBuilder.buildUserAllFields().build();
         userRepository.save(user);
 
         mockMvc.perform(post("/password/forgot").param("email", user.getEmail())
@@ -102,7 +102,7 @@ public class PasswordControllerIntegrationTest {
 
     @Test
     void forgotPassword_shouldReturnConflict_whenForgotPasswordEventHasAlreadySent() throws Exception {
-        User user = UserDataBuilder.buildUserWithRequiredFields().build();
+        User user = UserDataBuilder.buildUserAllFields().build();
         String otp = "123456";
 
         redisService.saveValue(
@@ -135,7 +135,7 @@ public class PasswordControllerIntegrationTest {
 
     @Test
     void forgotPassword_shouldReturnNotFound_whenUserNotFound() throws Exception {
-        User user = UserDataBuilder.buildUserWithRequiredFields().build();
+        User user = UserDataBuilder.buildUserAllFields().build();
 
         String responseContent = mockMvc.perform(post("/password/forgot")
                         .contentType(MediaType.APPLICATION_JSON).param("email", user.getEmail()))
@@ -159,7 +159,7 @@ public class PasswordControllerIntegrationTest {
     void resetPassword_shouldResetPassword() throws Exception {
         String otp = "123456";
         String newPassword = "newTestPassword1234@";
-        User user = UserDataBuilder.buildUserWithRequiredFields().build();
+        User user = UserDataBuilder.buildUserAllFields().build();
         ResetPasswordRequest resetPasswordRequest = ResetPasswordRequest.builder()
                 .password(newPassword).build();
         redisService.saveValue(
@@ -186,7 +186,7 @@ public class PasswordControllerIntegrationTest {
     void resetPassword_shouldReturnGone_whenTokenExpired() throws Exception {
         String otp = "123456";
         String newPassword = "newTestPassword1234@";
-        User user = UserDataBuilder.buildUserWithRequiredFields().build();
+        User user = UserDataBuilder.buildUserAllFields().build();
         ResetPasswordRequest resetPasswordRequest = ResetPasswordRequest.builder().password(newPassword).build();
         userRepository.save(user);
 
@@ -214,7 +214,7 @@ public class PasswordControllerIntegrationTest {
     void resetPassword_shouldReturnNotFound_whenUserNotFound() throws Exception {
         String otp = "123456";
         String newPassword = "newTestPassword1234@";
-        User user = UserDataBuilder.buildUserWithRequiredFields().build();
+        User user = UserDataBuilder.buildUserAllFields().build();
         ResetPasswordRequest resetPasswordRequest = ResetPasswordRequest.builder().password(newPassword).build();
         redisService.saveValue(
                 passwordRecoveryOtpNamespace.getOtp().buildPrefix(otp),
@@ -243,7 +243,7 @@ public class PasswordControllerIntegrationTest {
 
     @Test
     void resendOtp_shouldResendOtp_whenFirstAttempt_andOtpAlreadyExists() throws Exception {
-        User user = UserDataBuilder.buildUserWithRequiredFields().build();
+        User user = UserDataBuilder.buildUserAllFields().build();
         String otp = "123456";
         redisService.saveValue(
                 passwordRecoveryOtpNamespace.getEmail().buildPrefix(user.getEmail()),
@@ -268,7 +268,7 @@ public class PasswordControllerIntegrationTest {
 
     @Test
     void resendOtp_shouldResendOtp_whenFirstAttempt_andOtpDoesNotExist() throws Exception {
-        User user = UserDataBuilder.buildUserWithRequiredFields().build();
+        User user = UserDataBuilder.buildUserAllFields().build();
         String otp = "123456";
         redisService.saveValue(
                 passwordRecoveryOtpNamespace.getEmail().buildPrefix(user.getEmail()),
@@ -294,7 +294,7 @@ public class PasswordControllerIntegrationTest {
 
     @Test
     void resendOtp_shouldReturnNotFound_whenUserNotFound() throws Exception {
-        User user = UserDataBuilder.buildUserWithRequiredFields().build();
+        User user = UserDataBuilder.buildUserAllFields().build();
         String otp = "123456";
         redisService.saveValue(
                 passwordRecoveryOtpNamespace.getEmail().buildPrefix(user.getEmail()),
@@ -326,7 +326,7 @@ public class PasswordControllerIntegrationTest {
 
     @Test
     void resendOtp_shouldResendOtp_whenSecondAttempt() throws Exception {
-        User user = UserDataBuilder.buildUserWithRequiredFields().build();
+        User user = UserDataBuilder.buildUserAllFields().build();
         String otp = "123456";
         redisService.saveValue(
                 passwordRecoveryOtpNamespace.getEmail().buildPrefix(user.getEmail()),
@@ -353,7 +353,7 @@ public class PasswordControllerIntegrationTest {
 
     @Test
     void resendOtp_shouldResendOtp_whenThirdAttempt() throws Exception {
-        User user = UserDataBuilder.buildUserWithRequiredFields().build();
+        User user = UserDataBuilder.buildUserAllFields().build();
         String otp = "123456";
         redisService.saveValue(
                 passwordRecoveryOtpNamespace.getEmail().buildPrefix(user.getEmail()),
@@ -380,7 +380,7 @@ public class PasswordControllerIntegrationTest {
 
     @Test
     void resendOtp_shouldReturnTooManyRequests_whenFourthAttempt() throws Exception {
-        User user = UserDataBuilder.buildUserWithRequiredFields().build();
+        User user = UserDataBuilder.buildUserAllFields().build();
         String otp = "123456";
         redisService.saveValue(
                 passwordRecoveryOtpNamespace.getEmail().buildPrefix(user.getEmail()),
@@ -417,7 +417,7 @@ public class PasswordControllerIntegrationTest {
 
     @Test
     void resendOtp_shouldReturnGone_whenOtpSessionExpired() throws Exception {
-        User user = UserDataBuilder.buildUserWithRequiredFields().build();
+        User user = UserDataBuilder.buildUserAllFields().build();
         userRepository.save(user);
 
         String responseContent = mockMvc.perform(put("/password/resend-otp").param("email", user.getEmail())

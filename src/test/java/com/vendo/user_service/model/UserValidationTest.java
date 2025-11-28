@@ -26,7 +26,7 @@ class UserValidationTest {
 
     @Test
     void whenUserIsValid_thenNoViolations() {
-        User user = UserDataBuilder.buildUserWithRequiredFields().build();
+        User user = UserDataBuilder.buildUserAllFields().build();
 
         Set<ConstraintViolation<User>> constraintViolations = validator.validate(user);
         assertThat(constraintViolations.isEmpty()).isTrue();
@@ -34,7 +34,7 @@ class UserValidationTest {
 
     @Test
     void whenEmailIsValid_thenNoViolations() {
-        User user = UserDataBuilder.buildUserWithRequiredFields().email("test@gmail.com").build();
+        User user = UserDataBuilder.buildUserAllFields().email("test@gmail.com").build();
 
         Set<ConstraintViolation<User>> constraintViolations = validator.validate(user);
 
@@ -43,35 +43,35 @@ class UserValidationTest {
 
     @Test
     void whenEmailIsNotPresent_thenValidationFails() {
-        User user = UserDataBuilder.buildUserWithRequiredFields().email(null).build();
+        User user = UserDataBuilder.buildUserAllFields().email(null).build();
 
         validateUserField(user, "Email is required.");
     }
 
     @Test
     void whenEmailHasIncorrectFormat_thenValidationFalls() {
-        User user = UserDataBuilder.buildUserWithRequiredFields().email("testgmail.com").build();
+        User user = UserDataBuilder.buildUserAllFields().email("testgmail.com").build();
 
         validateUserField(user, "Invalid email.");
     }
 
     @Test
     void whenStatusIsNotPresent_thenValidationFalls() {
-        User user = UserDataBuilder.buildUserWithRequiredFields().status(null).build();
+        User user = UserDataBuilder.buildUserAllFields().status(null).build();
 
         validateUserField(user, "Status is required.");
     }
 
     @Test
     void whenRoleIsNotPresent_thenValidationFalls() {
-        User user = UserDataBuilder.buildUserWithRequiredFields().role(null).build();
+        User user = UserDataBuilder.buildUserAllFields().role(null).build();
 
         validateUserField(user, "Role is required.");
     }
 
     @Test
     void whenPasswordIsValid_thenNoViolations() {
-        User user = UserDataBuilder.buildUserWithRequiredFields().password("Qwerty1234@").build();
+        User user = UserDataBuilder.buildUserAllFields().password("Qwerty1234@").build();
 
         Set<ConstraintViolation<User>> constraintViolations = validator.validate(user);
 
@@ -80,21 +80,21 @@ class UserValidationTest {
 
     @Test
     void whenPasswordIsNotPresent_thenValidationFalls() {
-        User user = UserDataBuilder.buildUserWithRequiredFields().password(null).build();
+        User user = UserDataBuilder.buildUserAllFields().password(null).build();
 
         validateUserField(user, "Password is required.");
     }
 
     @Test
     void whenPasswordHasIncorrectFormat_thenValidationFalls() {
-        User user = UserDataBuilder.buildUserWithRequiredFields().password("qwerty1234").build();
+        User user = UserDataBuilder.buildUserAllFields().password("qwerty1234").build();
 
         validateUserField(user, "Invalid password. Should include minimum 8 characters, 1 uppercase character, 1 lowercase character, 1 special symbol.");
     }
 
     @Test
     void whenBirthDateIsNull_thenNoViolations() {
-        User user = UserDataBuilder.buildUserWithRequiredFields().birthDate(null).build();
+        User user = UserDataBuilder.buildUserAllFields().birthDate(null).build();
 
         Set<ConstraintViolation<User>> violations = validator.validate(user);
 
@@ -103,7 +103,7 @@ class UserValidationTest {
 
     @Test
     void whenAdult_thenNoViolations() {
-        User user = UserDataBuilder.buildUserWithRequiredFields().birthDate(LocalDate.of(2000, 1, 1)).build();
+        User user = UserDataBuilder.buildUserAllFields().birthDate(LocalDate.of(2000, 1, 1)).build();
 
         Set<ConstraintViolation<User>> violations = validator.validate(user);
 
@@ -112,14 +112,14 @@ class UserValidationTest {
 
     @Test
     void whenNotAdult_thenViolationsFalls() {
-        User user = UserDataBuilder.buildUserWithRequiredFields().birthDate(LocalDate.now()).build();
+        User user = UserDataBuilder.buildUserAllFields().birthDate(LocalDate.now()).build();
 
         validateUserField(user, "User should be at least 18 years old.");
     }
 
     @Test
     void whenFullNameIsNull_thenNoViolations() {
-        User user = UserDataBuilder.buildUserWithRequiredFields().fullName(null).build();
+        User user = UserDataBuilder.buildUserAllFields().fullName(null).build();
 
         Set<ConstraintViolation<User>> violations = validator.validate(user);
 
@@ -128,7 +128,7 @@ class UserValidationTest {
 
     @Test
     void whenFullNameIsTwoWords_thenNoViolations() {
-        User user = UserDataBuilder.buildUserWithRequiredFields().fullName("John Smith").build();
+        User user = UserDataBuilder.buildUserAllFields().fullName("John Smith").build();
 
         Set<ConstraintViolation<User>> violations = validator.validate(user);
 
@@ -137,7 +137,7 @@ class UserValidationTest {
 
     @Test
     void whenFullNameIsThreeWords_ValidationFails() {
-        User user = UserDataBuilder.buildUserWithRequiredFields().fullName("John Smith Junior").build();
+        User user = UserDataBuilder.buildUserAllFields().fullName("John Smith Junior").build();
 
         validateUserField(user, "Full name must contain two words, each starting with an uppercase letter and followed by lowercase letters.");
 
@@ -145,28 +145,28 @@ class UserValidationTest {
 
     @Test
     void whenFullNameStartsWithLowercase_thenValidationFails() {
-        User user = UserDataBuilder.buildUserWithRequiredFields().fullName("john Smith").build();
+        User user = UserDataBuilder.buildUserAllFields().fullName("john Smith").build();
 
         validateUserField(user, "Full name must contain two words, each starting with an uppercase letter and followed by lowercase letters.");
     }
 
     @Test
     void whenFullNameHasOnlyOneWord_thenValidationFails() {
-        User user = UserDataBuilder.buildUserWithRequiredFields().fullName("John").build();
+        User user = UserDataBuilder.buildUserAllFields().fullName("John").build();
 
         validateUserField(user, "Full name must contain two words, each starting with an uppercase letter and followed by lowercase letters.");
     }
 
     @Test
     void whenFullNameContainsDigits_thenValidationFails() {
-        User user = UserDataBuilder.buildUserWithRequiredFields().fullName("John Smith2").build();
+        User user = UserDataBuilder.buildUserAllFields().fullName("John Smith2").build();
 
         validateUserField(user, "Full name must contain two words, each starting with an uppercase letter and followed by lowercase letters.");
     }
 
     @Test
     void whenFullNameContainsDoubleSpaces_thenValidationFails() {
-        User user = UserDataBuilder.buildUserWithRequiredFields().fullName("John  Smith").build();
+        User user = UserDataBuilder.buildUserAllFields().fullName("John  Smith").build();
 
         validateUserField(user, "Full name must contain two words, each starting with an uppercase letter and followed by lowercase letters.");
     }

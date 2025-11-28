@@ -22,7 +22,7 @@ class UserAuditingTest {
 
     @Test
     void shouldSetCreatedAtAndUpdatedAt_whenUserSaved() {
-        User user = UserDataBuilder.buildUserWithRequiredFields().build();
+        User user = UserDataBuilder.buildUserAllFields().build();
         Instant now = Instant.now();
 
         User saved = userRepository.save(user);
@@ -35,7 +35,7 @@ class UserAuditingTest {
 
     @Test
     void shouldUpdateFieldUpdatedAt_whenUserModified() {
-        User user = UserDataBuilder.buildUserWithRequiredFields().build();
+        User user = UserDataBuilder.buildUserAllFields().build();
 
         User saved = userRepository.save(user);
         Instant beforeUpdatedAt = saved.getUpdatedAt();

@@ -1,7 +1,7 @@
 package com.vendo.user_service.web.controller;
 
 import com.vendo.user_service.service.user.UserService;
-import com.vendo.user_service.service.user.auth.AuthService;
+import com.vendo.user_service.service.auth.AuthService;
 import com.vendo.user_service.web.dto.*;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -41,8 +41,8 @@ public class AuthController {
     }
 
     @GetMapping("/me")
-    public ResponseEntity<UserProfileResponse> getAuthenticatedUser() {
-        return ResponseEntity.ok(userService.getAuthenticatedUser());
+    ResponseEntity<UserProfileResponse> getAuthenticatedUserProfile() {
+        return ResponseEntity.ok(userService.getAuthenticatedUserProfile());
     }
 
     @PostMapping("/google")
