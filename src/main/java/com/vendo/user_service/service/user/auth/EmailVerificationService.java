@@ -1,6 +1,5 @@
 package com.vendo.user_service.service.user.auth;
 
-import com.vendo.domain.user.common.type.UserStatus;
 import com.vendo.integration.kafka.event.EmailOtpEvent;
 import com.vendo.user_service.model.User;
 import com.vendo.user_service.service.otp.EmailOtpService;
@@ -48,7 +47,7 @@ public class EmailVerificationService {
         emailOtpService.verifyOtp(otp, validateRequest.email(), emailVerificationOtpNamespace);
 
         userService.update(user.getId(), User.builder()
-                .status(UserStatus.ACTIVE)
+                .emailVerified(true)
                 .build());
     }
 

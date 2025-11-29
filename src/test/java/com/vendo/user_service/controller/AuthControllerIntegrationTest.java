@@ -308,7 +308,7 @@ class AuthControllerIntegrationTest {
 
     @Test
     void completeAuth_shouldSuccessfullyCompleteRegistration() throws Exception {
-        User user = UserDataBuilder.buildUserWithRequiredFields().build();
+        User user = UserDataBuilder.buildUserWithRequiredFields().emailVerified(true).build();
         userRepository.save(user);
         CompleteAuthRequest completeAuthRequest = CompleteAuthRequestDataBuilder.buildCompleteAuthRequestWithAllFields().build();
 
@@ -428,8 +428,11 @@ class AuthControllerIntegrationTest {
     }
 
     @Test
-    void completeProfile_shouldReturn_whenUserBlocked() throws Exception {
-        User user = UserDataBuilder.buildUserWithRequiredFields().status(UserStatus.BLOCKED).build();
+    void completeProfile_shouldReturnForbidden_whenUserBlocked() throws Exception {
+        User user = UserDataBuilder.buildUserWithRequiredFields()
+                .status(UserStatus.BLOCKED)
+                .emailVerified(true)
+                .build();
         userRepository.save(user);
         CompleteAuthRequest completeAuthRequest = CompleteAuthRequestDataBuilder.buildCompleteAuthRequestWithAllFields().build();
 
@@ -453,7 +456,10 @@ class AuthControllerIntegrationTest {
 
     @Test
     void completeProfile_shouldReturn_whenUserAlreadyCompletedRegistration() throws Exception {
-        User user = UserDataBuilder.buildUserWithRequiredFields().status(UserStatus.ACTIVE).build();
+        User user = UserDataBuilder.buildUserWithRequiredFields()
+                .emailVerified(true)
+                .status(UserStatus.ACTIVE)
+                .build();
         userRepository.save(user);
         CompleteAuthRequest completeAuthRequest = CompleteAuthRequestDataBuilder.buildCompleteAuthRequestWithAllFields().build();
 

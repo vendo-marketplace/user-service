@@ -14,6 +14,7 @@ import com.vendo.user_service.security.service.JwtService;
 import com.vendo.user_service.security.service.JwtUserDetailsService;
 import com.vendo.user_service.service.user.UserService;
 import com.vendo.user_service.service.user.common.exception.UserAlreadyActivatedException;
+import com.vendo.user_service.service.user.common.exception.UserEmailNotVerifiedException;
 import com.vendo.user_service.web.dto.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.BadCredentialsException;
@@ -72,6 +73,10 @@ public class AuthService {
 
     public void completeAuth(String email, CompleteAuthRequest completeAuthRequest) {
         User user = userService.findByEmailOrThrow(email);
+
+        if (!user.getEmailVerified()) {
+            throw new UserEmailNotVerifiedException("Your email is not verified.");
+        }
 
         if (user.getStatus() == UserStatus.BLOCKED) {
             throw new UserBlockedException("Your account is blocked.");
