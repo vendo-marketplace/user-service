@@ -81,7 +81,7 @@ public class JwtAuthFilterIntegrationTest {
         assertThat(responseContent).isNotBlank();
 
         ExceptionResponse exceptionResponse = objectMapper.readValue(responseContent, ExceptionResponse.class);
-        assertThat(exceptionResponse.message()).isEqualTo("Invalid token.");
+        assertThat(exceptionResponse.message()).isEqualTo("Unauthorized.");
         assertThat(exceptionResponse.code()).isEqualTo(HttpStatus.UNAUTHORIZED.value());
     }
 

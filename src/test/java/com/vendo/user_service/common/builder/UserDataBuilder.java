@@ -20,6 +20,7 @@ public class UserDataBuilder {
                 .birthDate(LocalDate.of(2000, 1, 1))
                 .providerType(ProviderType.LOCAL)
                 .status(UserStatus.INCOMPLETE)
+                .emailVerified(false)
                 .createdAt(Instant.now())
                 .updatedAt(Instant.now());
     }

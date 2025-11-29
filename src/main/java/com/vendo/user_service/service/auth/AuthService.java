@@ -68,21 +68,14 @@ public class AuthService {
                 .status(UserStatus.INCOMPLETE)
                 .providerType(ProviderType.LOCAL)
                 .password(encodedPassword)
+                .emailVerified(false)
                 .build());
     }
 
     public void completeAuth(String email, CompleteAuthRequest completeAuthRequest) {
         User user = userService.findByEmailOrThrow(email);
 
-        if (!user.getEmailVerified()) {
-            throw new UserEmailNotVerifiedException("Your email is not verified.");
-        }
-
-        if (user.getStatus() == UserStatus.BLOCKED) {
-            throw new UserBlockedException("Your account is blocked.");
-        } else if (user.getStatus() == UserStatus.ACTIVE) {
-            throw new UserAlreadyActivatedException("Your account is already activated.");
-        }
+        validateUserBeforeCompleteAuth(user);
 
         userService.update(user.getId(), user.toBuilder()
                 .status(UserStatus.ACTIVE)
@@ -131,4 +124,19 @@ public class AuthService {
             throw new BadCredentialsException("Wrong credentials");
         }
     }
+
+    private void validateUserBeforeCompleteAuth(User user) {
+        if (!user.getEmailVerified()) {
+            throw new UserEmailNotVerifiedException("Your email is not verified.");
+        }
+
+        if (user.getStatus() == UserStatus.BLOCKED) {
+            throw new UserBlockedException("Your account is blocked.");
+        }
+
+        if (user.getStatus() == UserStatus.ACTIVE) {
+            throw new UserAlreadyActivatedException("Your account is already activated.");
+        }
+    }
+
 }

@@ -6,7 +6,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.authentication.AuthenticationCredentialsNotFoundException;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
@@ -35,14 +34,15 @@ public class CommonExceptionHandler {
         return ResponseEntity.badRequest().body(exceptionResponse);
     }
 
-    @ExceptionHandler(AuthenticationCredentialsNotFoundException.class)
-    public ResponseEntity<ExceptionResponse> handleAuthenticationCredentialsNotFoundException(AuthenticationCredentialsNotFoundException e, HttpServletRequest request) {
+    @ExceptionHandler(IllegalArgumentException.class)
+    protected ResponseEntity<ExceptionResponse> handleIllegalArgumentException(IllegalArgumentException e, HttpServletRequest request) {
+        log.error(e.getMessage());
         ExceptionResponse exceptionResponse = ExceptionResponse.builder()
-                .message(e.getMessage())
-                .code(HttpStatus.UNAUTHORIZED.value())
+                .message("Internal server error.")
+                .code(HttpStatus.INTERNAL_SERVER_ERROR.value())
                 .path(request.getRequestURI())
                 .build();
 
-        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(exceptionResponse);
+        return ResponseEntity.badRequest().body(exceptionResponse);
     }
 }

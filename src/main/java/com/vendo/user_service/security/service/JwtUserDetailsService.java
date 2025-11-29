@@ -1,5 +1,7 @@
 package com.vendo.user_service.security.service;
 
+import com.vendo.domain.user.common.type.UserStatus;
+import com.vendo.user_service.model.User;
 import com.vendo.user_service.security.common.dto.TokenPayload;
 import com.vendo.user_service.security.common.helper.JwtHelper;
 import io.jsonwebtoken.Claims;
@@ -48,5 +50,9 @@ public class JwtUserDetailsService {
     public UserDetails getUserDetailsByTokenSubject(String token) {
         Claims claims = jwtHelper.extractAllClaims(token);
         return userDetailsService.loadUserByUsername(claims.getSubject());
+    }
+
+    public static boolean isUserActive(UserDetails userDetails) {
+        return userDetails instanceof User && ((User) userDetails).getStatus() == UserStatus.ACTIVE;
     }
 }

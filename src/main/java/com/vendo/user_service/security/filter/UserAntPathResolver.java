@@ -12,7 +12,11 @@ public class UserAntPathResolver implements AntPathResolver {
     private static final AntPathMatcher antPathMatcher = new AntPathMatcher();
 
     public static final String[] PERMITTED_PATHS = new String[] {
-            "/auth/**",
+            "/auth/sign-in",
+            "/auth/sign-up",
+            "/auth/refresh",
+            "/auth/google",
+            "/auth/complete-auth",
             "/password/**",
             "/verification/**",
             "/swagger-ui/**",

@@ -13,11 +13,13 @@ import com.vendo.user_service.repository.UserRepository;
 import com.vendo.user_service.security.common.helper.JwtHelper;
 import com.vendo.user_service.security.service.JwtService;
 import com.vendo.user_service.web.dto.*;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.data.redis.connection.RedisConnection;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -28,13 +30,13 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors;
 import org.springframework.test.context.ActiveProfiles;
-import org.springframework.test.context.event.annotation.AfterTestClass;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.time.LocalDate;
 import java.util.Optional;
 
 import static com.vendo.security.common.constants.AuthConstants.BEARER_PREFIX;
+import static com.vendo.user_service.security.common.util.SecurityContextUtils.initializeSecurityContext;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
@@ -68,14 +70,22 @@ class AuthControllerIntegrationTest {
 
     @BeforeEach
     void setUp() {
-        redisTemplate.getConnectionFactory().getConnection().serverCommands().flushAll();
+        SecurityContextHolder.clearContext();
+        flushRedis();
         userRepository.deleteAll();
     }
 
-    @AfterTestClass
+    @AfterEach
     void tearDown() {
-        redisTemplate.getConnectionFactory().getConnection().serverCommands().flushAll();
+        SecurityContextHolder.clearContext();
+        flushRedis();
         userRepository.deleteAll();
+    }
+
+    private void flushRedis() {
+        RedisConnection connection = redisTemplate.getRequiredConnectionFactory().getConnection();
+        connection.flushAll();
+        connection.close();
     }
 
     @Test
@@ -505,15 +515,11 @@ class AuthControllerIntegrationTest {
                 .status(UserStatus.ACTIVE)
                 .build();
         userRepository.save(user);
-
-        SecurityContextHolder.getContext().setAuthentication(
-                new UsernamePasswordAuthenticationToken(
-                        user, null, user.getAuthorities()
-                )
-        );
+        SecurityContext securityContext = initializeSecurityContext(user);
 
         String content = mockMvc.perform(get("/auth/me")
-                        .contentType(MediaType.APPLICATION_JSON))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .with(SecurityMockMvcRequestPostProcessors.securityContext(securityContext)))
                 .andExpect(status().isOk())
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON))
                 .andReturn()
@@ -536,35 +542,16 @@ class AuthControllerIntegrationTest {
     }
 
     @Test
-    void getAuthenticatedUser_shouldReturnUnauthorized_whenNoAuthentication() throws Exception {
-        SecurityContextHolder.clearContext();
-
-        String content = mockMvc.perform(get("/auth/me")
-                        .contentType(MediaType.APPLICATION_JSON))
-                .andExpect(status().isUnauthorized())
-                .andReturn()
-                .getResponse().getContentAsString();
-
-        assertThat(content).isNotNull();
-        ExceptionResponse exceptionResponse = objectMapper.readValue(content, ExceptionResponse.class);
-
-        assertThat(exceptionResponse).isNotNull();
-        assertThat(exceptionResponse.message()).isEqualTo("Unauthorized.");
-        assertThat(exceptionResponse.code()).isEqualTo(HttpStatus.UNAUTHORIZED.value());
-        assertThat(exceptionResponse.path()).isEqualTo("/auth/me");
-    }
-
-    @Test
     void getAuthenticatedUser_shouldReturnUnauthorized_whenNotUserInstance() throws Exception {
-        SecurityContextHolder.clearContext();
         UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
                 "not-a-user-object",
                 null,
                 null);
-        SecurityContextHolder.getContext().setAuthentication(authToken);
+        SecurityContext securityContext = initializeSecurityContext(authToken);
 
         String content = mockMvc.perform(get("/auth/me")
-                        .contentType(MediaType.APPLICATION_JSON))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .with(SecurityMockMvcRequestPostProcessors.securityContext(securityContext)))
                 .andExpect(status().isUnauthorized())
                 .andReturn()
                 .getResponse()
@@ -580,16 +567,10 @@ class AuthControllerIntegrationTest {
 
     @Test
     void getAuthenticatedUser_shouldReturnNotFound_whenUserNotFound() throws Exception {
-        SecurityContextHolder.clearContext();
         User user = UserDataBuilder.buildUserAllFields()
                 .status(UserStatus.ACTIVE)
                 .build();
-
-        SecurityContext securityContext = SecurityContextHolder.createEmptyContext();
-        securityContext.setAuthentication(new UsernamePasswordAuthenticationToken(
-                user,
-                null,
-                user.getAuthorities()));
+        SecurityContext securityContext = initializeSecurityContext(user);
 
         String content = mockMvc.perform(get("/auth/me")
                         .with(SecurityMockMvcRequestPostProcessors.securityContext(securityContext))

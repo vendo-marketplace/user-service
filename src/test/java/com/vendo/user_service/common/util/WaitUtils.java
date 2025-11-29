@@ -3,7 +3,7 @@ package com.vendo.user_service.common.util;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
-public class WaitUtil {
+public class WaitUtils {
 
     public static void waitSafely(long mills) {
         try{

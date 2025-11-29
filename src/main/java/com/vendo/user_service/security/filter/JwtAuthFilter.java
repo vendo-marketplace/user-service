@@ -1,9 +1,7 @@
 package com.vendo.user_service.security.filter;
 
-import com.vendo.domain.user.common.type.UserStatus;
 import com.vendo.security.common.exception.AccessDeniedException;
 import com.vendo.security.common.exception.InvalidTokenException;
-import com.vendo.user_service.model.User;
 import com.vendo.user_service.security.common.helper.JwtHelper;
 import io.jsonwebtoken.Claims;
 import jakarta.servlet.FilterChain;
@@ -13,6 +11,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.security.authentication.AuthenticationCredentialsNotFoundException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -26,6 +25,7 @@ import java.io.IOException;
 
 import static com.vendo.security.common.constants.AuthConstants.AUTHORIZATION_HEADER;
 import static com.vendo.security.common.constants.AuthConstants.BEARER_PREFIX;
+import static com.vendo.user_service.security.service.JwtUserDetailsService.isUserActive;
 
 @Slf4j
 @Component
@@ -72,18 +72,20 @@ public class JwtAuthFilter extends OncePerRequestFilter {
     private String getTokenFromRequest(HttpServletRequest request) {
         String authorization = request.getHeader(AUTHORIZATION_HEADER);
 
-        if (authorization != null && authorization.startsWith(BEARER_PREFIX)) {
-            return authorization.substring(BEARER_PREFIX.length());
+        if (authorization == null) {
+            throw new AuthenticationCredentialsNotFoundException("Unauthorized.");
+        } else if (!authorization.startsWith(BEARER_PREFIX)) {
+            throw new InvalidTokenException("Invalid token.");
         }
 
-        throw new InvalidTokenException("Invalid token.");
+        return authorization.substring(BEARER_PREFIX.length());
     }
 
     private UserDetails validateUserAccessibility(Claims claims) {
         String email = claims.getSubject();
         UserDetails userDetails = userDetailsService.loadUserByUsername(email);
 
-        if (userDetails instanceof User && ((User) userDetails).getStatus() != UserStatus.ACTIVE) {
+        if (!isUserActive(userDetails)) {
             throw new AccessDeniedException("User is unactive.");
         }
 
