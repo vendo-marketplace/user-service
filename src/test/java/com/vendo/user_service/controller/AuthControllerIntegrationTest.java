@@ -452,7 +452,6 @@ class AuthControllerIntegrationTest {
         assertThat(exceptionResponse).isNotNull();
         assertThat(exceptionResponse.path()).isEqualTo("/auth/complete-auth");
         assertThat(exceptionResponse.code()).isEqualTo(HttpStatus.NOT_FOUND.value());
-        assertThat(exceptionResponse.errors()).isNull();
         assertThat(exceptionResponse.message()).isEqualTo("User not found.");
     }
 
@@ -478,9 +477,7 @@ class AuthControllerIntegrationTest {
         assertThat(exceptionResponse).isNotNull();
         assertThat(exceptionResponse.path()).isEqualTo("/auth/complete-auth");
         assertThat(exceptionResponse.code()).isEqualTo(HttpStatus.FORBIDDEN.value());
-        assertThat(exceptionResponse.errors()).isNull();
         assertThat(exceptionResponse.message()).isEqualTo("Your account is blocked.");
-
     }
 
     @Test

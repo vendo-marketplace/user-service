@@ -1,7 +1,9 @@
 package com.vendo.user_service.security.filter;
 
+import com.vendo.domain.user.common.type.UserStatus;
 import com.vendo.security.common.exception.AccessDeniedException;
 import com.vendo.security.common.exception.InvalidTokenException;
+import com.vendo.user_service.model.User;
 import com.vendo.user_service.security.common.helper.JwtHelper;
 import io.jsonwebtoken.Claims;
 import jakarta.servlet.FilterChain;
@@ -25,7 +27,6 @@ import java.io.IOException;
 
 import static com.vendo.security.common.constants.AuthConstants.AUTHORIZATION_HEADER;
 import static com.vendo.security.common.constants.AuthConstants.BEARER_PREFIX;
-import static com.vendo.user_service.security.service.JwtUserDetailsService.isUserActive;
 
 @Slf4j
 @Component
@@ -100,4 +101,9 @@ public class JwtAuthFilter extends OncePerRequestFilter {
 
         SecurityContextHolder.getContext().setAuthentication(authToken);
     }
+
+    private static boolean isUserActive(UserDetails userDetails) {
+        return userDetails instanceof User && ((User) userDetails).getStatus() == UserStatus.ACTIVE;
+    }
+
 }

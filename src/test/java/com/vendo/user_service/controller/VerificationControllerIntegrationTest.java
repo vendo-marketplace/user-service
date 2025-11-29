@@ -350,7 +350,7 @@ public class VerificationControllerIntegrationTest {
     }
 
     @Test
-    void validate_shouldActivateUser_whenOtpIsValid() throws Exception {
+    void validate_shouldVerifyUser_whenOtpIsValid() throws Exception {
         User user = UserDataBuilder.buildUserAllFields().build();
         userRepository.save(user);
         String otp = "123456";
