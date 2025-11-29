@@ -47,6 +47,7 @@ public class UserService {
         Optional.ofNullable(requestUser.getProviderType()).ifPresent(user::setProviderType);
         Optional.ofNullable(requestUser.getFullName()).ifPresent(user::setFullName);
         Optional.ofNullable(requestUser.getBirthDate()).ifPresent(user::setBirthDate);
+        Optional.ofNullable(requestUser.getEmailVerified()).ifPresent(user::setEmailVerified);
 
         userRepository.save(user);
     }

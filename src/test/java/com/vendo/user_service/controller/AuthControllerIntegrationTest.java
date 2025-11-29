@@ -12,7 +12,6 @@ import com.vendo.user_service.model.User;
 import com.vendo.user_service.repository.UserRepository;
 import com.vendo.user_service.security.common.helper.JwtHelper;
 import com.vendo.user_service.security.service.JwtService;
-import com.vendo.user_service.security.service.JwtUserDetailsService;
 import com.vendo.user_service.web.dto.*;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -26,8 +25,6 @@ import org.springframework.mock.web.MockHttpServletResponse;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.core.userdetails.UserDetailsService;
-import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors;
 import org.springframework.test.context.ActiveProfiles;
@@ -39,7 +36,6 @@ import java.util.Optional;
 
 import static com.vendo.security.common.constants.AuthConstants.BEARER_PREFIX;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
-import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -323,7 +319,7 @@ class AuthControllerIntegrationTest {
 
     @Test
     void completeAuth_shouldSuccessfullyCompleteRegistration() throws Exception {
-        User user = UserDataBuilder.buildUserAllFields().build();
+        User user = UserDataBuilder.buildUserAllFields().emailVerified(true).build();
         userRepository.save(user);
         CompleteAuthRequest completeAuthRequest = CompleteAuthRequestDataBuilder.buildCompleteAuthRequestWithAllFields().build();
 
@@ -452,7 +448,10 @@ class AuthControllerIntegrationTest {
 
     @Test
     void completeProfile_shouldReturnForbidden_whenUserBlocked() throws Exception {
-        User user = UserDataBuilder.buildUserAllFields().status(UserStatus.BLOCKED).build();
+        User user = UserDataBuilder.buildUserAllFields()
+                .status(UserStatus.BLOCKED)
+                .emailVerified(true)
+                .build();
         userRepository.save(user);
         CompleteAuthRequest completeAuthRequest = CompleteAuthRequestDataBuilder.buildCompleteAuthRequestWithAllFields().build();
 
@@ -475,8 +474,11 @@ class AuthControllerIntegrationTest {
     }
 
     @Test
-    void completeProfile_shouldReturnConflict_whenUserAlreadyCompletedRegistration() throws Exception {
-        User user = UserDataBuilder.buildUserAllFields().status(UserStatus.ACTIVE).build();
+    void completeProfile_shouldReturn_whenUserAlreadyCompletedRegistration() throws Exception {
+        User user = UserDataBuilder.buildUserAllFields()
+                .emailVerified(true)
+                .status(UserStatus.ACTIVE)
+                .build();
         userRepository.save(user);
         CompleteAuthRequest completeAuthRequest = CompleteAuthRequestDataBuilder.buildCompleteAuthRequestWithAllFields().build();
 

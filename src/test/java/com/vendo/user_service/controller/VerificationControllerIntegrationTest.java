@@ -351,9 +351,7 @@ public class VerificationControllerIntegrationTest {
 
     @Test
     void validate_shouldActivateUser_whenOtpIsValid() throws Exception {
-        User user = UserDataBuilder.buildUserAllFields()
-                .status(UserStatus.BLOCKED)
-                .build();
+        User user = UserDataBuilder.buildUserAllFields().build();
         userRepository.save(user);
         String otp = "123456";
 
@@ -378,7 +376,8 @@ public class VerificationControllerIntegrationTest {
         await().atMost(5, TimeUnit.SECONDS).untilAsserted(() -> {
             Optional<User> optionalUser = userRepository.findByEmail(user.getEmail());
             assertThat(optionalUser).isPresent();
-            assertThat(optionalUser.get().getStatus()).isEqualTo(UserStatus.ACTIVE);
+            assertThat(optionalUser.get().getStatus()).isEqualTo(UserStatus.INCOMPLETE);
+            assertThat(optionalUser.get().getEmailVerified()).isTrue();
         });
 
         assertThat(redisService.getValue(emailVerificationOtpNamespace.getOtp().buildPrefix(otp))).isEmpty();

@@ -7,6 +7,7 @@ import com.vendo.security.common.exception.AccessDeniedException;
 import com.vendo.security.common.exception.InvalidTokenException;
 import com.vendo.user_service.common.exception.UserAlreadyExistsException;
 import com.vendo.user_service.common.exception.UserBlockedException;
+import com.vendo.user_service.common.exception.UserEmailNotVerifiedException;
 import com.vendo.user_service.common.type.UserRole;
 import com.vendo.user_service.model.User;
 import com.vendo.user_service.security.common.dto.TokenPayload;
@@ -72,6 +73,10 @@ public class AuthService {
 
     public void completeAuth(String email, CompleteAuthRequest completeAuthRequest) {
         User user = userService.findByEmailOrThrow(email);
+
+        if (!user.getEmailVerified()) {
+            throw new UserEmailNotVerifiedException("Your email is not verified.");
+        }
 
         if (user.getStatus() == UserStatus.BLOCKED) {
             throw new UserBlockedException("Your account is blocked.");

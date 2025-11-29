@@ -1,9 +1,7 @@
 package com.vendo.user_service.common.exception.handler;
 
 import com.vendo.common.exception.ExceptionResponse;
-import com.vendo.user_service.common.exception.UserAlreadyActivatedException;
-import com.vendo.user_service.common.exception.UserAlreadyExistsException;
-import com.vendo.user_service.common.exception.UserBlockedException;
+import com.vendo.user_service.common.exception.*;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -52,6 +50,16 @@ public class UserExceptionHandler {
                 .path(request.getRequestURI())
                 .build();
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(exceptionResponse);
+    }
+
+    @ExceptionHandler(UserEmailNotVerifiedException.class)
+    public ResponseEntity<ExceptionResponse> handleUserEmailNotVerifiedException(UserEmailNotVerifiedException e, HttpServletRequest request) {
+        ExceptionResponse exceptionResponse = ExceptionResponse.builder()
+                .message(e.getMessage())
+                .code(HttpStatus.FORBIDDEN.value())
+                .path(request.getRequestURI())
+                .build();
+        return ResponseEntity.status(HttpStatus.FORBIDDEN).body(exceptionResponse);
     }
 
 }
