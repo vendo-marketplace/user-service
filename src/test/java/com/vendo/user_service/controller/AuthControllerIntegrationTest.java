@@ -24,10 +24,12 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockHttpServletResponse;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.event.annotation.AfterTestClass;
 import org.springframework.test.web.servlet.MockMvc;
@@ -581,19 +583,14 @@ class AuthControllerIntegrationTest {
                 .status(UserStatus.ACTIVE)
                 .build();
 
-        UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
+        SecurityContext securityContext = SecurityContextHolder.createEmptyContext();
+        securityContext.setAuthentication(new UsernamePasswordAuthenticationToken(
                 user,
                 null,
-                user.getAuthorities());
-        SecurityContextHolder.getContext().setAuthentication(authToken);
-
-//        when(jwtUserDetailsService.getUserDetailsFromContext()).thenCallRealMethod();
-//
-
-//        when(userDetailsService.loadUserByUsername(user.getUsername()))
-//                .thenThrow(new UsernameNotFoundException("User not found."));
+                user.getAuthorities()));
 
         String content = mockMvc.perform(get("/auth/me")
+                        .with(SecurityMockMvcRequestPostProcessors.securityContext(securityContext))
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isNotFound())
                 .andReturn()

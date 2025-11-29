@@ -37,6 +37,7 @@ public class JwtUserDetailsService {
 
     public UserDetails getUserDetailsFromContext() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+
         if (authentication == null || !(authentication.getPrincipal() instanceof UserDetails userDetails)) {
             throw new AuthenticationCredentialsNotFoundException("Unauthorized.");
         }
