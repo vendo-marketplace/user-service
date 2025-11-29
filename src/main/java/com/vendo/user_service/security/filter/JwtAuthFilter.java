@@ -13,6 +13,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.security.authentication.AuthenticationCredentialsNotFoundException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -72,18 +73,20 @@ public class JwtAuthFilter extends OncePerRequestFilter {
     private String getTokenFromRequest(HttpServletRequest request) {
         String authorization = request.getHeader(AUTHORIZATION_HEADER);
 
-        if (authorization != null && authorization.startsWith(BEARER_PREFIX)) {
-            return authorization.substring(BEARER_PREFIX.length());
+        if (authorization == null) {
+            throw new AuthenticationCredentialsNotFoundException("Unauthorized.");
+        } else if (!authorization.startsWith(BEARER_PREFIX)) {
+            throw new InvalidTokenException("Invalid token.");
         }
 
-        throw new InvalidTokenException("Invalid token.");
+        return authorization.substring(BEARER_PREFIX.length());
     }
 
     private UserDetails validateUserAccessibility(Claims claims) {
         String email = claims.getSubject();
         UserDetails userDetails = userDetailsService.loadUserByUsername(email);
 
-        if (userDetails instanceof User && ((User) userDetails).getStatus() != UserStatus.ACTIVE) {
+        if (!isUserActive(userDetails)) {
             throw new AccessDeniedException("User is unactive.");
         }
 
@@ -98,4 +101,9 @@ public class JwtAuthFilter extends OncePerRequestFilter {
 
         SecurityContextHolder.getContext().setAuthentication(authToken);
     }
+
+    private static boolean isUserActive(UserDetails userDetails) {
+        return userDetails instanceof User && ((User) userDetails).getStatus() == UserStatus.ACTIVE;
+    }
+
 }

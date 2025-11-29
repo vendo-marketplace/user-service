@@ -1,4 +1,4 @@
-package com.vendo.user_service.service.user.common.exception;
+package com.vendo.user_service.common.exception;
 
 public class UserAlreadyActivatedException extends RuntimeException {
   public UserAlreadyActivatedException(String message) {

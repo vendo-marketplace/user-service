@@ -55,7 +55,7 @@ public class JwtAuthFilterIntegrationTest {
 
     @Test
     void doFilterInternal_shouldPassAuthorization_whenUserAlreadyAuthorized() throws Exception {
-        User user = UserDataBuilder.buildUserWithRequiredFields().build();
+        User user = UserDataBuilder.buildUserAllFields().build();
         UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
                 user,
                 null,
@@ -81,13 +81,13 @@ public class JwtAuthFilterIntegrationTest {
         assertThat(responseContent).isNotBlank();
 
         ExceptionResponse exceptionResponse = objectMapper.readValue(responseContent, ExceptionResponse.class);
-        assertThat(exceptionResponse.message()).isEqualTo("Invalid token.");
+        assertThat(exceptionResponse.message()).isEqualTo("Unauthorized.");
         assertThat(exceptionResponse.code()).isEqualTo(HttpStatus.UNAUTHORIZED.value());
     }
 
     @Test
     void doFilterInternal_shouldPassFilter_whenTokenIsValid() throws Exception {
-        User user = UserDataBuilder.buildUserWithRequiredFields()
+        User user = UserDataBuilder.buildUserAllFields()
                 .status(UserStatus.ACTIVE)
                 .build();
         userRepository.save(user);
@@ -99,7 +99,7 @@ public class JwtAuthFilterIntegrationTest {
 
     @Test
     void doFilterInternal_shouldReturnUnauthorized_whenTokenWithoutBearerPrefix() throws Exception {
-        User user = UserDataBuilder.buildUserWithRequiredFields().build();
+        User user = UserDataBuilder.buildUserAllFields().build();
         String accessToken = jwtService.generateAccessToken(user);
 
         MockHttpServletResponse response = mockMvc.perform(get("/test/ping").header(AUTHORIZATION, accessToken))
@@ -113,12 +113,11 @@ public class JwtAuthFilterIntegrationTest {
         assertThat(exceptionResponse.message()).isEqualTo("Invalid token.");
         assertThat(exceptionResponse.code()).isEqualTo(HttpStatus.UNAUTHORIZED.value());
         assertThat(exceptionResponse.path()).isEqualTo("/test/ping");
-
     }
 
     @Test
     void doFilterInternal_shouldReturnNotFound_whenUserNotFound() throws Exception {
-        User user = UserDataBuilder.buildUserWithRequiredFields().build();
+        User user = UserDataBuilder.buildUserAllFields().build();
         String accessToken = jwtService.generateAccessToken(user);
 
         MockHttpServletResponse response = mockMvc.perform(get("/test/ping").header(AUTHORIZATION, "Bearer " + accessToken))
@@ -136,7 +135,7 @@ public class JwtAuthFilterIntegrationTest {
 
     @Test
     void doFilterInternal_shouldReturnUnauthorized_whenTokenIsNotValid() throws Exception {
-        User user = UserDataBuilder.buildUserWithRequiredFields().build();
+        User user = UserDataBuilder.buildUserAllFields().build();
         userRepository.save(user);
         String expiredToken = jwtService.generateTokenWithExpiration(user, 0);
 

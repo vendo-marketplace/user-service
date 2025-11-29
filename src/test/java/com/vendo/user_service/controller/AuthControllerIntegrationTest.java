@@ -1,6 +1,5 @@
 package com.vendo.user_service.controller;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.vendo.common.exception.ExceptionResponse;
 import com.vendo.domain.user.common.type.ProviderType;
@@ -13,32 +12,34 @@ import com.vendo.user_service.model.User;
 import com.vendo.user_service.repository.UserRepository;
 import com.vendo.user_service.security.common.helper.JwtHelper;
 import com.vendo.user_service.security.service.JwtService;
-import com.vendo.user_service.web.dto.AuthRequest;
-import com.vendo.user_service.web.dto.AuthResponse;
-import com.vendo.user_service.web.dto.CompleteAuthRequest;
-import com.vendo.user_service.web.dto.RefreshRequest;
+import com.vendo.user_service.web.dto.*;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.data.redis.connection.RedisConnection;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockHttpServletResponse;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.context.SecurityContext;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors;
 import org.springframework.test.context.ActiveProfiles;
-import org.springframework.test.context.event.annotation.AfterTestClass;
 import org.springframework.test.web.servlet.MockMvc;
 
-import java.io.UnsupportedEncodingException;
 import java.time.LocalDate;
 import java.util.Optional;
 
 import static com.vendo.security.common.constants.AuthConstants.BEARER_PREFIX;
+import static com.vendo.user_service.security.common.util.SecurityContextUtils.initializeSecurityContext;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @SpringBootTest
@@ -69,23 +70,31 @@ class AuthControllerIntegrationTest {
 
     @BeforeEach
     void setUp() {
-        redisTemplate.getConnectionFactory().getConnection().serverCommands().flushAll();
+        SecurityContextHolder.clearContext();
+        flushRedis();
         userRepository.deleteAll();
     }
 
-    @AfterTestClass
+    @AfterEach
     void tearDown() {
-        redisTemplate.getConnectionFactory().getConnection().serverCommands().flushAll();
+        SecurityContextHolder.clearContext();
+        flushRedis();
         userRepository.deleteAll();
+    }
+
+    private void flushRedis() {
+        RedisConnection connection = redisTemplate.getRequiredConnectionFactory().getConnection();
+        connection.flushAll();
+        connection.close();
     }
 
     @Test
     void signUp_shouldSuccessfullyRegisterUser() throws Exception {
-        AuthRequest authRequest = AuthRequestDataBuilder.buildUserWithRequiredFields().build();
+        AuthRequest authRequest = AuthRequestDataBuilder.buildUserWithAllFields().build();
 
         mockMvc.perform(post("/auth/sign-up")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(authRequest)))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(authRequest)))
                 .andExpect(status().isOk());
 
         Optional<User> optionalUser = userRepository.findByEmail(authRequest.email());
@@ -101,19 +110,21 @@ class AuthControllerIntegrationTest {
 
     @Test
     void signUp_shouldReturnConflict_whenUserAlreadyExists() throws Exception {
-        AuthRequest authRequest = AuthRequestDataBuilder.buildUserWithRequiredFields().build();
+        AuthRequest authRequest = AuthRequestDataBuilder.buildUserWithAllFields().build();
         User user = User.builder().email(authRequest.email()).password(passwordEncoder.encode(authRequest.password())).build();
         userRepository.save(user);
 
-        MockHttpServletResponse response = mockMvc.perform(post("/auth/sign-up")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(authRequest)))
-                .andExpect(status().isConflict()).andReturn().getResponse();
+        String content = mockMvc.perform(post("/auth/sign-up")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(authRequest)))
+                .andExpect(status().isConflict())
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
 
-        String responseContent = response.getContentAsString();
-        assertThat(responseContent).isNotBlank();
+        assertThat(content).isNotBlank();
+        ExceptionResponse exceptionResponse = objectMapper.readValue(content, ExceptionResponse.class);
 
-        ExceptionResponse exceptionResponse = objectMapper.readValue(responseContent, ExceptionResponse.class);
         assertThat(exceptionResponse.message()).isEqualTo("User already exists.");
         assertThat(exceptionResponse.code()).isEqualTo(HttpStatus.CONFLICT.value());
         assertThat(exceptionResponse.path()).isEqualTo("/auth/sign-up");
@@ -121,7 +132,7 @@ class AuthControllerIntegrationTest {
 
     @Test
     void signIn_shouldReturnPairOfTokens() throws Exception {
-        AuthRequest authRequest = AuthRequestDataBuilder.buildUserWithRequiredFields().build();
+        AuthRequest authRequest = AuthRequestDataBuilder.buildUserWithAllFields().build();
         User user = User.builder()
                 .email(authRequest.email())
                 .password(passwordEncoder.encode(authRequest.password()))
@@ -129,17 +140,18 @@ class AuthControllerIntegrationTest {
                 .build();
         userRepository.save(user);
 
-        MockHttpServletResponse response = mockMvc.perform(post("/auth/sign-in")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(authRequest)))
-                .andExpect(status().isOk()).andReturn().getResponse();
+        String content = mockMvc.perform(post("/auth/sign-in")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(authRequest)))
+                .andExpect(status().isOk())
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
 
-        String responseContent = response.getContentAsString();
-        assertThat(responseContent).isNotBlank();
+        assertThat(content).isNotBlank();
+        AuthResponse authResponse = objectMapper.readValue(content, AuthResponse.class);
 
-        AuthResponse authResponse = objectMapper.readValue(responseContent, AuthResponse.class);
         assertThat(authResponse).isNotNull();
-
         assertThat(authResponse.accessToken()).isNotBlank();
         assertThat(jwtHelper.extractAllClaims(authResponse.accessToken())).isNotNull();
 
@@ -149,11 +161,11 @@ class AuthControllerIntegrationTest {
 
     @Test
     void signIn_shouldReturnNotFound_whenUserNotFound() throws Exception {
-        AuthRequest authRequest = AuthRequestDataBuilder.buildUserWithRequiredFields().build();
+        AuthRequest authRequest = AuthRequestDataBuilder.buildUserWithAllFields().build();
 
         MockHttpServletResponse response = mockMvc.perform(post("/auth/sign-in")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(authRequest)))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(authRequest)))
                 .andExpect(status().isNotFound()).andReturn().getResponse();
 
         String responseContent = response.getContentAsString();
@@ -167,7 +179,7 @@ class AuthControllerIntegrationTest {
 
     @Test
     void signIn_shouldReturnForbidden_whenUserBlocked() throws Exception {
-        AuthRequest authRequest = AuthRequestDataBuilder.buildUserWithRequiredFields().build();
+        AuthRequest authRequest = AuthRequestDataBuilder.buildUserWithAllFields().build();
         User user = User.builder()
                 .email(authRequest.email())
                 .password(passwordEncoder.encode(authRequest.password()))
@@ -176,15 +188,17 @@ class AuthControllerIntegrationTest {
                 .build();
         userRepository.save(user);
 
-        MockHttpServletResponse response = mockMvc.perform(post("/auth/sign-in")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(authRequest)))
-                .andExpect(status().isForbidden()).andReturn().getResponse();
+        String content = mockMvc.perform(post("/auth/sign-in")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(authRequest)))
+                .andExpect(status().isForbidden())
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
 
-        String responseContent = response.getContentAsString();
-        assertThat(responseContent).isNotBlank();
+        assertThat(content).isNotBlank();
+        ExceptionResponse exceptionResponse = objectMapper.readValue(content, ExceptionResponse.class);
 
-        ExceptionResponse exceptionResponse = objectMapper.readValue(responseContent, ExceptionResponse.class);
         assertThat(exceptionResponse.message()).isEqualTo("User is unactive.");
         assertThat(exceptionResponse.code()).isEqualTo(HttpStatus.FORBIDDEN.value());
         assertThat(exceptionResponse.path()).isEqualTo("/auth/sign-in");
@@ -192,7 +206,7 @@ class AuthControllerIntegrationTest {
 
     @Test
     void signIn_shouldReturnForbidden_whenUserIncomplete() throws Exception {
-        AuthRequest authRequest = AuthRequestDataBuilder.buildUserWithRequiredFields().build();
+        AuthRequest authRequest = AuthRequestDataBuilder.buildUserWithAllFields().build();
         User user = User.builder()
                 .email(authRequest.email())
                 .password(passwordEncoder.encode(authRequest.password()))
@@ -201,15 +215,17 @@ class AuthControllerIntegrationTest {
                 .build();
         userRepository.save(user);
 
-        MockHttpServletResponse response = mockMvc.perform(post("/auth/sign-in")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(authRequest)))
-                .andExpect(status().isForbidden()).andReturn().getResponse();
+        String content = mockMvc.perform(post("/auth/sign-in")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(authRequest)))
+                .andExpect(status().isForbidden())
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
 
-        String responseContent = response.getContentAsString();
-        assertThat(responseContent).isNotBlank();
+        assertThat(content).isNotBlank();
+        ExceptionResponse exceptionResponse = objectMapper.readValue(content, ExceptionResponse.class);
 
-        ExceptionResponse exceptionResponse = objectMapper.readValue(responseContent, ExceptionResponse.class);
         assertThat(exceptionResponse.message()).isEqualTo("User is unactive.");
         assertThat(exceptionResponse.code()).isEqualTo(HttpStatus.FORBIDDEN.value());
         assertThat(exceptionResponse.path()).isEqualTo("/auth/sign-in");
@@ -217,24 +233,23 @@ class AuthControllerIntegrationTest {
 
     @Test
     void refresh_shouldReturnPairOfTokens() throws Exception {
-        User user = UserDataBuilder.buildUserWithRequiredFields().build();
+        User user = UserDataBuilder.buildUserAllFields().build();
         userRepository.save(user);
         String refreshToken = jwtService.generateRefreshToken(user);
         RefreshRequest refreshRequest = RefreshRequest.builder().refreshToken(BEARER_PREFIX + refreshToken).build();
 
-        MockHttpServletResponse response = mockMvc.perform(post("/auth/refresh")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(refreshRequest)))
+        String content = mockMvc.perform(post("/auth/refresh")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(refreshRequest)))
                 .andExpect(status().isOk())
                 .andReturn()
-                .getResponse();
+                .getResponse()
+                .getContentAsString();
 
-        String responseContent = response.getContentAsString();
-        assertThat(responseContent).isNotBlank();
+        assertThat(content).isNotBlank();
+        AuthResponse authResponse = objectMapper.readValue(content, AuthResponse.class);
 
-        AuthResponse authResponse = objectMapper.readValue(responseContent, AuthResponse.class);
         assertThat(authResponse).isNotNull();
-
         assertThat(authResponse.accessToken()).isNotBlank();
         assertThat(jwtHelper.extractAllClaims(authResponse.accessToken())).isNotNull();
 
@@ -244,19 +259,21 @@ class AuthControllerIntegrationTest {
 
     @Test
     void refresh_shouldReturnNotFound_whenUserNotFound() throws Exception {
-        User user = UserDataBuilder.buildUserWithRequiredFields().build();
+        User user = UserDataBuilder.buildUserAllFields().build();
         String refreshToken = jwtService.generateRefreshToken(user);
         RefreshRequest refreshRequest = RefreshRequest.builder().refreshToken(BEARER_PREFIX + refreshToken).build();
 
-        MockHttpServletResponse response = mockMvc.perform(post("/auth/refresh")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(refreshRequest)))
-                .andExpect(status().isNotFound()).andReturn().getResponse();
+        String content = mockMvc.perform(post("/auth/refresh")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(refreshRequest)))
+                .andExpect(status().isNotFound())
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
 
-        String responseContent = response.getContentAsString();
-        assertThat(responseContent).isNotBlank();
+        assertThat(content).isNotBlank();
+        ExceptionResponse exceptionResponse = objectMapper.readValue(content, ExceptionResponse.class);
 
-        ExceptionResponse exceptionResponse = objectMapper.readValue(responseContent, ExceptionResponse.class);
         assertThat(exceptionResponse.message()).isEqualTo("User not found.");
         assertThat(exceptionResponse.code()).isEqualTo(HttpStatus.NOT_FOUND.value());
         assertThat(exceptionResponse.path()).isEqualTo("/auth/refresh");
@@ -264,22 +281,24 @@ class AuthControllerIntegrationTest {
 
     @Test
     void refresh_shouldReturnUnauthorized_whenTokenWithoutBearerPrefix() throws Exception {
-        User user = UserDataBuilder.buildUserWithRequiredFields().build();
+        User user = UserDataBuilder.buildUserAllFields().build();
         userRepository.save(user);
         String refreshToken = jwtService.generateRefreshToken(user);
         refreshToken = refreshToken.substring(BEARER_PREFIX.length() + 1);
 
         RefreshRequest refreshRequest = RefreshRequest.builder().refreshToken(refreshToken).build();
 
-        MockHttpServletResponse response = mockMvc.perform(post("/auth/refresh")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(refreshRequest)))
-                .andExpect(status().isUnauthorized()).andReturn().getResponse();
+        String content = mockMvc.perform(post("/auth/refresh")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(refreshRequest)))
+                .andExpect(status().isUnauthorized())
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
 
-        String responseContent = response.getContentAsString();
-        assertThat(responseContent).isNotBlank();
+        assertThat(content).isNotBlank();
+        ExceptionResponse exceptionResponse = objectMapper.readValue(content, ExceptionResponse.class);
 
-        ExceptionResponse exceptionResponse = objectMapper.readValue(responseContent, ExceptionResponse.class);
         assertThat(exceptionResponse.message()).isEqualTo("Invalid token.");
         assertThat(exceptionResponse.code()).isEqualTo(HttpStatus.UNAUTHORIZED.value());
         assertThat(exceptionResponse.path()).isEqualTo("/auth/refresh");
@@ -287,20 +306,22 @@ class AuthControllerIntegrationTest {
 
     @Test
     void refresh_shouldReturnUnauthorized_whenTokenIsExpired() throws Exception {
-        User user = UserDataBuilder.buildUserWithRequiredFields().build();
+        User user = UserDataBuilder.buildUserAllFields().build();
         userRepository.save(user);
         String expiredRefreshToken = jwtService.generateTokenWithExpiration(user, 0);
         RefreshRequest refreshRequest = RefreshRequest.builder().refreshToken(BEARER_PREFIX + expiredRefreshToken).build();
 
-        MockHttpServletResponse response = mockMvc.perform(post("/auth/refresh")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(refreshRequest)))
-                .andExpect(status().isUnauthorized()).andReturn().getResponse();
+        String content = mockMvc.perform(post("/auth/refresh")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(refreshRequest)))
+                .andExpect(status().isUnauthorized())
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
 
-        String responseContent = response.getContentAsString();
-        assertThat(responseContent).isNotBlank();
+        assertThat(content).isNotBlank();
+        ExceptionResponse exceptionResponse = objectMapper.readValue(content, ExceptionResponse.class);
 
-        ExceptionResponse exceptionResponse = objectMapper.readValue(responseContent, ExceptionResponse.class);
         assertThat(exceptionResponse.message()).isEqualTo("Token has expired.");
         assertThat(exceptionResponse.code()).isEqualTo(HttpStatus.UNAUTHORIZED.value());
         assertThat(exceptionResponse.path()).isEqualTo("/auth/refresh");
@@ -308,7 +329,7 @@ class AuthControllerIntegrationTest {
 
     @Test
     void completeAuth_shouldSuccessfullyCompleteRegistration() throws Exception {
-        User user = UserDataBuilder.buildUserWithRequiredFields().emailVerified(true).build();
+        User user = UserDataBuilder.buildUserAllFields().emailVerified(true).build();
         userRepository.save(user);
         CompleteAuthRequest completeAuthRequest = CompleteAuthRequestDataBuilder.buildCompleteAuthRequestWithAllFields().build();
 
@@ -327,22 +348,24 @@ class AuthControllerIntegrationTest {
 
     @Test
     void completeProfile_shouldReturnBadRequest_whenNotValidFullName() throws Exception {
-        User user = UserDataBuilder.buildUserWithRequiredFields().build();
+        User user = UserDataBuilder.buildUserAllFields().build();
         userRepository.save(user);
         CompleteAuthRequest completeAuthRequest = CompleteAuthRequestDataBuilder.buildCompleteAuthRequestWithAllFields()
                 .fullName("Invalid_fullName")
                 .build();
 
-        MockHttpServletResponse response = mockMvc.perform(patch("/auth/complete-auth")
+        String content = mockMvc.perform(patch("/auth/complete-auth")
                         .param("email", user.getEmail())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(completeAuthRequest)))
-                .andExpect(status().isBadRequest()).andReturn().getResponse();
+                .andExpect(status().isBadRequest())
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
 
-        String content = response.getContentAsString();
         assertThat(content).isNotNull();
-
         ExceptionResponse exceptionResponse = objectMapper.readValue(content, ExceptionResponse.class);
+
         assertThat(exceptionResponse).isNotNull();
         assertThat(exceptionResponse.path()).isEqualTo("/auth/complete-auth");
         assertThat(exceptionResponse.code()).isEqualTo(HttpStatus.BAD_REQUEST.value());
@@ -353,22 +376,24 @@ class AuthControllerIntegrationTest {
 
     @Test
     void completeProfile_shouldReturnBadRequest_whenNotAdult() throws Exception {
-        User user = UserDataBuilder.buildUserWithRequiredFields().build();
+        User user = UserDataBuilder.buildUserAllFields().build();
         userRepository.save(user);
         CompleteAuthRequest completeAuthRequest = CompleteAuthRequestDataBuilder.buildCompleteAuthRequestWithAllFields()
                 .birthDate(LocalDate.now())
                 .build();
 
-        MockHttpServletResponse response = mockMvc.perform(patch("/auth/complete-auth")
+        String content = mockMvc.perform(patch("/auth/complete-auth")
                         .param("email", user.getEmail())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(completeAuthRequest)))
-                .andExpect(status().isBadRequest()).andReturn().getResponse();
+                .andExpect(status().isBadRequest())
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
 
-        String content = response.getContentAsString();
         assertThat(content).isNotNull();
-
         ExceptionResponse exceptionResponse = objectMapper.readValue(content, ExceptionResponse.class);
+
         assertThat(exceptionResponse).isNotNull();
         assertThat(exceptionResponse.path()).isEqualTo("/auth/complete-auth");
         assertThat(exceptionResponse.code()).isEqualTo(HttpStatus.BAD_REQUEST.value());
@@ -379,23 +404,25 @@ class AuthControllerIntegrationTest {
 
     @Test
     void completeProfile_shouldReturnBadRequest_whenBothNotAdultAndInvalidFullName() throws Exception {
-        User user = UserDataBuilder.buildUserWithRequiredFields().build();
+        User user = UserDataBuilder.buildUserAllFields().build();
         userRepository.save(user);
         CompleteAuthRequest completeAuthRequest = CompleteAuthRequestDataBuilder.buildCompleteAuthRequestWithAllFields()
                 .fullName("Invalid_fullName")
                 .birthDate(LocalDate.of(2025, 1, 1))
                 .build();
 
-        MockHttpServletResponse response = mockMvc.perform(patch("/auth/complete-auth")
+        String content = mockMvc.perform(patch("/auth/complete-auth")
                         .param("email", user.getEmail())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(completeAuthRequest)))
-                .andExpect(status().isBadRequest()).andReturn().getResponse();
+                .andExpect(status().isBadRequest())
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
 
-        String content = response.getContentAsString();
         assertThat(content).isNotNull();
-
         ExceptionResponse exceptionResponse = objectMapper.readValue(content, ExceptionResponse.class);
+
         assertThat(exceptionResponse).isNotNull();
         assertThat(exceptionResponse.path()).isEqualTo("/auth/complete-auth");
         assertThat(exceptionResponse.code()).isEqualTo(HttpStatus.BAD_REQUEST.value());
@@ -406,30 +433,31 @@ class AuthControllerIntegrationTest {
     }
 
     @Test
-    void completeProfile_shouldReturn_whenUserNotFound() throws Exception {
-        User user = UserDataBuilder.buildUserWithRequiredFields().build();
+    void completeProfile_shouldReturnNotFound_whenUserNotFound() throws Exception {
+        User user = UserDataBuilder.buildUserAllFields().build();
         CompleteAuthRequest completeAuthRequest = CompleteAuthRequestDataBuilder.buildCompleteAuthRequestWithAllFields().build();
 
-        MockHttpServletResponse response = mockMvc.perform(patch("/auth/complete-auth")
+        String content = mockMvc.perform(patch("/auth/complete-auth")
                         .param("email", user.getEmail())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(completeAuthRequest)))
-                .andExpect(status().isNotFound()).andReturn().getResponse();
+                .andExpect(status().isNotFound())
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
 
-        String content = response.getContentAsString();
         assertThat(content).isNotNull();
-
         ExceptionResponse exceptionResponse = objectMapper.readValue(content, ExceptionResponse.class);
+
         assertThat(exceptionResponse).isNotNull();
         assertThat(exceptionResponse.path()).isEqualTo("/auth/complete-auth");
         assertThat(exceptionResponse.code()).isEqualTo(HttpStatus.NOT_FOUND.value());
-        assertThat(exceptionResponse.errors()).isNull();
         assertThat(exceptionResponse.message()).isEqualTo("User not found.");
     }
 
     @Test
     void completeProfile_shouldReturnForbidden_whenUserBlocked() throws Exception {
-        User user = UserDataBuilder.buildUserWithRequiredFields()
+        User user = UserDataBuilder.buildUserAllFields()
                 .status(UserStatus.BLOCKED)
                 .emailVerified(true)
                 .build();
@@ -444,19 +472,17 @@ class AuthControllerIntegrationTest {
                 .andReturn().getResponse().getContentAsString();
 
         assertThat(content).isNotNull();
-
         ExceptionResponse exceptionResponse = objectMapper.readValue(content, ExceptionResponse.class);
+
         assertThat(exceptionResponse).isNotNull();
         assertThat(exceptionResponse.path()).isEqualTo("/auth/complete-auth");
         assertThat(exceptionResponse.code()).isEqualTo(HttpStatus.FORBIDDEN.value());
-        assertThat(exceptionResponse.errors()).isNull();
         assertThat(exceptionResponse.message()).isEqualTo("Your account is blocked.");
-
     }
 
     @Test
     void completeProfile_shouldReturn_whenUserAlreadyCompletedRegistration() throws Exception {
-        User user = UserDataBuilder.buildUserWithRequiredFields()
+        User user = UserDataBuilder.buildUserAllFields()
                 .emailVerified(true)
                 .status(UserStatus.ACTIVE)
                 .build();
@@ -471,12 +497,91 @@ class AuthControllerIntegrationTest {
                 .andReturn().getResponse().getContentAsString();
 
         assertThat(content).isNotNull();
-
         ExceptionResponse exceptionResponse = objectMapper.readValue(content, ExceptionResponse.class);
+
         assertThat(exceptionResponse).isNotNull();
         assertThat(exceptionResponse.path()).isEqualTo("/auth/complete-auth");
         assertThat(exceptionResponse.code()).isEqualTo(HttpStatus.CONFLICT.value());
         assertThat(exceptionResponse.errors()).isNull();
         assertThat(exceptionResponse.message()).isEqualTo("Your account is already activated.");
+    }
+
+    @Test
+    void getAuthenticatedUser_shouldReturnUserProfile() throws Exception {
+        User user = UserDataBuilder.buildUserAllFields()
+                .status(UserStatus.ACTIVE)
+                .build();
+        userRepository.save(user);
+        SecurityContext securityContext = initializeSecurityContext(user);
+
+        String content = mockMvc.perform(get("/auth/me")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .with(SecurityMockMvcRequestPostProcessors.securityContext(securityContext)))
+                .andExpect(status().isOk())
+                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
+
+        assertThat(content).isNotNull();
+        UserProfileResponse responseDto = objectMapper.readValue(content, UserProfileResponse.class);
+
+        assertThat(content).doesNotContain("password");
+        assertThat(responseDto).isNotNull();
+        assertThat(responseDto.id()).isEqualTo("1");
+        assertThat(responseDto.email()).isEqualTo("test@gmail.com");
+        assertThat(responseDto.fullName()).isEqualTo("Test Name");
+        assertThat(responseDto.role()).isEqualTo(UserRole.USER);
+        assertThat(responseDto.status()).isEqualTo(UserStatus.ACTIVE);
+        assertThat(responseDto.providerType()).isEqualTo(ProviderType.LOCAL);
+        assertThat(responseDto.createdAt()).isNotNull();
+        assertThat(responseDto.updatedAt()).isNotNull();
+    }
+
+    @Test
+    void getAuthenticatedUser_shouldReturnUnauthorized_whenNotUserInstance() throws Exception {
+        UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
+                "not-a-user-object",
+                null,
+                null);
+        SecurityContext securityContext = initializeSecurityContext(authToken);
+
+        String content = mockMvc.perform(get("/auth/me")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .with(SecurityMockMvcRequestPostProcessors.securityContext(securityContext)))
+                .andExpect(status().isUnauthorized())
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
+
+        ExceptionResponse exceptionResponse = objectMapper.readValue(content, ExceptionResponse.class);
+
+        assertThat(exceptionResponse).isNotNull();
+        assertThat(exceptionResponse.path()).isEqualTo("/auth/me");
+        assertThat(exceptionResponse.code()).isEqualTo(HttpStatus.UNAUTHORIZED.value());
+        assertThat(exceptionResponse.message()).isEqualTo("Unauthorized.");
+    }
+
+    @Test
+    void getAuthenticatedUser_shouldReturnNotFound_whenUserNotFound() throws Exception {
+        User user = UserDataBuilder.buildUserAllFields()
+                .status(UserStatus.ACTIVE)
+                .build();
+        SecurityContext securityContext = initializeSecurityContext(user);
+
+        String content = mockMvc.perform(get("/auth/me")
+                        .with(SecurityMockMvcRequestPostProcessors.securityContext(securityContext))
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isNotFound())
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
+
+        ExceptionResponse exceptionResponse = objectMapper.readValue(content, ExceptionResponse.class);
+
+        assertThat(exceptionResponse).isNotNull();
+        assertThat(exceptionResponse.path()).isEqualTo("/auth/me");
+        assertThat(exceptionResponse.code()).isEqualTo(HttpStatus.NOT_FOUND.value());
+        assertThat(exceptionResponse.message()).isEqualTo("User not found.");
     }
 }

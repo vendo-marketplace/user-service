@@ -1,4 +1,4 @@
-package com.vendo.user_service.service.user.common.exception;
+package com.vendo.user_service.common.exception;
 
 public class UserEmailNotVerifiedException extends RuntimeException {
   public UserEmailNotVerifiedException(String message) {

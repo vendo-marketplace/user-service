@@ -1,4 +1,4 @@
-package com.vendo.user_service.service.user.auth;
+package com.vendo.user_service.service.auth;
 
 import com.google.api.client.googleapis.auth.oauth2.GoogleIdToken;
 import com.google.api.client.googleapis.auth.oauth2.GoogleIdTokenVerifier;
@@ -13,7 +13,7 @@ import java.security.GeneralSecurityException;
 @Slf4j
 @Service
 @RequiredArgsConstructor
-public class GoogleOauthService {
+public class GoogleOAuthService {
 
     private final GoogleIdTokenVerifier googleIdTokenVerifier;
 

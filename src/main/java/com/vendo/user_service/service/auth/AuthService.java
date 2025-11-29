@@ -1,20 +1,20 @@
-package com.vendo.user_service.service.user.auth;
+package com.vendo.user_service.service.auth;
 
 import com.google.api.client.googleapis.auth.oauth2.GoogleIdToken;
 import com.vendo.domain.user.common.type.ProviderType;
 import com.vendo.domain.user.common.type.UserStatus;
 import com.vendo.security.common.exception.AccessDeniedException;
 import com.vendo.security.common.exception.InvalidTokenException;
-import com.vendo.user_service.service.user.common.exception.UserAlreadyExistsException;
-import com.vendo.user_service.service.user.common.exception.UserBlockedException;
+import com.vendo.user_service.common.exception.UserAlreadyExistsException;
+import com.vendo.user_service.common.exception.UserBlockedException;
+import com.vendo.user_service.common.exception.UserEmailNotVerifiedException;
 import com.vendo.user_service.common.type.UserRole;
 import com.vendo.user_service.model.User;
 import com.vendo.user_service.security.common.dto.TokenPayload;
 import com.vendo.user_service.security.service.JwtService;
 import com.vendo.user_service.security.service.JwtUserDetailsService;
 import com.vendo.user_service.service.user.UserService;
-import com.vendo.user_service.service.user.common.exception.UserAlreadyActivatedException;
-import com.vendo.user_service.service.user.common.exception.UserEmailNotVerifiedException;
+import com.vendo.user_service.common.exception.UserAlreadyActivatedException;
 import com.vendo.user_service.web.dto.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.BadCredentialsException;
@@ -36,7 +36,7 @@ public class AuthService {
 
     private final JwtUserDetailsService jwtUserDetailsService;
 
-    private final GoogleOauthService googleOauthService;
+    private final GoogleOAuthService googleOauthService;
 
     public AuthResponse signIn(AuthRequest authRequest) {
         User user = userService.findByEmailOrThrow(authRequest.email());
@@ -68,21 +68,14 @@ public class AuthService {
                 .status(UserStatus.INCOMPLETE)
                 .providerType(ProviderType.LOCAL)
                 .password(encodedPassword)
+                .emailVerified(false)
                 .build());
     }
 
     public void completeAuth(String email, CompleteAuthRequest completeAuthRequest) {
         User user = userService.findByEmailOrThrow(email);
 
-        if (!user.getEmailVerified()) {
-            throw new UserEmailNotVerifiedException("Your email is not verified.");
-        }
-
-        if (user.getStatus() == UserStatus.BLOCKED) {
-            throw new UserBlockedException("Your account is blocked.");
-        } else if (user.getStatus() == UserStatus.ACTIVE) {
-            throw new UserAlreadyActivatedException("Your account is already activated.");
-        }
+        validateUserBeforeCompleteAuth(user);
 
         userService.update(user.getId(), user.toBuilder()
                 .status(UserStatus.ACTIVE)
@@ -97,7 +90,7 @@ public class AuthService {
         }
         String token = refreshRequest.refreshToken().substring(BEARER_PREFIX.length());
 
-        UserDetails userDetails = jwtUserDetailsService.retrieveUserDetails(token);
+        UserDetails userDetails = jwtUserDetailsService.getUserDetailsByTokenSubject(token);
         TokenPayload tokenPayload = jwtUserDetailsService.generateTokenPayload(userDetails);
 
         return AuthResponse.builder()
@@ -110,7 +103,13 @@ public class AuthService {
         GoogleIdToken.Payload payload = googleOauthService.verify(googleAuthRequest.idToken());
 
         User user = userService.findUserByEmailOrSave(payload.getEmail());
-        updateUserGoogleAuthActivity(user);
+
+        if (user.getStatus() == UserStatus.INCOMPLETE) {
+            userService.update(user.getId(), user.toBuilder()
+                    .status(UserStatus.ACTIVE)
+                    .providerType(ProviderType.GOOGLE).build()
+            );
+        }
 
         TokenPayload tokenPayload = jwtUserDetailsService.generateTokenPayload(user);
         return AuthResponse.builder()
@@ -126,11 +125,18 @@ public class AuthService {
         }
     }
 
-    private void updateUserGoogleAuthActivity(User user) {
-        if (user.getStatus() == UserStatus.INCOMPLETE) {
-            user.setStatus(UserStatus.ACTIVE);
-            user.setProviderType(ProviderType.GOOGLE);
-            userService.update(user.getId(), user);
+    private void validateUserBeforeCompleteAuth(User user) {
+        if (!user.getEmailVerified()) {
+            throw new UserEmailNotVerifiedException("Your email is not verified.");
+        }
+
+        if (user.getStatus() == UserStatus.BLOCKED) {
+            throw new UserBlockedException("Your account is blocked.");
+        }
+
+        if (user.getStatus() == UserStatus.ACTIVE) {
+            throw new UserAlreadyActivatedException("Your account is already activated.");
         }
     }
+
 }

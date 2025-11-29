@@ -10,8 +10,8 @@ import com.vendo.user_service.model.User;
 import com.vendo.user_service.security.common.dto.TokenPayload;
 import com.vendo.user_service.security.service.JwtUserDetailsService;
 import com.vendo.user_service.service.user.UserService;
-import com.vendo.user_service.service.user.auth.AuthService;
-import com.vendo.user_service.service.user.auth.GoogleOauthService;
+import com.vendo.user_service.service.auth.AuthService;
+import com.vendo.user_service.service.auth.GoogleOAuthService;
 import com.vendo.user_service.web.dto.AuthResponse;
 import com.vendo.user_service.web.dto.GoogleAuthRequest;
 import org.junit.jupiter.api.Test;
@@ -40,13 +40,13 @@ public class AuthServiceTest {
     private JwtUserDetailsService jwtUserDetailsService;
 
     @Mock
-    private GoogleOauthService googleOauthService;
+    private GoogleOAuthService googleOauthService;
 
     @Test
     void googleAuth_shouldReturnTokenPayload() {
         TokenPayload tokenPayload = TokenPayloadDataBuilder.buildTokenPayloadWithAllFields().build();
         GoogleAuthRequest googleAuthRequest = new GoogleAuthRequest("test_id_token");
-        User user = UserDataBuilder.buildUserWithRequiredFields().build();
+        User user = UserDataBuilder.buildUserAllFields().build();
         String idToken = "test_id_token";
         String email = "test_email";
         GoogleIdToken.Payload mockPayload = mock(GoogleIdToken.Payload.class);
@@ -62,17 +62,23 @@ public class AuthServiceTest {
         assertThat(authResponse.accessToken()).isEqualTo(tokenPayload.accessToken());
         assertThat(authResponse.refreshToken()).isEqualTo(tokenPayload.refreshToken());
 
+        ArgumentCaptor<User> userArgumentCaptor = ArgumentCaptor.forClass(User.class);
         verify(googleOauthService).verify(idToken);
         verify(userService).findUserByEmailOrSave(email);
         verify(jwtUserDetailsService).generateTokenPayload(user);
-        verify(userService).update(user.getId(), user);
+        verify(userService).update(eq(user.getId()), userArgumentCaptor.capture());
+
+        User userCaptorValue = userArgumentCaptor.getValue();
+        assertThat(userCaptorValue).isNotNull();
+        assertThat(userCaptorValue.getStatus()).isEqualTo(UserStatus.ACTIVE);
+        assertThat(userCaptorValue.getProviderType()).isEqualTo(ProviderType.GOOGLE);
     }
 
     @Test
     void googleAuth_shouldActivateIncompletedUser_andReturnTokenPayload() {
         TokenPayload tokenPayload = TokenPayloadDataBuilder.buildTokenPayloadWithAllFields().build();
         GoogleAuthRequest googleAuthRequest = new GoogleAuthRequest("test_id_token");
-        User user = UserDataBuilder.buildUserWithRequiredFields().build();
+        User user = UserDataBuilder.buildUserAllFields().build();
         String idToken = "test_id_token";
         String email = "test_email";
         GoogleIdToken.Payload mockPayload = mock(GoogleIdToken.Payload.class);
@@ -103,7 +109,7 @@ public class AuthServiceTest {
     void googleAuth_shouldNotUpdateProviderTypeToGoogle_whenUserIsActive() {
         TokenPayload tokenPayload = TokenPayloadDataBuilder.buildTokenPayloadWithAllFields().build();
         GoogleAuthRequest googleAuthRequest = new GoogleAuthRequest("test_id_token");
-        User user = UserDataBuilder.buildUserWithRequiredFields().status(UserStatus.ACTIVE).build();
+        User user = UserDataBuilder.buildUserAllFields().status(UserStatus.ACTIVE).build();
         String idToken = "test_id_token";
         String email = "test_email";
         GoogleIdToken.Payload mockPayload = mock(GoogleIdToken.Payload.class);
@@ -128,7 +134,7 @@ public class AuthServiceTest {
     @Test
     void googleAuth_shouldThrowException_whenIdTokenNotVerified() {
         GoogleAuthRequest googleAuthRequest = new GoogleAuthRequest("test_id_token");
-        User user = UserDataBuilder.buildUserWithRequiredFields().build();
+        User user = UserDataBuilder.buildUserAllFields().build();
         String idToken = "test_id_token";
         String email = "test_email";
 

@@ -78,7 +78,7 @@ public class VerificationControllerIntegrationTest {
 
     @Test
     void sendOtp_shouldSendEmailVerificationEventSuccessfully() throws Exception {
-        User user = UserDataBuilder.buildUserWithRequiredFields().build();
+        User user = UserDataBuilder.buildUserAllFields().build();
         userRepository.save(user);
 
         mockMvc.perform(MockMvcRequestBuilders.post("/verification/send-otp").param("email", user.getEmail())
@@ -99,7 +99,7 @@ public class VerificationControllerIntegrationTest {
 
     @Test
     void sendOtp_shouldReturnConflict_whenEmailVerificationEventHasAlreadySent() throws Exception {
-        User user = UserDataBuilder.buildUserWithRequiredFields().build();
+        User user = UserDataBuilder.buildUserAllFields().build();
         String otp = "123456";
 
         redisService.saveValue(
@@ -132,7 +132,7 @@ public class VerificationControllerIntegrationTest {
 
     @Test
     void sendOtp_shouldReturnNotFound_whenUserNotFound() throws Exception {
-        User user = UserDataBuilder.buildUserWithRequiredFields().build();
+        User user = UserDataBuilder.buildUserAllFields().build();
 
         String responseContent = mockMvc.perform(post("/verification/send-otp")
                         .contentType(MediaType.APPLICATION_JSON).param("email", user.getEmail()))
@@ -154,7 +154,7 @@ public class VerificationControllerIntegrationTest {
 
     @Test
     void resendOtp_shouldResendOtp_whenFirstAttemptAndOtpAlreadyExist() throws Exception {
-        User user = UserDataBuilder.buildUserWithRequiredFields().build();
+        User user = UserDataBuilder.buildUserAllFields().build();
         String otp = "123456";
         redisService.saveValue(
                 emailVerificationOtpNamespace.getEmail().buildPrefix(user.getEmail()),
@@ -176,7 +176,7 @@ public class VerificationControllerIntegrationTest {
 
     @Test
     void resendOtp_shouldResendOtp_whenFirstAttemptAndOtpDoesNotExist() throws Exception {
-        User user = UserDataBuilder.buildUserWithRequiredFields().build();
+        User user = UserDataBuilder.buildUserAllFields().build();
         String otp = "123456";
         redisService.saveValue(
                 emailVerificationOtpNamespace.getEmail().buildPrefix(user.getEmail()),
@@ -202,7 +202,7 @@ public class VerificationControllerIntegrationTest {
 
     @Test
     void resendOtp_shouldReturnNotFound_whenUserNotFound() throws Exception {
-        User user = UserDataBuilder.buildUserWithRequiredFields().build();
+        User user = UserDataBuilder.buildUserAllFields().build();
         String otp = "123456";
         redisService.saveValue(
                 emailVerificationOtpNamespace.getEmail().buildPrefix(user.getEmail()),
@@ -234,7 +234,7 @@ public class VerificationControllerIntegrationTest {
 
     @Test
     void resendOtp_shouldResendOtp_whenSecondAttempt() throws Exception {
-        User user = UserDataBuilder.buildUserWithRequiredFields().build();
+        User user = UserDataBuilder.buildUserAllFields().build();
         String otp = "123456";
         String attempts = "1";
         redisService.saveValue(
@@ -262,7 +262,7 @@ public class VerificationControllerIntegrationTest {
 
     @Test
     void resendOtp_shouldResendOtp_whenThirdAttempt() throws Exception {
-        User user = UserDataBuilder.buildUserWithRequiredFields().build();
+        User user = UserDataBuilder.buildUserAllFields().build();
         String otp = "123456";
         String attempts = "2";
         redisService.saveValue(
@@ -290,7 +290,7 @@ public class VerificationControllerIntegrationTest {
 
     @Test
     void resendOtp_shouldReturnTooManyRequests_whenFourthAttempt() throws Exception {
-        User user = UserDataBuilder.buildUserWithRequiredFields().build();
+        User user = UserDataBuilder.buildUserAllFields().build();
         String otp = "123456";
         String attempts = "3";
         redisService.saveValue(
@@ -328,7 +328,7 @@ public class VerificationControllerIntegrationTest {
 
     @Test
     void resendOtp_shouldReturnGone_whenOtpSessionExpired() throws Exception {
-        User user = UserDataBuilder.buildUserWithRequiredFields().build();
+        User user = UserDataBuilder.buildUserAllFields().build();
         userRepository.save(user);
 
         String responseContent = mockMvc.perform(post("/verification/resend-otp").param("email", user.getEmail())
@@ -351,7 +351,7 @@ public class VerificationControllerIntegrationTest {
 
     @Test
     void validate_shouldVerifyUser_whenOtpIsValid() throws Exception {
-        User user = UserDataBuilder.buildUserWithRequiredFields().build();
+        User user = UserDataBuilder.buildUserAllFields().build();
         userRepository.save(user);
         String otp = "123456";
 
@@ -376,7 +376,6 @@ public class VerificationControllerIntegrationTest {
         await().atMost(5, TimeUnit.SECONDS).untilAsserted(() -> {
             Optional<User> optionalUser = userRepository.findByEmail(user.getEmail());
             assertThat(optionalUser).isPresent();
-            assertThat(optionalUser.get().getStatus()).isEqualTo(UserStatus.INCOMPLETE);
             assertThat(optionalUser.get().getEmailVerified()).isTrue();
         });
 
@@ -387,7 +386,7 @@ public class VerificationControllerIntegrationTest {
 
     @Test
     void validate_shouldReturnGone_whenOtpDoesNotMatchEmail() throws Exception {
-        User user = UserDataBuilder.buildUserWithRequiredFields().build();
+        User user = UserDataBuilder.buildUserAllFields().build();
         userRepository.save(user);
         String otp = "123456";
         String mismatchEmail = "mismatch@example.com";
@@ -416,7 +415,7 @@ public class VerificationControllerIntegrationTest {
         Optional<User> optionalUser = userRepository.findByEmail(user.getEmail());
         assertThat(optionalUser).isPresent();
 
-        assertThat(optionalUser.get().getStatus()).isEqualTo(UserStatus.INCOMPLETE);
+        assertThat(optionalUser.get().getEmailVerified()).isFalse();
         Optional<String> mismatchEmailOptional = redisService.getValue(emailVerificationOtpNamespace.getOtp().buildPrefix(otp));
         assertThat(mismatchEmailOptional).isPresent();
         assertThat(mismatchEmailOptional).isNotEqualTo(validateRequest.email());
@@ -424,7 +423,7 @@ public class VerificationControllerIntegrationTest {
 
     @Test
     void validate_shouldReturnGone_whenOtpExpired() throws Exception {
-        User user = UserDataBuilder.buildUserWithRequiredFields().build();
+        User user = UserDataBuilder.buildUserAllFields().build();
         userRepository.save(user);
         String otp = "123456";
 
@@ -445,7 +444,8 @@ public class VerificationControllerIntegrationTest {
         assertThat(exceptionResponse.code()).isEqualTo(HttpStatus.GONE.value());
         assertThat(exceptionResponse.path()).isEqualTo("/verification/validate");
 
-        User updateUser = userRepository.findByEmail(user.getEmail()).orElseThrow();
-        assertThat(updateUser.getStatus()).isEqualTo(UserStatus.INCOMPLETE);
+        Optional<User> optionalUser = userRepository.findByEmail(user.getEmail());
+        assertThat(optionalUser).isPresent();
+        assertThat(optionalUser.get().getEmailVerified()).isFalse();
     }
 }

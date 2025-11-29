@@ -1,6 +1,7 @@
 package com.vendo.user_service.web.controller;
 
-import com.vendo.user_service.service.user.auth.AuthService;
+import com.vendo.user_service.service.user.UserService;
+import com.vendo.user_service.service.auth.AuthService;
 import com.vendo.user_service.web.dto.*;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -13,6 +14,8 @@ import org.springframework.web.bind.annotation.*;
 public class AuthController {
 
     private final AuthService authService;
+
+    private final UserService userService;
 
     @PostMapping("/sign-in")
     ResponseEntity<AuthResponse> signIn(@Valid @RequestBody AuthRequest authRequest) {
@@ -35,6 +38,11 @@ public class AuthController {
     @PostMapping("/refresh")
     ResponseEntity<AuthResponse> refresh(@Valid @RequestBody RefreshRequest refreshRequest) {
         return ResponseEntity.ok(authService.refresh(refreshRequest));
+    }
+
+    @GetMapping("/me")
+    ResponseEntity<UserProfileResponse> getAuthenticatedUserProfile() {
+        return ResponseEntity.ok(userService.getAuthenticatedUserProfile());
     }
 
     @PostMapping("/google")
