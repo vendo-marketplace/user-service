@@ -30,7 +30,7 @@ public class PasswordRecoveryService {
     private final EmailOtpService emailOtpService;
 
     public void forgotPassword(String email) {
-        userService.findByEmailOrThrow(email);
+        userService.loadUserByUsername(email);
 
         EmailOtpEvent event = EmailOtpEvent.builder()
                 .email(email)
@@ -43,7 +43,7 @@ public class PasswordRecoveryService {
         String email = redisService.getValue(passwordRecoveryOtpNamespace.getOtp().buildPrefix(String.valueOf(otp)))
                 .orElseThrow(() -> new OtpExpiredException("Otp session expired."));
 
-        User user = userService.findByEmailOrThrow(email);
+        User user = userService.loadUserByUsername(email);
         userService.update(user.getId(), User.builder()
                 .password(passwordEncoder.encode(resetPasswordRequest.password()))
                 .build());
@@ -54,7 +54,7 @@ public class PasswordRecoveryService {
     }
 
     public void resendOtp(String email) {
-        userService.findByEmailOrThrow(email);
+        userService.loadUserByUsername(email);
 
         EmailOtpEvent event = EmailOtpEvent.builder()
                 .email(email)

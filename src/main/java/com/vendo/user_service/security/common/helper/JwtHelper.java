@@ -1,5 +1,6 @@
 package com.vendo.user_service.security.common.helper;
 
+import com.vendo.user_service.model.User;
 import com.vendo.user_service.security.common.config.JwtProperties;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jws;
@@ -8,7 +9,6 @@ import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.GrantedAuthority;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 
 import javax.crypto.SecretKey;
@@ -22,8 +22,8 @@ public class JwtHelper {
 
     private final JwtProperties jwtProperties;
 
-    public List<String> getRoles(UserDetails userDetails) {
-        return userDetails.getAuthorities().stream()
+    public List<String> getRoles(User user) {
+        return user.getAuthorities().stream()
                 .map(GrantedAuthority::getAuthority)
                 .toList();
     }

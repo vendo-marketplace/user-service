@@ -5,6 +5,7 @@ import com.vendo.security.common.exception.AccessDeniedException;
 import com.vendo.security.common.exception.InvalidTokenException;
 import com.vendo.user_service.model.User;
 import com.vendo.user_service.security.common.helper.JwtHelper;
+import com.vendo.user_service.service.user.UserService;
 import io.jsonwebtoken.Claims;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -17,8 +18,6 @@ import org.springframework.security.authentication.AuthenticationCredentialsNotF
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 import org.springframework.web.servlet.HandlerExceptionResolver;
@@ -35,7 +34,7 @@ public class JwtAuthFilter extends OncePerRequestFilter {
 
     private final JwtHelper jwtHelper;
 
-    private final UserDetailsService userDetailsService;
+    private final UserService userService;
 
     private final UserAntPathResolver userAntPathResolver;
 
@@ -54,8 +53,8 @@ public class JwtAuthFilter extends OncePerRequestFilter {
             String jwtToken = getTokenFromRequest(request);
             Claims claims = jwtHelper.extractAllClaims(jwtToken);
 
-            UserDetails userDetails = validateUserAccessibility(claims);
-            addAuthenticationToContext(userDetails);
+            User user = validateUserAccessibility(claims);
+            addAuthenticationToContext(user);
         } catch (Exception e) {
             handlerExceptionResolver.resolveException(request, response, null, e);
             return;
@@ -82,28 +81,24 @@ public class JwtAuthFilter extends OncePerRequestFilter {
         return authorization.substring(BEARER_PREFIX.length());
     }
 
-    private UserDetails validateUserAccessibility(Claims claims) {
+    private User validateUserAccessibility(Claims claims) {
         String email = claims.getSubject();
-        UserDetails userDetails = userDetailsService.loadUserByUsername(email);
+        User user = userService.loadUserByUsername(email);
 
-        if (!isUserActive(userDetails)) {
+        if (user.getStatus() != UserStatus.ACTIVE) {
             throw new AccessDeniedException("User is unactive.");
         }
 
-        return userDetails;
+        return user;
     }
 
-    private void addAuthenticationToContext(UserDetails userDetails) {
+    private void addAuthenticationToContext(User user) {
         UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
-                userDetails,
+                user,
                 null,
-                userDetails.getAuthorities());
+                user.getAuthorities());
 
         SecurityContextHolder.getContext().setAuthentication(authToken);
-    }
-
-    private static boolean isUserActive(UserDetails userDetails) {
-        return userDetails instanceof User && ((User) userDetails).getStatus() == UserStatus.ACTIVE;
     }
 
 }

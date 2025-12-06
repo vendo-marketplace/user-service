@@ -8,7 +8,7 @@ import com.vendo.user_service.common.builder.TokenPayloadDataBuilder;
 import com.vendo.user_service.common.builder.UserDataBuilder;
 import com.vendo.user_service.model.User;
 import com.vendo.user_service.security.common.dto.TokenPayload;
-import com.vendo.user_service.security.service.JwtUserDetailsService;
+import com.vendo.user_service.security.service.JwtService;
 import com.vendo.user_service.service.user.UserService;
 import com.vendo.user_service.service.auth.AuthService;
 import com.vendo.user_service.service.auth.GoogleOAuthService;
@@ -37,7 +37,7 @@ public class AuthServiceTest {
     private UserService userService;
 
     @Mock
-    private JwtUserDetailsService jwtUserDetailsService;
+    private JwtService jwtService;
 
     @Mock
     private GoogleOAuthService googleOauthService;
@@ -54,7 +54,7 @@ public class AuthServiceTest {
         when(googleOauthService.verify(idToken)).thenReturn(mockPayload);
         when(mockPayload.getEmail()).thenReturn(email);
         when(userService.findUserByEmailOrSave(email)).thenReturn(user);
-        when(jwtUserDetailsService.generateTokenPayload(user)).thenReturn(tokenPayload);
+        when(jwtService.generateTokenPayload(user)).thenReturn(tokenPayload);
 
         verify(userService, never()).save(user);
         AuthResponse authResponse = authService.googleAuth(googleAuthRequest);
@@ -65,7 +65,7 @@ public class AuthServiceTest {
         ArgumentCaptor<User> userArgumentCaptor = ArgumentCaptor.forClass(User.class);
         verify(googleOauthService).verify(idToken);
         verify(userService).findUserByEmailOrSave(email);
-        verify(jwtUserDetailsService).generateTokenPayload(user);
+        verify(jwtService).generateTokenPayload(user);
         verify(userService).update(eq(user.getId()), userArgumentCaptor.capture());
 
         User userCaptorValue = userArgumentCaptor.getValue();
@@ -86,7 +86,7 @@ public class AuthServiceTest {
         when(googleOauthService.verify(idToken)).thenReturn(mockPayload);
         when(mockPayload.getEmail()).thenReturn(email);
         when(userService.findUserByEmailOrSave(email)).thenReturn(user);
-        when(jwtUserDetailsService.generateTokenPayload(user)).thenReturn(tokenPayload);
+        when(jwtService.generateTokenPayload(user)).thenReturn(tokenPayload);
 
         AuthResponse authResponse = authService.googleAuth(googleAuthRequest);
 
@@ -97,7 +97,7 @@ public class AuthServiceTest {
         ArgumentCaptor<User> userCaptor = ArgumentCaptor.forClass(User.class);
         verify(googleOauthService).verify(idToken);
         verify(userService).findUserByEmailOrSave(email);
-        verify(jwtUserDetailsService).generateTokenPayload(user);
+        verify(jwtService).generateTokenPayload(user);
         verify(userService).update(eq(user.getId()), userCaptor.capture());
 
         User captorValue = userCaptor.getValue();
@@ -117,7 +117,7 @@ public class AuthServiceTest {
         when(googleOauthService.verify(idToken)).thenReturn(mockPayload);
         when(mockPayload.getEmail()).thenReturn(email);
         when(userService.findUserByEmailOrSave(email)).thenReturn(user);
-        when(jwtUserDetailsService.generateTokenPayload(user)).thenReturn(tokenPayload);
+        when(jwtService.generateTokenPayload(user)).thenReturn(tokenPayload);
 
         AuthResponse authResponse = authService.googleAuth(googleAuthRequest);
 
@@ -127,7 +127,7 @@ public class AuthServiceTest {
 
         verify(googleOauthService).verify(idToken);
         verify(userService).findUserByEmailOrSave(email);
-        verify(jwtUserDetailsService).generateTokenPayload(user);
+        verify(jwtService).generateTokenPayload(user);
         verify(userService, never()).update(user.getId(), user);
     }
 
@@ -145,6 +145,6 @@ public class AuthServiceTest {
 
         verify(googleOauthService).verify(idToken);
         verify(userService, never()).findUserByEmailOrSave(email);
-        verify(jwtUserDetailsService, never()).generateTokenPayload(user);
+        verify(jwtService, never()).generateTokenPayload(user);
     }
 }

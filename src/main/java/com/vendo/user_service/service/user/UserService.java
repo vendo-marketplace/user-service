@@ -5,31 +5,31 @@ import com.vendo.domain.user.common.type.UserStatus;
 import com.vendo.user_service.common.type.UserRole;
 import com.vendo.user_service.model.User;
 import com.vendo.user_service.repository.UserRepository;
-import com.vendo.user_service.security.service.JwtUserDetailsService;
 import com.vendo.user_service.common.exception.UserAlreadyExistsException;
 import com.vendo.user_service.common.mapper.UserMapper;
 import com.vendo.user_service.web.dto.UserProfileResponse;
 import jakarta.validation.constraints.NotNull;
 import lombok.RequiredArgsConstructor;
-import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 
 import java.util.Optional;
 
+import static com.vendo.user_service.security.common.helper.SecurityContextHelper.getUserFromContext;
+
 @Service
 @RequiredArgsConstructor
-public class UserService {
+public class UserService implements UserDetailsService {
 
     private final UserRepository userRepository;
 
     private final UserMapper userMapper;
 
-    private final JwtUserDetailsService jwtUserDetailsService;
-
     public UserProfileResponse getAuthenticatedUserProfile() {
-        UserDetails userDetails = jwtUserDetailsService.getUserDetailsFromContext();
-        return userMapper.toUserProfileResponse((User) userDetails);
+        User userFromContext = getUserFromContext();
+        User userFromDb = loadUserByUsername(userFromContext.getEmail());
+        return userMapper.toUserProfileResponse(userFromDb);
     }
 
     public User save(User user) {
@@ -70,7 +70,13 @@ public class UserService {
         return userRepository.findByEmail(email);
     }
 
-    public User findByEmailOrThrow(@NotNull String email) {
-        return findByEmail(email).orElseThrow(() -> new UsernameNotFoundException("User not found."));
+    @Override
+    public User loadUserByUsername(String username) throws UsernameNotFoundException {
+        if (username == null) {
+            throw new UsernameNotFoundException("User not found.");
+        }
+
+        return userRepository.findByEmail(username)
+                .orElseThrow(() -> new UsernameNotFoundException("User not found."));
     }
 }

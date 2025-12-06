@@ -22,7 +22,7 @@ public class EmailVerificationService {
     private final EmailVerificationOtpNamespace emailVerificationOtpNamespace;
 
     public void sendOtp(String email) {
-        userService.findByEmailOrThrow(email);
+        userService.loadUserByUsername(email);
 
         EmailOtpEvent event = EmailOtpEvent.builder()
                 .email(email)
@@ -32,7 +32,7 @@ public class EmailVerificationService {
     }
 
     public void resendOtp(String email) {
-        userService.findByEmailOrThrow(email);
+        userService.loadUserByUsername(email);
 
         EmailOtpEvent event = EmailOtpEvent.builder()
                 .email(email)
@@ -42,7 +42,7 @@ public class EmailVerificationService {
     }
 
     public void validate(String otp, ValidateRequest validateRequest) {
-        User user = userService.findByEmailOrThrow(validateRequest.email());
+        User user = userService.loadUserByUsername(validateRequest.email());
 
         emailOtpService.verifyOtp(otp, validateRequest.email(), emailVerificationOtpNamespace);
 

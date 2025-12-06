@@ -11,14 +11,13 @@ import com.vendo.user_service.common.exception.UserEmailNotVerifiedException;
 import com.vendo.user_service.common.type.UserRole;
 import com.vendo.user_service.model.User;
 import com.vendo.user_service.security.common.dto.TokenPayload;
+import com.vendo.user_service.security.common.helper.JwtHelper;
 import com.vendo.user_service.security.service.JwtService;
-import com.vendo.user_service.security.service.JwtUserDetailsService;
 import com.vendo.user_service.service.user.UserService;
 import com.vendo.user_service.common.exception.UserAlreadyActivatedException;
 import com.vendo.user_service.web.dto.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.BadCredentialsException;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -32,14 +31,14 @@ public class AuthService {
 
     private final JwtService jwtService;
 
-    private final PasswordEncoder passwordEncoder;
+    private final JwtHelper jwtHelper;
 
-    private final JwtUserDetailsService jwtUserDetailsService;
+    private final PasswordEncoder passwordEncoder;
 
     private final GoogleOAuthService googleOauthService;
 
     public AuthResponse signIn(AuthRequest authRequest) {
-        User user = userService.findByEmailOrThrow(authRequest.email());
+        User user = userService.loadUserByUsername(authRequest.email());
 
         if (user.getStatus() != UserStatus.ACTIVE) {
             throw new AccessDeniedException("User is unactive.");
@@ -73,7 +72,7 @@ public class AuthService {
     }
 
     public void completeAuth(String email, CompleteAuthRequest completeAuthRequest) {
-        User user = userService.findByEmailOrThrow(email);
+        User user = userService.loadUserByUsername(email);
 
         validateUserBeforeCompleteAuth(user);
 
@@ -90,8 +89,9 @@ public class AuthService {
         }
         String token = refreshRequest.refreshToken().substring(BEARER_PREFIX.length());
 
-        UserDetails userDetails = jwtUserDetailsService.getUserDetailsByTokenSubject(token);
-        TokenPayload tokenPayload = jwtUserDetailsService.generateTokenPayload(userDetails);
+        String email = jwtHelper.extractAllClaims(token).getSubject();
+        User user = userService.loadUserByUsername(email);
+        TokenPayload tokenPayload = jwtService.generateTokenPayload(user);
 
         return AuthResponse.builder()
                 .accessToken(tokenPayload.accessToken())
@@ -111,7 +111,7 @@ public class AuthService {
             );
         }
 
-        TokenPayload tokenPayload = jwtUserDetailsService.generateTokenPayload(user);
+        TokenPayload tokenPayload = jwtService.generateTokenPayload(user);
         return AuthResponse.builder()
                 .accessToken(tokenPayload.accessToken())
                 .refreshToken(tokenPayload.refreshToken())

@@ -1,12 +1,11 @@
 package com.vendo.user_service.security.service;
 
-import com.vendo.domain.user.common.type.UserStatus;
 import com.vendo.user_service.model.User;
 import com.vendo.user_service.security.common.config.JwtProperties;
+import com.vendo.user_service.security.common.dto.TokenPayload;
 import com.vendo.user_service.security.common.helper.JwtHelper;
 import io.jsonwebtoken.*;
 import lombok.RequiredArgsConstructor;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 
 import java.util.Date;
@@ -24,36 +23,49 @@ public class JwtService {
 
     private final JwtProperties jwtProperties;
 
-    public String generateAccessToken(UserDetails userDetails) {
-        List<String> roles = jwtHelper.getRoles(userDetails);
-        UserStatus status = ((User) userDetails).getStatus();
+    public String generateAccessToken(User user) {
+        List<String> roles = jwtHelper.getRoles(user);
 
-        return generateAccessToken(userDetails, Map.of(
+        return generateAccessToken(user, Map.of(
                 ROLES_CLAIM.getClaim(), roles,
-                STATUS_CLAIM.getClaim(), status
+                STATUS_CLAIM.getClaim(), user.getStatus()
         ));
     }
 
-    public String generateAccessToken(UserDetails userDetails, Map<String, Object> claims) {
-        return buildToken(userDetails, claims, jwtProperties.getAccessExpirationTime());
+    public String generateAccessToken(User user, Map<String, Object> claims) {
+        return buildToken(user, claims, jwtProperties.getAccessExpirationTime());
     }
 
-    public String generateRefreshToken(UserDetails userDetails) {
-        return buildToken(userDetails, Map.of(), jwtProperties.getRefreshExpirationTime());
+    public String generateRefreshToken(User user) {
+        return buildToken(user, Map.of(), jwtProperties.getRefreshExpirationTime());
     }
 
-    public String generateTokenWithExpiration(UserDetails userDetails, int expiration) {
-        List<String> roles = jwtHelper.getRoles(userDetails);
-        return buildToken(userDetails, Map.of(ROLES_CLAIM.getClaim(), roles), expiration);
+    public String generateTokenWithExpiration(User user, int expiration) {
+        List<String> roles = jwtHelper.getRoles(user);
+        return buildToken(user, Map.of(ROLES_CLAIM.getClaim(), roles), expiration);
     }
 
-    private String buildToken(UserDetails userDetails, Map<String, Object> claims, int expiration) {
+    private String buildToken(User user, Map<String, Object> claims, int expiration) {
         return Jwts.builder()
                 .claims(claims)
-                .subject(userDetails.getUsername())
+                .subject(user.getUsername())
                 .issuedAt(new Date(System.currentTimeMillis()))
                 .expiration(new Date(System.currentTimeMillis() + expiration))
                 .signWith(jwtHelper.getSignInKey(), SignatureAlgorithm.HS256)
                 .compact();
+    }
+
+    public TokenPayload generateTokenPayload(User user) {
+        if (user == null) {
+            throw new IllegalArgumentException("User is required.");
+        }
+
+        String accessToken = generateAccessToken(user);
+        String refreshToken = generateRefreshToken(user);
+
+        return TokenPayload.builder()
+                .accessToken(accessToken)
+                .refreshToken(refreshToken)
+                .build();
     }
 }
