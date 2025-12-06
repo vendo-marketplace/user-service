@@ -1,8 +1,9 @@
 package com.vendo.user_service.security.filter;
 
 import com.vendo.domain.user.common.type.UserStatus;
-import com.vendo.security.common.exception.AccessDeniedException;
 import com.vendo.security.common.exception.InvalidTokenException;
+import com.vendo.user_service.common.exception.UserEmailNotVerifiedException;
+import com.vendo.user_service.common.exception.UserIsUnactiveException;
 import com.vendo.user_service.model.User;
 import com.vendo.user_service.security.common.helper.JwtHelper;
 import com.vendo.user_service.service.user.UserService;
@@ -86,7 +87,11 @@ public class JwtAuthFilter extends OncePerRequestFilter {
         User user = userService.loadUserByUsername(email);
 
         if (user.getStatus() != UserStatus.ACTIVE) {
-            throw new AccessDeniedException("User is unactive.");
+            throw new UserIsUnactiveException("User is unactive.");
+        }
+
+        if (!user.getEmailVerified()){
+            throw new UserEmailNotVerifiedException("User email is not verified.");
         }
 
         return user;

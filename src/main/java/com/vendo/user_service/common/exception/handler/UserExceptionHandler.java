@@ -62,4 +62,14 @@ public class UserExceptionHandler {
         return ResponseEntity.status(HttpStatus.FORBIDDEN).body(exceptionResponse);
     }
 
+    @ExceptionHandler(UserIsUnactiveException.class)
+    public ResponseEntity<ExceptionResponse> handleUserIsUnactiveException(UserIsUnactiveException e, HttpServletRequest request) {
+        ExceptionResponse exceptionResponse = ExceptionResponse.builder()
+                .message(e.getMessage())
+                .code(HttpStatus.FORBIDDEN.value())
+                .path(request.getRequestURI())
+                .build();
+        return ResponseEntity.status(HttpStatus.FORBIDDEN).body(exceptionResponse);
+    }
+
 }
