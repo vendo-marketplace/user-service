@@ -6,6 +6,7 @@ import com.vendo.domain.user.common.type.UserStatus;
 import com.vendo.user_service.common.builder.UserDataBuilder;
 import com.vendo.user_service.model.User;
 import com.vendo.user_service.repository.UserRepository;
+import com.vendo.user_service.security.common.util.SecurityContextUtils;
 import com.vendo.user_service.security.service.JwtService;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -15,13 +16,14 @@ import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMock
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.HttpStatus;
 import org.springframework.mock.web.MockHttpServletResponse;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.springframework.http.HttpHeaders.AUTHORIZATION;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.securityContext;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -56,13 +58,10 @@ public class JwtAuthFilterIntegrationTest {
     @Test
     void doFilterInternal_shouldPassAuthorization_whenUserAlreadyAuthorized() throws Exception {
         User user = UserDataBuilder.buildUserAllFields().build();
-        UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
-                user,
-                null,
-                user.getAuthorities());
-        SecurityContextHolder.getContext().setAuthentication(authToken);
+        SecurityContext securityContext = SecurityContextUtils.initializeSecurityContext(user);
 
-        MockHttpServletResponse response = mockMvc.perform(get("/test/ping"))
+        MockHttpServletResponse response = mockMvc.perform(get("/test/ping")
+                        .with(securityContext(securityContext)))
                 .andExpect(status().isOk())
                 .andReturn().getResponse();
         String responseContent = response.getContentAsString();
@@ -89,6 +88,7 @@ public class JwtAuthFilterIntegrationTest {
     void doFilterInternal_shouldPassFilter_whenTokenIsValid() throws Exception {
         User user = UserDataBuilder.buildUserAllFields()
                 .status(UserStatus.ACTIVE)
+                .emailVerified(true)
                 .build();
         userRepository.save(user);
         String accessToken = jwtService.generateAccessToken(user);
@@ -151,5 +151,69 @@ public class JwtAuthFilterIntegrationTest {
         assertThat(exceptionResponse.message()).isEqualTo("Token has expired.");
         assertThat(exceptionResponse.code()).isEqualTo(HttpStatus.UNAUTHORIZED.value());
         assertThat(exceptionResponse.path()).isEqualTo("/test/ping");
+    }
+
+    @Test
+    void doFilterInternal_shouldReturnForbidden_whenUserIsBlocked() throws Exception {
+        User user = UserDataBuilder.buildUserAllFields()
+                .status(UserStatus.BLOCKED)
+                .emailVerified(true)
+                .build();
+        userRepository.save(user);
+        String accessToken = jwtService.generateAccessToken(user);
+
+        MockHttpServletResponse response = mockMvc.perform(get("/test/ping").header(AUTHORIZATION, "Bearer " + accessToken))
+                .andExpect(status().isForbidden())
+                .andReturn().getResponse();
+
+        String responseContent = response.getContentAsString();
+
+        assertThat(responseContent).isNotBlank();
+        ExceptionResponse exceptionResponse = objectMapper.readValue(responseContent, ExceptionResponse.class);
+        assertThat(exceptionResponse.message()).isEqualTo("User is unactive.");
+        assertThat(exceptionResponse.code()).isEqualTo(HttpStatus.FORBIDDEN.value());
+        assertThat(exceptionResponse.path()).isEqualTo("/test/ping");
+    }
+
+    @Test
+    void doFilterInternal_shouldReturnForbidden_whenUserIsIncomplete() throws Exception {
+        User user = UserDataBuilder.buildUserAllFields()
+                .status(UserStatus.INCOMPLETE)
+                .emailVerified(true)
+                .build();
+        userRepository.save(user);
+        String accessToken = jwtService.generateAccessToken(user);
+
+        MockHttpServletResponse response = mockMvc.perform(get("/test/ping").header(AUTHORIZATION, "Bearer " + accessToken))
+                .andExpect(status().isForbidden())
+                .andReturn().getResponse();
+
+        String responseContent = response.getContentAsString();
+
+        assertThat(responseContent).isNotBlank();
+        ExceptionResponse exceptionResponse = objectMapper.readValue(responseContent, ExceptionResponse.class);
+        assertThat(exceptionResponse.message()).isEqualTo("User is unactive.");
+        assertThat(exceptionResponse.code()).isEqualTo(HttpStatus.FORBIDDEN.value());
+        assertThat(exceptionResponse.path()).isEqualTo("/test/ping");
+    }
+
+    @Test
+    void doFilterInternal_shouldReturnForbidden_whenUserEmailIsNotVerified() throws Exception {
+        User user = UserDataBuilder.buildUserAllFields()
+                .status(UserStatus.ACTIVE)
+                .build();
+        userRepository.save(user);
+        String accessToken = jwtService.generateAccessToken(user);
+
+        MockHttpServletResponse response = mockMvc.perform(get("/test/ping").header(AUTHORIZATION, "Bearer " + accessToken))
+                .andExpect(status().isForbidden())
+                .andReturn().getResponse();
+
+        String responseContent = response.getContentAsString();
+
+        assertThat(responseContent).isNotBlank();
+        ExceptionResponse exceptionResponse = objectMapper.readValue(responseContent, ExceptionResponse.class);
+        assertThat(exceptionResponse.message()).isEqualTo("User email is not verified.");
+        assertThat(exceptionResponse.code()).isEqualTo(HttpStatus.FORBIDDEN.value());
     }
 }
