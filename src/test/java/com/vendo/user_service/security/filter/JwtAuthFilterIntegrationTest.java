@@ -15,12 +15,12 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.HttpStatus;
-import org.springframework.mock.web.MockHttpServletResponse;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 
+import static com.vendo.security.common.constants.AuthConstants.BEARER_PREFIX;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.springframework.http.HttpHeaders.AUTHORIZATION;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.securityContext;
@@ -60,26 +60,28 @@ public class JwtAuthFilterIntegrationTest {
         User user = UserDataBuilder.buildUserAllFields().build();
         SecurityContext securityContext = SecurityContextUtils.initializeSecurityContext(user);
 
-        MockHttpServletResponse response = mockMvc.perform(get("/test/ping")
+        String response = mockMvc.perform(get("/test/ping")
                         .with(securityContext(securityContext)))
                 .andExpect(status().isOk())
-                .andReturn().getResponse();
-        String responseContent = response.getContentAsString();
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
 
-        assertThat(responseContent).isNotBlank();
-        assertThat(responseContent).isEqualTo("pong");
+        assertThat(response).isNotBlank();
+        assertThat(response).isEqualTo("pong");
     }
 
     @Test
     void doFilterInternal_shouldReturnUnauthorized_whenNoTokenInRequest() throws Exception {
-        MockHttpServletResponse response = mockMvc.perform(get("/test/ping"))
+        String response = mockMvc.perform(get("/test/ping"))
                 .andExpect(status().isUnauthorized())
-                .andReturn().getResponse();
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
 
-        String responseContent = response.getContentAsString();
-        assertThat(responseContent).isNotBlank();
+        assertThat(response).isNotBlank();
 
-        ExceptionResponse exceptionResponse = objectMapper.readValue(responseContent, ExceptionResponse.class);
+        ExceptionResponse exceptionResponse = objectMapper.readValue(response, ExceptionResponse.class);
         assertThat(exceptionResponse.message()).isEqualTo("Unauthorized.");
         assertThat(exceptionResponse.code()).isEqualTo(HttpStatus.UNAUTHORIZED.value());
     }
@@ -93,7 +95,7 @@ public class JwtAuthFilterIntegrationTest {
         userRepository.save(user);
         String accessToken = jwtService.generateAccessToken(user);
 
-        mockMvc.perform(get("/test/ping").header(AUTHORIZATION, "Bearer " + accessToken))
+        mockMvc.perform(get("/test/ping").header(AUTHORIZATION, BEARER_PREFIX + accessToken))
                 .andExpect(status().isOk());
     }
 
@@ -102,14 +104,15 @@ public class JwtAuthFilterIntegrationTest {
         User user = UserDataBuilder.buildUserAllFields().build();
         String accessToken = jwtService.generateAccessToken(user);
 
-        MockHttpServletResponse response = mockMvc.perform(get("/test/ping").header(AUTHORIZATION, accessToken))
+        String response = mockMvc.perform(get("/test/ping").header(AUTHORIZATION, accessToken))
                 .andExpect(status().isUnauthorized())
-                .andReturn().getResponse();
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
 
-        String responseContent = response.getContentAsString();
-        assertThat(responseContent).isNotBlank();
+        assertThat(response).isNotBlank();
 
-        ExceptionResponse exceptionResponse = objectMapper.readValue(responseContent, ExceptionResponse.class);
+        ExceptionResponse exceptionResponse = objectMapper.readValue(response, ExceptionResponse.class);
         assertThat(exceptionResponse.message()).isEqualTo("Invalid token.");
         assertThat(exceptionResponse.code()).isEqualTo(HttpStatus.UNAUTHORIZED.value());
         assertThat(exceptionResponse.path()).isEqualTo("/test/ping");
@@ -120,14 +123,15 @@ public class JwtAuthFilterIntegrationTest {
         User user = UserDataBuilder.buildUserAllFields().build();
         String accessToken = jwtService.generateAccessToken(user);
 
-        MockHttpServletResponse response = mockMvc.perform(get("/test/ping").header(AUTHORIZATION, "Bearer " + accessToken))
+        String response = mockMvc.perform(get("/test/ping").header(AUTHORIZATION, BEARER_PREFIX + accessToken))
                 .andExpect(status().isNotFound())
-                .andReturn().getResponse();
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
 
-        String responseContent = response.getContentAsString();
-        assertThat(responseContent).isNotBlank();
+        assertThat(response).isNotBlank();
 
-        ExceptionResponse exceptionResponse = objectMapper.readValue(responseContent, ExceptionResponse.class);
+        ExceptionResponse exceptionResponse = objectMapper.readValue(response, ExceptionResponse.class);
         assertThat(exceptionResponse.message()).isEqualTo("User not found.");
         assertThat(exceptionResponse.code()).isEqualTo(HttpStatus.NOT_FOUND.value());
         assertThat(exceptionResponse.path()).isEqualTo("/test/ping");
@@ -139,15 +143,16 @@ public class JwtAuthFilterIntegrationTest {
         userRepository.save(user);
         String expiredToken = jwtService.generateTokenWithExpiration(user, 0);
 
-        MockHttpServletResponse response = mockMvc.perform(get("/test/ping").header(AUTHORIZATION, "Bearer " + expiredToken))
+        String response = mockMvc.perform(get("/test/ping").header(AUTHORIZATION, BEARER_PREFIX + expiredToken))
                 .andExpect(status().isUnauthorized())
-                .andReturn().getResponse();
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
 
-        String responseContent = response.getContentAsString();
 
-        assertThat(responseContent).isNotBlank();
+        assertThat(response).isNotBlank();
 
-        ExceptionResponse exceptionResponse = objectMapper.readValue(responseContent, ExceptionResponse.class);
+        ExceptionResponse exceptionResponse = objectMapper.readValue(response, ExceptionResponse.class);
         assertThat(exceptionResponse.message()).isEqualTo("Token has expired.");
         assertThat(exceptionResponse.code()).isEqualTo(HttpStatus.UNAUTHORIZED.value());
         assertThat(exceptionResponse.path()).isEqualTo("/test/ping");
@@ -162,14 +167,15 @@ public class JwtAuthFilterIntegrationTest {
         userRepository.save(user);
         String accessToken = jwtService.generateAccessToken(user);
 
-        MockHttpServletResponse response = mockMvc.perform(get("/test/ping").header(AUTHORIZATION, "Bearer " + accessToken))
+        String response = mockMvc.perform(get("/test/ping").header(AUTHORIZATION, BEARER_PREFIX + accessToken))
                 .andExpect(status().isForbidden())
-                .andReturn().getResponse();
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
 
-        String responseContent = response.getContentAsString();
+        assertThat(response).isNotBlank();
 
-        assertThat(responseContent).isNotBlank();
-        ExceptionResponse exceptionResponse = objectMapper.readValue(responseContent, ExceptionResponse.class);
+        ExceptionResponse exceptionResponse = objectMapper.readValue(response, ExceptionResponse.class);
         assertThat(exceptionResponse.message()).isEqualTo("User is unactive.");
         assertThat(exceptionResponse.code()).isEqualTo(HttpStatus.FORBIDDEN.value());
         assertThat(exceptionResponse.path()).isEqualTo("/test/ping");
@@ -184,14 +190,15 @@ public class JwtAuthFilterIntegrationTest {
         userRepository.save(user);
         String accessToken = jwtService.generateAccessToken(user);
 
-        MockHttpServletResponse response = mockMvc.perform(get("/test/ping").header(AUTHORIZATION, "Bearer " + accessToken))
+        String response = mockMvc.perform(get("/test/ping").header(AUTHORIZATION, BEARER_PREFIX + accessToken))
                 .andExpect(status().isForbidden())
-                .andReturn().getResponse();
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
 
-        String responseContent = response.getContentAsString();
+        assertThat(response).isNotBlank();
 
-        assertThat(responseContent).isNotBlank();
-        ExceptionResponse exceptionResponse = objectMapper.readValue(responseContent, ExceptionResponse.class);
+        ExceptionResponse exceptionResponse = objectMapper.readValue(response, ExceptionResponse.class);
         assertThat(exceptionResponse.message()).isEqualTo("User is unactive.");
         assertThat(exceptionResponse.code()).isEqualTo(HttpStatus.FORBIDDEN.value());
         assertThat(exceptionResponse.path()).isEqualTo("/test/ping");
@@ -205,14 +212,15 @@ public class JwtAuthFilterIntegrationTest {
         userRepository.save(user);
         String accessToken = jwtService.generateAccessToken(user);
 
-        MockHttpServletResponse response = mockMvc.perform(get("/test/ping").header(AUTHORIZATION, "Bearer " + accessToken))
+        String response = mockMvc.perform(get("/test/ping").header(AUTHORIZATION, BEARER_PREFIX + accessToken))
                 .andExpect(status().isForbidden())
-                .andReturn().getResponse();
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
 
-        String responseContent = response.getContentAsString();
+        assertThat(response).isNotBlank();
 
-        assertThat(responseContent).isNotBlank();
-        ExceptionResponse exceptionResponse = objectMapper.readValue(responseContent, ExceptionResponse.class);
+        ExceptionResponse exceptionResponse = objectMapper.readValue(response, ExceptionResponse.class);
         assertThat(exceptionResponse.message()).isEqualTo("User email is not verified.");
         assertThat(exceptionResponse.code()).isEqualTo(HttpStatus.FORBIDDEN.value());
     }
