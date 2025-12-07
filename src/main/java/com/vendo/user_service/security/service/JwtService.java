@@ -12,8 +12,7 @@ import java.util.Date;
 import java.util.List;
 import java.util.Map;
 
-import static com.vendo.security.common.type.TokenClaim.ROLES_CLAIM;
-import static com.vendo.security.common.type.TokenClaim.STATUS_CLAIM;
+import static com.vendo.security.common.type.TokenClaim.*;
 
 @Service
 @RequiredArgsConstructor
@@ -27,6 +26,7 @@ public class JwtService {
         List<String> roles = jwtHelper.getRoles(user);
 
         return generateAccessToken(user, Map.of(
+                USER_ID_CLAIM.getClaim(), user.getId(),
                 ROLES_CLAIM.getClaim(), roles,
                 STATUS_CLAIM.getClaim(), user.getStatus()
         ));
@@ -46,6 +46,14 @@ public class JwtService {
     }
 
     private String buildToken(User user, Map<String, Object> claims, int expiration) {
+        if (user == null) {
+            throw new IllegalArgumentException("User is required.");
+        }
+
+        if (expiration < 1) {
+            throw new IllegalArgumentException("Expiration cannot be less than one.");
+        }
+
         return Jwts.builder()
                 .claims(claims)
                 .subject(user.getUsername())
