@@ -2,12 +2,13 @@ package com.vendo.user_service.service.user;
 
 import com.vendo.domain.user.common.type.ProviderType;
 import com.vendo.domain.user.common.type.UserStatus;
+import com.vendo.user_service.common.exception.UserAlreadyExistsException;
+import com.vendo.user_service.common.mapper.UserMapper;
 import com.vendo.user_service.common.type.UserRole;
 import com.vendo.user_service.model.User;
 import com.vendo.user_service.repository.UserRepository;
-import com.vendo.user_service.common.exception.UserAlreadyExistsException;
-import com.vendo.user_service.common.mapper.UserMapper;
 import com.vendo.user_service.web.dto.UserProfileResponse;
+import com.vendo.user_service.web.dto.UserUpdateRequest;
 import jakarta.validation.constraints.NotNull;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.userdetails.UserDetailsService;
@@ -39,15 +40,15 @@ public class UserService implements UserDetailsService {
         return userRepository.save(user);
     }
 
-    public void update(String userId, User requestUser) {
+    public void update(String userId, UserUpdateRequest requestUser) {
         User user = findByUserIdOrThrow(userId);
 
-        Optional.ofNullable(requestUser.getPassword()).ifPresent(user::setPassword);
-        Optional.ofNullable(requestUser.getStatus()).ifPresent(user::setStatus);
-        Optional.ofNullable(requestUser.getProviderType()).ifPresent(user::setProviderType);
-        Optional.ofNullable(requestUser.getFullName()).ifPresent(user::setFullName);
-        Optional.ofNullable(requestUser.getBirthDate()).ifPresent(user::setBirthDate);
-        Optional.ofNullable(requestUser.getEmailVerified()).ifPresent(user::setEmailVerified);
+        Optional.ofNullable(requestUser.password()).ifPresent(user::setPassword);
+        Optional.ofNullable(requestUser.status()).ifPresent(user::setStatus);
+        Optional.ofNullable(requestUser.providerType()).ifPresent(user::setProviderType);
+        Optional.ofNullable(requestUser.fullName()).ifPresent(user::setFullName);
+        Optional.ofNullable(requestUser.birthDate()).ifPresent(user::setBirthDate);
+        Optional.ofNullable(requestUser.emailVerified()).ifPresent(user::setEmailVerified);
 
         userRepository.save(user);
     }
