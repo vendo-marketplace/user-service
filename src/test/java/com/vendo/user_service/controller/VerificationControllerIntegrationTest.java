@@ -119,9 +119,9 @@ public class VerificationControllerIntegrationTest {
         assertThat(responseContent).isNotNull();
 
         ExceptionResponse exceptionResponse = objectMapper.readValue(responseContent, ExceptionResponse.class);
-        assertThat(exceptionResponse.message()).isEqualTo("Otp has already sent.");
-        assertThat(exceptionResponse.code()).isEqualTo(HttpStatus.CONFLICT.value());
-        assertThat(exceptionResponse.path()).isEqualTo("/verification/send-otp");
+        assertThat(exceptionResponse.getMessage()).isEqualTo("Otp has already sent.");
+        assertThat(exceptionResponse.getCode()).isEqualTo(HttpStatus.CONFLICT.value());
+        assertThat(exceptionResponse.getPath()).isEqualTo("/verification/send-otp");
 
         Optional<String> otpOptional = redisService.getValue(emailVerificationOtpNamespace.getEmail().buildPrefix(user.getEmail()));
         assertThat(otpOptional).isPresent();
@@ -144,9 +144,9 @@ public class VerificationControllerIntegrationTest {
         assertThat(responseContent).isNotNull();
 
         ExceptionResponse exceptionResponse = objectMapper.readValue(responseContent, ExceptionResponse.class);
-        assertThat(exceptionResponse.message()).isEqualTo("User not found.");
-        assertThat(exceptionResponse.code()).isEqualTo(HttpStatus.NOT_FOUND.value());
-        assertThat(exceptionResponse.path()).isEqualTo("/verification/send-otp");
+        assertThat(exceptionResponse.getMessage()).isEqualTo("User not found.");
+        assertThat(exceptionResponse.getCode()).isEqualTo(HttpStatus.NOT_FOUND.value());
+        assertThat(exceptionResponse.getPath()).isEqualTo("/verification/send-otp");
 
         Optional<String> otp = redisService.getValue(emailVerificationOtpNamespace.getEmail().buildPrefix(user.getEmail()));
         assertThat(otp).isEmpty();
@@ -220,9 +220,9 @@ public class VerificationControllerIntegrationTest {
         assertThat(responseContent).isNotNull();
 
         ExceptionResponse exceptionResponse = objectMapper.readValue(responseContent, ExceptionResponse.class);
-        assertThat(exceptionResponse.message()).isEqualTo("User not found.");
-        assertThat(exceptionResponse.code()).isEqualTo(HttpStatus.NOT_FOUND.value());
-        assertThat(exceptionResponse.path()).isEqualTo("/verification/resend-otp");
+        assertThat(exceptionResponse.getMessage()).isEqualTo("User not found.");
+        assertThat(exceptionResponse.getCode()).isEqualTo(HttpStatus.NOT_FOUND.value());
+        assertThat(exceptionResponse.getPath()).isEqualTo("/verification/resend-otp");
 
         Optional<User> optionalUser = userRepository.findByEmail(user.getEmail());
         assertThat(optionalUser).isNotPresent();
@@ -315,9 +315,9 @@ public class VerificationControllerIntegrationTest {
         assertThat(responseContent).isNotNull();
 
         ExceptionResponse exceptionResponse = objectMapper.readValue(responseContent, ExceptionResponse.class);
-        assertThat(exceptionResponse.message()).isEqualTo("Reached maximum attempts.");
-        assertThat(exceptionResponse.code()).isEqualTo(HttpStatus.TOO_MANY_REQUESTS.value());
-        assertThat(exceptionResponse.path()).isEqualTo("/verification/resend-otp");
+        assertThat(exceptionResponse.getMessage()).isEqualTo("Reached maximum attempts.");
+        assertThat(exceptionResponse.getCode()).isEqualTo(HttpStatus.TOO_MANY_REQUESTS.value());
+        assertThat(exceptionResponse.getPath()).isEqualTo("/verification/resend-otp");
 
         Optional<String> attemptsOptional = redisService.getValue(emailVerificationOtpNamespace.getAttempts().buildPrefix(user.getEmail()));
         assertThat(attemptsOptional).isPresent();
@@ -341,9 +341,9 @@ public class VerificationControllerIntegrationTest {
         assertThat(responseContent).isNotNull();
 
         ExceptionResponse exceptionResponse = objectMapper.readValue(responseContent, ExceptionResponse.class);
-        assertThat(exceptionResponse.message()).isEqualTo("Otp session expired.");
-        assertThat(exceptionResponse.code()).isEqualTo(HttpStatus.GONE.value());
-        assertThat(exceptionResponse.path()).isEqualTo("/verification/resend-otp");
+        assertThat(exceptionResponse.getMessage()).isEqualTo("Otp session expired.");
+        assertThat(exceptionResponse.getCode()).isEqualTo(HttpStatus.GONE.value());
+        assertThat(exceptionResponse.getPath()).isEqualTo("/verification/resend-otp");
 
         Optional<String> otp = redisService.getValue(emailVerificationOtpNamespace.getEmail().buildPrefix(user.getEmail()));
         assertThat(otp).isNotPresent();
@@ -409,8 +409,8 @@ public class VerificationControllerIntegrationTest {
         assertThat(responseContent).isNotNull();
 
         ExceptionResponse exceptionResponse = objectMapper.readValue(responseContent, ExceptionResponse.class);
-        assertThat(exceptionResponse.message()).isEqualTo("Invalid otp.");
-        assertThat(exceptionResponse.code()).isEqualTo(HttpStatus.GONE.value());
+        assertThat(exceptionResponse.getMessage()).isEqualTo("Invalid otp.");
+        assertThat(exceptionResponse.getCode()).isEqualTo(HttpStatus.GONE.value());
 
         Optional<User> optionalUser = userRepository.findByEmail(user.getEmail());
         assertThat(optionalUser).isPresent();
@@ -440,9 +440,9 @@ public class VerificationControllerIntegrationTest {
         assertThat(responseContent).isNotNull();
 
         ExceptionResponse exceptionResponse = objectMapper.readValue(responseContent, ExceptionResponse.class);
-        assertThat(exceptionResponse.message()).isEqualTo("Otp session expired.");
-        assertThat(exceptionResponse.code()).isEqualTo(HttpStatus.GONE.value());
-        assertThat(exceptionResponse.path()).isEqualTo("/verification/validate");
+        assertThat(exceptionResponse.getMessage()).isEqualTo("Otp session expired.");
+        assertThat(exceptionResponse.getCode()).isEqualTo(HttpStatus.GONE.value());
+        assertThat(exceptionResponse.getPath()).isEqualTo("/verification/validate");
 
         Optional<User> optionalUser = userRepository.findByEmail(user.getEmail());
         assertThat(optionalUser).isPresent();
