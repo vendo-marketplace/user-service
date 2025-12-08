@@ -50,10 +50,6 @@ public class JwtService {
             throw new IllegalArgumentException("User is required.");
         }
 
-        if (expiration < 1) {
-            throw new IllegalArgumentException("Expiration cannot be less than one.");
-        }
-
         return Jwts.builder()
                 .claims(claims)
                 .subject(user.getUsername())
