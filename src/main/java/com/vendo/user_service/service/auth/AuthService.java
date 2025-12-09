@@ -76,7 +76,7 @@ public class AuthService {
 
         validateUserBeforeCompleteAuth(user);
 
-        userService.update(user.getId(), user.toBuilder()
+        userService.update(user.getId(), UserUpdateRequest.builder()
                 .status(UserStatus.ACTIVE)
                 .fullName(completeAuthRequest.fullName())
                 .birthDate(completeAuthRequest.birthDate())
@@ -105,7 +105,7 @@ public class AuthService {
         User user = userService.findUserByEmailOrSave(payload.getEmail());
 
         if (user.getStatus() == UserStatus.INCOMPLETE) {
-            userService.update(user.getId(), user.toBuilder()
+            userService.update(user.getId(), UserUpdateRequest.builder()
                     .status(UserStatus.ACTIVE)
                     .providerType(ProviderType.GOOGLE).build()
             );
@@ -126,7 +126,7 @@ public class AuthService {
     }
 
     private void validateUserBeforeCompleteAuth(User user) {
-        if (!user.getEmailVerified()) {
+        if (!user.isEmailVerified()) {
             throw new UserEmailNotVerifiedException("Your email is not verified.");
         }
 
