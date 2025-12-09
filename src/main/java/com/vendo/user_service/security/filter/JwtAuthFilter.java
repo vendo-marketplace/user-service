@@ -93,7 +93,7 @@ public class JwtAuthFilter extends OncePerRequestFilter {
             throw new UserIsUnactiveException("User is unactive.");
         }
 
-        if (!user.getEmailVerified()) {
+        if (!user.isEmailVerified()) {
             throw new UserEmailNotVerifiedException("User email is not verified.");
         }
 
