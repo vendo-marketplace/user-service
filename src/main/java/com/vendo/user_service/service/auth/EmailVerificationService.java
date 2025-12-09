@@ -6,6 +6,7 @@ import com.vendo.user_service.service.otp.EmailOtpService;
 import com.vendo.user_service.service.user.UserService;
 import com.vendo.user_service.system.redis.common.dto.ValidateRequest;
 import com.vendo.user_service.system.redis.common.namespace.otp.EmailVerificationOtpNamespace;
+import com.vendo.user_service.web.dto.UserUpdateRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -46,7 +47,7 @@ public class EmailVerificationService {
 
         emailOtpService.verifyOtp(otp, validateRequest.email(), emailVerificationOtpNamespace);
 
-        userService.update(user.getId(), User.builder()
+        userService.update(user.getId(), UserUpdateRequest.builder()
                 .emailVerified(true)
                 .build());
     }

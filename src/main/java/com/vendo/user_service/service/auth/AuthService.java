@@ -5,6 +5,7 @@ import com.vendo.domain.user.common.type.ProviderType;
 import com.vendo.domain.user.common.type.UserStatus;
 import com.vendo.security.common.exception.AccessDeniedException;
 import com.vendo.security.common.exception.InvalidTokenException;
+import com.vendo.user_service.common.exception.UserAlreadyActivatedException;
 import com.vendo.user_service.common.exception.UserAlreadyExistsException;
 import com.vendo.user_service.common.exception.UserBlockedException;
 import com.vendo.user_service.common.exception.UserEmailNotVerifiedException;
@@ -14,7 +15,6 @@ import com.vendo.user_service.security.common.dto.TokenPayload;
 import com.vendo.user_service.security.common.helper.JwtHelper;
 import com.vendo.user_service.security.service.JwtService;
 import com.vendo.user_service.service.user.UserService;
-import com.vendo.user_service.common.exception.UserAlreadyActivatedException;
 import com.vendo.user_service.web.dto.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.BadCredentialsException;
@@ -76,7 +76,7 @@ public class AuthService {
 
         validateUserBeforeCompleteAuth(user);
 
-        userService.update(user.getId(), user.toBuilder()
+        userService.update(user.getId(), UserUpdateRequest.builder()
                 .status(UserStatus.ACTIVE)
                 .fullName(completeAuthRequest.fullName())
                 .birthDate(completeAuthRequest.birthDate())
@@ -105,9 +105,10 @@ public class AuthService {
         User user = userService.findUserByEmailOrSave(payload.getEmail());
 
         if (user.getStatus() == UserStatus.INCOMPLETE) {
-            userService.update(user.getId(), user.toBuilder()
+            userService.update(user.getId(), UserUpdateRequest.builder()
                     .status(UserStatus.ACTIVE)
-                    .providerType(ProviderType.GOOGLE).build()
+                    .providerType(ProviderType.GOOGLE)
+                    .build()
             );
         }
 
@@ -126,7 +127,7 @@ public class AuthService {
     }
 
     private void validateUserBeforeCompleteAuth(User user) {
-        if (!user.getEmailVerified()) {
+        if (!user.isEmailVerified()) {
             throw new UserEmailNotVerifiedException("Your email is not verified.");
         }
 
