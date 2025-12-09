@@ -2,11 +2,12 @@ package com.vendo.user_service.service.user;
 
 import com.vendo.integration.kafka.event.EmailOtpEvent;
 import com.vendo.integration.redis.common.exception.OtpExpiredException;
+import com.vendo.user_service.model.User;
+import com.vendo.user_service.service.otp.EmailOtpService;
 import com.vendo.user_service.system.redis.common.dto.ResetPasswordRequest;
 import com.vendo.user_service.system.redis.common.namespace.otp.PasswordRecoveryOtpNamespace;
 import com.vendo.user_service.system.redis.service.RedisService;
-import com.vendo.user_service.model.User;
-import com.vendo.user_service.service.otp.EmailOtpService;
+import com.vendo.user_service.web.dto.UserUpdateRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -44,7 +45,7 @@ public class PasswordRecoveryService {
                 .orElseThrow(() -> new OtpExpiredException("Otp session expired."));
 
         User user = userService.loadUserByUsername(email);
-        userService.update(user.getId(), User.builder()
+        userService.update(user.getId(), UserUpdateRequest.builder()
                 .password(passwordEncoder.encode(resetPasswordRequest.password()))
                 .build());
 

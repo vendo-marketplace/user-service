@@ -30,7 +30,7 @@ public class User implements UserDetails {
     @Pattern(regexp = "^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$", message = "Invalid email.")
     private String email;
 
-    private Boolean emailVerified;
+    private boolean emailVerified;
 
     @NotNull(message = "Role is required.")
     private UserRole role;
