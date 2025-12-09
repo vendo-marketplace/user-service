@@ -82,8 +82,8 @@ public class JwtAuthFilterIntegrationTest {
         assertThat(response).isNotBlank();
 
         ExceptionResponse exceptionResponse = objectMapper.readValue(response, ExceptionResponse.class);
-        assertThat(exceptionResponse.message()).isEqualTo("Unauthorized.");
-        assertThat(exceptionResponse.code()).isEqualTo(HttpStatus.UNAUTHORIZED.value());
+        assertThat(exceptionResponse.getMessage()).isEqualTo("Unauthorized.");
+        assertThat(exceptionResponse.getCode()).isEqualTo(HttpStatus.UNAUTHORIZED.value());
     }
 
     @Test
@@ -113,9 +113,9 @@ public class JwtAuthFilterIntegrationTest {
         assertThat(response).isNotBlank();
 
         ExceptionResponse exceptionResponse = objectMapper.readValue(response, ExceptionResponse.class);
-        assertThat(exceptionResponse.message()).isEqualTo("Invalid token.");
-        assertThat(exceptionResponse.code()).isEqualTo(HttpStatus.UNAUTHORIZED.value());
-        assertThat(exceptionResponse.path()).isEqualTo("/test/ping");
+        assertThat(exceptionResponse.getMessage()).isEqualTo("Invalid token.");
+        assertThat(exceptionResponse.getCode()).isEqualTo(HttpStatus.UNAUTHORIZED.value());
+        assertThat(exceptionResponse.getPath()).isEqualTo("/test/ping");
     }
 
     @Test
@@ -132,9 +132,9 @@ public class JwtAuthFilterIntegrationTest {
         assertThat(response).isNotBlank();
 
         ExceptionResponse exceptionResponse = objectMapper.readValue(response, ExceptionResponse.class);
-        assertThat(exceptionResponse.message()).isEqualTo("User not found.");
-        assertThat(exceptionResponse.code()).isEqualTo(HttpStatus.NOT_FOUND.value());
-        assertThat(exceptionResponse.path()).isEqualTo("/test/ping");
+        assertThat(exceptionResponse.getMessage()).isEqualTo("User not found.");
+        assertThat(exceptionResponse.getCode()).isEqualTo(HttpStatus.NOT_FOUND.value());
+        assertThat(exceptionResponse.getPath()).isEqualTo("/test/ping");
     }
 
     @Test
@@ -153,9 +153,9 @@ public class JwtAuthFilterIntegrationTest {
         assertThat(response).isNotBlank();
 
         ExceptionResponse exceptionResponse = objectMapper.readValue(response, ExceptionResponse.class);
-        assertThat(exceptionResponse.message()).isEqualTo("Token has expired.");
-        assertThat(exceptionResponse.code()).isEqualTo(HttpStatus.UNAUTHORIZED.value());
-        assertThat(exceptionResponse.path()).isEqualTo("/test/ping");
+        assertThat(exceptionResponse.getMessage()).isEqualTo("Token has expired.");
+        assertThat(exceptionResponse.getCode()).isEqualTo(HttpStatus.UNAUTHORIZED.value());
+        assertThat(exceptionResponse.getPath()).isEqualTo("/test/ping");
     }
 
     @Test
@@ -176,9 +176,9 @@ public class JwtAuthFilterIntegrationTest {
         assertThat(response).isNotBlank();
 
         ExceptionResponse exceptionResponse = objectMapper.readValue(response, ExceptionResponse.class);
-        assertThat(exceptionResponse.message()).isEqualTo("User is unactive.");
-        assertThat(exceptionResponse.code()).isEqualTo(HttpStatus.FORBIDDEN.value());
-        assertThat(exceptionResponse.path()).isEqualTo("/test/ping");
+        assertThat(exceptionResponse.getMessage()).isEqualTo("User is blocked.");
+        assertThat(exceptionResponse.getCode()).isEqualTo(HttpStatus.FORBIDDEN.value());
+        assertThat(exceptionResponse.getPath()).isEqualTo("/test/ping");
     }
 
     @Test
@@ -199,9 +199,9 @@ public class JwtAuthFilterIntegrationTest {
         assertThat(response).isNotBlank();
 
         ExceptionResponse exceptionResponse = objectMapper.readValue(response, ExceptionResponse.class);
-        assertThat(exceptionResponse.message()).isEqualTo("User is unactive.");
-        assertThat(exceptionResponse.code()).isEqualTo(HttpStatus.FORBIDDEN.value());
-        assertThat(exceptionResponse.path()).isEqualTo("/test/ping");
+        assertThat(exceptionResponse.getMessage()).isEqualTo("User is unactive.");
+        assertThat(exceptionResponse.getCode()).isEqualTo(HttpStatus.FORBIDDEN.value());
+        assertThat(exceptionResponse.getPath()).isEqualTo("/test/ping");
     }
 
     @Test
@@ -221,7 +221,7 @@ public class JwtAuthFilterIntegrationTest {
         assertThat(response).isNotBlank();
 
         ExceptionResponse exceptionResponse = objectMapper.readValue(response, ExceptionResponse.class);
-        assertThat(exceptionResponse.message()).isEqualTo("User email is not verified.");
-        assertThat(exceptionResponse.code()).isEqualTo(HttpStatus.FORBIDDEN.value());
+        assertThat(exceptionResponse.getMessage()).isEqualTo("User email is not verified.");
+        assertThat(exceptionResponse.getCode()).isEqualTo(HttpStatus.FORBIDDEN.value());
     }
 }
