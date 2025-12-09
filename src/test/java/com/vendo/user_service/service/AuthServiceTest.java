@@ -14,6 +14,7 @@ import com.vendo.user_service.service.auth.AuthService;
 import com.vendo.user_service.service.auth.GoogleOAuthService;
 import com.vendo.user_service.web.dto.AuthResponse;
 import com.vendo.user_service.web.dto.GoogleAuthRequest;
+import com.vendo.user_service.web.dto.UserUpdateRequest;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
@@ -62,16 +63,16 @@ public class AuthServiceTest {
         assertThat(authResponse.accessToken()).isEqualTo(tokenPayload.accessToken());
         assertThat(authResponse.refreshToken()).isEqualTo(tokenPayload.refreshToken());
 
-        ArgumentCaptor<User> userArgumentCaptor = ArgumentCaptor.forClass(User.class);
+        ArgumentCaptor<UserUpdateRequest> userArgumentCaptor = ArgumentCaptor.forClass(UserUpdateRequest.class);
         verify(googleOauthService).verify(idToken);
         verify(userService).findUserByEmailOrSave(email);
         verify(jwtService).generateTokenPayload(user);
         verify(userService).update(eq(user.getId()), userArgumentCaptor.capture());
 
-        User userCaptorValue = userArgumentCaptor.getValue();
+        UserUpdateRequest userCaptorValue = userArgumentCaptor.getValue();
         assertThat(userCaptorValue).isNotNull();
-        assertThat(userCaptorValue.getStatus()).isEqualTo(UserStatus.ACTIVE);
-        assertThat(userCaptorValue.getProviderType()).isEqualTo(ProviderType.GOOGLE);
+        assertThat(userCaptorValue.status()).isEqualTo(UserStatus.ACTIVE);
+        assertThat(userCaptorValue.providerType()).isEqualTo(ProviderType.GOOGLE);
     }
 
     @Test
@@ -94,15 +95,15 @@ public class AuthServiceTest {
         assertThat(authResponse.accessToken()).isEqualTo(tokenPayload.accessToken());
         assertThat(authResponse.refreshToken()).isEqualTo(tokenPayload.refreshToken());
 
-        ArgumentCaptor<User> userCaptor = ArgumentCaptor.forClass(User.class);
+        ArgumentCaptor<UserUpdateRequest> userCaptor = ArgumentCaptor.forClass(UserUpdateRequest.class);
         verify(googleOauthService).verify(idToken);
         verify(userService).findUserByEmailOrSave(email);
         verify(jwtService).generateTokenPayload(user);
         verify(userService).update(eq(user.getId()), userCaptor.capture());
 
-        User captorValue = userCaptor.getValue();
-        assertThat(captorValue.getStatus()).isEqualTo(UserStatus.ACTIVE);
-        assertThat(captorValue.getProviderType()).isEqualTo(ProviderType.GOOGLE);
+        UserUpdateRequest captorValue = userCaptor.getValue();
+        assertThat(captorValue.status()).isEqualTo(UserStatus.ACTIVE);
+        assertThat(captorValue.providerType()).isEqualTo(ProviderType.GOOGLE);
     }
 
     @Test
@@ -128,7 +129,7 @@ public class AuthServiceTest {
         verify(googleOauthService).verify(idToken);
         verify(userService).findUserByEmailOrSave(email);
         verify(jwtService).generateTokenPayload(user);
-        verify(userService, never()).update(user.getId(), user);
+        verify(userService, never()).update(eq(user.getId()), any(UserUpdateRequest.class));
     }
 
     @Test

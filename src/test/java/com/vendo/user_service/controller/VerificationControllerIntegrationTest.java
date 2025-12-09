@@ -376,7 +376,7 @@ public class VerificationControllerIntegrationTest {
         await().atMost(5, TimeUnit.SECONDS).untilAsserted(() -> {
             Optional<User> optionalUser = userRepository.findByEmail(user.getEmail());
             assertThat(optionalUser).isPresent();
-            assertThat(optionalUser.get().getEmailVerified()).isTrue();
+            assertThat(optionalUser.get().isEmailVerified()).isTrue();
         });
 
         assertThat(redisService.getValue(emailVerificationOtpNamespace.getOtp().buildPrefix(otp))).isEmpty();
@@ -415,7 +415,7 @@ public class VerificationControllerIntegrationTest {
         Optional<User> optionalUser = userRepository.findByEmail(user.getEmail());
         assertThat(optionalUser).isPresent();
 
-        assertThat(optionalUser.get().getEmailVerified()).isFalse();
+        assertThat(optionalUser.get().isEmailVerified()).isFalse();
         Optional<String> mismatchEmailOptional = redisService.getValue(emailVerificationOtpNamespace.getOtp().buildPrefix(otp));
         assertThat(mismatchEmailOptional).isPresent();
         assertThat(mismatchEmailOptional).isNotEqualTo(validateRequest.email());
@@ -446,6 +446,6 @@ public class VerificationControllerIntegrationTest {
 
         Optional<User> optionalUser = userRepository.findByEmail(user.getEmail());
         assertThat(optionalUser).isPresent();
-        assertThat(optionalUser.get().getEmailVerified()).isFalse();
+        assertThat(optionalUser.get().isEmailVerified()).isFalse();
     }
 }
