@@ -27,7 +27,7 @@ public class JwtService {
 
         return generateAccessToken(user, Map.of(
                 USER_ID_CLAIM.getClaim(), user.getId(),
-                EMAIL_VERIFIED_CLAIM.getClaim(), user.getEmailVerified(),
+                EMAIL_VERIFIED_CLAIM.getClaim(), user.isEmailVerified(),
                 ROLES_CLAIM.getClaim(), roles,
                 STATUS_CLAIM.getClaim(), user.getStatus()
         ));
