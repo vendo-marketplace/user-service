@@ -111,7 +111,10 @@ class AuthControllerIntegrationTest {
     @Test
     void signUp_shouldReturnConflict_whenUserAlreadyExists() throws Exception {
         AuthRequest authRequest = AuthRequestDataBuilder.buildUserWithAllFields().build();
-        User user = User.builder().email(authRequest.email()).password(passwordEncoder.encode(authRequest.password())).build();
+        User user = UserDataBuilder.buildUserAllFields()
+                .email(authRequest.email())
+                .password(passwordEncoder.encode(authRequest.password()))
+                .build();
         userRepository.save(user);
 
         String content = mockMvc.perform(post("/auth/sign-up")
@@ -133,10 +136,10 @@ class AuthControllerIntegrationTest {
     @Test
     void signIn_shouldReturnPairOfTokens() throws Exception {
         AuthRequest authRequest = AuthRequestDataBuilder.buildUserWithAllFields().build();
-        User user = User.builder()
+        User user = UserDataBuilder.buildUserAllFields()
+                .status(UserStatus.ACTIVE)
                 .email(authRequest.email())
                 .password(passwordEncoder.encode(authRequest.password()))
-                .role(UserRole.USER).status(UserStatus.ACTIVE)
                 .build();
         userRepository.save(user);
 
@@ -180,11 +183,10 @@ class AuthControllerIntegrationTest {
     @Test
     void signIn_shouldReturnForbidden_whenUserBlocked() throws Exception {
         AuthRequest authRequest = AuthRequestDataBuilder.buildUserWithAllFields().build();
-        User user = User.builder()
+        User user = UserDataBuilder.buildUserAllFields()
+                .status(UserStatus.BLOCKED)
                 .email(authRequest.email())
                 .password(passwordEncoder.encode(authRequest.password()))
-                .role(UserRole.USER)
-                .status(UserStatus.BLOCKED)
                 .build();
         userRepository.save(user);
 
@@ -207,11 +209,10 @@ class AuthControllerIntegrationTest {
     @Test
     void signIn_shouldReturnForbidden_whenUserIncomplete() throws Exception {
         AuthRequest authRequest = AuthRequestDataBuilder.buildUserWithAllFields().build();
-        User user = User.builder()
+        User user = UserDataBuilder.buildUserAllFields()
+                .status(UserStatus.INCOMPLETE)
                 .email(authRequest.email())
                 .password(passwordEncoder.encode(authRequest.password()))
-                .role(UserRole.USER)
-                .status(UserStatus.INCOMPLETE)
                 .build();
         userRepository.save(user);
 
