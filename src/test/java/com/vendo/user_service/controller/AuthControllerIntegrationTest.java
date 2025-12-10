@@ -111,7 +111,10 @@ class AuthControllerIntegrationTest {
     @Test
     void signUp_shouldReturnConflict_whenUserAlreadyExists() throws Exception {
         AuthRequest authRequest = AuthRequestDataBuilder.buildUserWithAllFields().build();
-        User user = User.builder().email(authRequest.email()).password(passwordEncoder.encode(authRequest.password())).build();
+        User user = UserDataBuilder.buildUserAllFields()
+                .email(authRequest.email())
+                .password(passwordEncoder.encode(authRequest.password()))
+                .build();
         userRepository.save(user);
 
         String content = mockMvc.perform(post("/auth/sign-up")
@@ -125,18 +128,18 @@ class AuthControllerIntegrationTest {
         assertThat(content).isNotBlank();
         ExceptionResponse exceptionResponse = objectMapper.readValue(content, ExceptionResponse.class);
 
-        assertThat(exceptionResponse.message()).isEqualTo("User already exists.");
-        assertThat(exceptionResponse.code()).isEqualTo(HttpStatus.CONFLICT.value());
-        assertThat(exceptionResponse.path()).isEqualTo("/auth/sign-up");
+        assertThat(exceptionResponse.getMessage()).isEqualTo("User already exists.");
+        assertThat(exceptionResponse.getCode()).isEqualTo(HttpStatus.CONFLICT.value());
+        assertThat(exceptionResponse.getPath()).isEqualTo("/auth/sign-up");
     }
 
     @Test
     void signIn_shouldReturnPairOfTokens() throws Exception {
         AuthRequest authRequest = AuthRequestDataBuilder.buildUserWithAllFields().build();
-        User user = User.builder()
+        User user = UserDataBuilder.buildUserAllFields()
+                .status(UserStatus.ACTIVE)
                 .email(authRequest.email())
                 .password(passwordEncoder.encode(authRequest.password()))
-                .role(UserRole.USER).status(UserStatus.ACTIVE)
                 .build();
         userRepository.save(user);
 
@@ -172,19 +175,18 @@ class AuthControllerIntegrationTest {
         assertThat(responseContent).isNotBlank();
 
         ExceptionResponse exceptionResponse = objectMapper.readValue(responseContent, ExceptionResponse.class);
-        assertThat(exceptionResponse.message()).isEqualTo("User not found.");
-        assertThat(exceptionResponse.code()).isEqualTo(HttpStatus.NOT_FOUND.value());
-        assertThat(exceptionResponse.path()).isEqualTo("/auth/sign-in");
+        assertThat(exceptionResponse.getMessage()).isEqualTo("User not found.");
+        assertThat(exceptionResponse.getCode()).isEqualTo(HttpStatus.NOT_FOUND.value());
+        assertThat(exceptionResponse.getPath()).isEqualTo("/auth/sign-in");
     }
 
     @Test
     void signIn_shouldReturnForbidden_whenUserBlocked() throws Exception {
         AuthRequest authRequest = AuthRequestDataBuilder.buildUserWithAllFields().build();
-        User user = User.builder()
+        User user = UserDataBuilder.buildUserAllFields()
+                .status(UserStatus.BLOCKED)
                 .email(authRequest.email())
                 .password(passwordEncoder.encode(authRequest.password()))
-                .role(UserRole.USER)
-                .status(UserStatus.BLOCKED)
                 .build();
         userRepository.save(user);
 
@@ -199,19 +201,18 @@ class AuthControllerIntegrationTest {
         assertThat(content).isNotBlank();
         ExceptionResponse exceptionResponse = objectMapper.readValue(content, ExceptionResponse.class);
 
-        assertThat(exceptionResponse.message()).isEqualTo("User is unactive.");
-        assertThat(exceptionResponse.code()).isEqualTo(HttpStatus.FORBIDDEN.value());
-        assertThat(exceptionResponse.path()).isEqualTo("/auth/sign-in");
+        assertThat(exceptionResponse.getMessage()).isEqualTo("User is unactive.");
+        assertThat(exceptionResponse.getCode()).isEqualTo(HttpStatus.FORBIDDEN.value());
+        assertThat(exceptionResponse.getPath()).isEqualTo("/auth/sign-in");
     }
 
     @Test
     void signIn_shouldReturnForbidden_whenUserIncomplete() throws Exception {
         AuthRequest authRequest = AuthRequestDataBuilder.buildUserWithAllFields().build();
-        User user = User.builder()
+        User user = UserDataBuilder.buildUserAllFields()
+                .status(UserStatus.INCOMPLETE)
                 .email(authRequest.email())
                 .password(passwordEncoder.encode(authRequest.password()))
-                .role(UserRole.USER)
-                .status(UserStatus.INCOMPLETE)
                 .build();
         userRepository.save(user);
 
@@ -226,9 +227,9 @@ class AuthControllerIntegrationTest {
         assertThat(content).isNotBlank();
         ExceptionResponse exceptionResponse = objectMapper.readValue(content, ExceptionResponse.class);
 
-        assertThat(exceptionResponse.message()).isEqualTo("User is unactive.");
-        assertThat(exceptionResponse.code()).isEqualTo(HttpStatus.FORBIDDEN.value());
-        assertThat(exceptionResponse.path()).isEqualTo("/auth/sign-in");
+        assertThat(exceptionResponse.getMessage()).isEqualTo("User is unactive.");
+        assertThat(exceptionResponse.getCode()).isEqualTo(HttpStatus.FORBIDDEN.value());
+        assertThat(exceptionResponse.getPath()).isEqualTo("/auth/sign-in");
     }
 
     @Test
@@ -274,9 +275,9 @@ class AuthControllerIntegrationTest {
         assertThat(content).isNotBlank();
         ExceptionResponse exceptionResponse = objectMapper.readValue(content, ExceptionResponse.class);
 
-        assertThat(exceptionResponse.message()).isEqualTo("User not found.");
-        assertThat(exceptionResponse.code()).isEqualTo(HttpStatus.NOT_FOUND.value());
-        assertThat(exceptionResponse.path()).isEqualTo("/auth/refresh");
+        assertThat(exceptionResponse.getMessage()).isEqualTo("User not found.");
+        assertThat(exceptionResponse.getCode()).isEqualTo(HttpStatus.NOT_FOUND.value());
+        assertThat(exceptionResponse.getPath()).isEqualTo("/auth/refresh");
     }
 
     @Test
@@ -299,9 +300,9 @@ class AuthControllerIntegrationTest {
         assertThat(content).isNotBlank();
         ExceptionResponse exceptionResponse = objectMapper.readValue(content, ExceptionResponse.class);
 
-        assertThat(exceptionResponse.message()).isEqualTo("Invalid token.");
-        assertThat(exceptionResponse.code()).isEqualTo(HttpStatus.UNAUTHORIZED.value());
-        assertThat(exceptionResponse.path()).isEqualTo("/auth/refresh");
+        assertThat(exceptionResponse.getMessage()).isEqualTo("Invalid token.");
+        assertThat(exceptionResponse.getCode()).isEqualTo(HttpStatus.UNAUTHORIZED.value());
+        assertThat(exceptionResponse.getPath()).isEqualTo("/auth/refresh");
     }
 
     @Test
@@ -322,9 +323,9 @@ class AuthControllerIntegrationTest {
         assertThat(content).isNotBlank();
         ExceptionResponse exceptionResponse = objectMapper.readValue(content, ExceptionResponse.class);
 
-        assertThat(exceptionResponse.message()).isEqualTo("Token has expired.");
-        assertThat(exceptionResponse.code()).isEqualTo(HttpStatus.UNAUTHORIZED.value());
-        assertThat(exceptionResponse.path()).isEqualTo("/auth/refresh");
+        assertThat(exceptionResponse.getMessage()).isEqualTo("Token has expired.");
+        assertThat(exceptionResponse.getCode()).isEqualTo(HttpStatus.UNAUTHORIZED.value());
+        assertThat(exceptionResponse.getPath()).isEqualTo("/auth/refresh");
     }
 
     @Test
@@ -367,11 +368,11 @@ class AuthControllerIntegrationTest {
         ExceptionResponse exceptionResponse = objectMapper.readValue(content, ExceptionResponse.class);
 
         assertThat(exceptionResponse).isNotNull();
-        assertThat(exceptionResponse.path()).isEqualTo("/auth/complete-auth");
-        assertThat(exceptionResponse.code()).isEqualTo(HttpStatus.BAD_REQUEST.value());
-        assertThat(exceptionResponse.errors()).isNotNull();
-        assertThat(exceptionResponse.errors().size()).isEqualTo(1);
-        assertThat(exceptionResponse.errors().get("fullName")).isNotNull();
+        assertThat(exceptionResponse.getPath()).isEqualTo("/auth/complete-auth");
+        assertThat(exceptionResponse.getCode()).isEqualTo(HttpStatus.BAD_REQUEST.value());
+        assertThat(exceptionResponse.getErrors()).isNotNull();
+        assertThat(exceptionResponse.getErrors().size()).isEqualTo(1);
+        assertThat(exceptionResponse.getErrors().get("fullName")).isNotNull();
     }
 
     @Test
@@ -395,11 +396,11 @@ class AuthControllerIntegrationTest {
         ExceptionResponse exceptionResponse = objectMapper.readValue(content, ExceptionResponse.class);
 
         assertThat(exceptionResponse).isNotNull();
-        assertThat(exceptionResponse.path()).isEqualTo("/auth/complete-auth");
-        assertThat(exceptionResponse.code()).isEqualTo(HttpStatus.BAD_REQUEST.value());
-        assertThat(exceptionResponse.errors()).isNotNull();
-        assertThat(exceptionResponse.errors().size()).isEqualTo(1);
-        assertThat(exceptionResponse.errors().get("birthDate")).isNotNull();
+        assertThat(exceptionResponse.getPath()).isEqualTo("/auth/complete-auth");
+        assertThat(exceptionResponse.getCode()).isEqualTo(HttpStatus.BAD_REQUEST.value());
+        assertThat(exceptionResponse.getErrors()).isNotNull();
+        assertThat(exceptionResponse.getErrors().size()).isEqualTo(1);
+        assertThat(exceptionResponse.getErrors().get("birthDate")).isNotNull();
     }
 
     @Test
@@ -424,12 +425,12 @@ class AuthControllerIntegrationTest {
         ExceptionResponse exceptionResponse = objectMapper.readValue(content, ExceptionResponse.class);
 
         assertThat(exceptionResponse).isNotNull();
-        assertThat(exceptionResponse.path()).isEqualTo("/auth/complete-auth");
-        assertThat(exceptionResponse.code()).isEqualTo(HttpStatus.BAD_REQUEST.value());
-        assertThat(exceptionResponse.errors()).isNotNull();
-        assertThat(exceptionResponse.errors().size()).isEqualTo(2);
-        assertThat(exceptionResponse.errors().get("birthDate")).isNotNull();
-        assertThat(exceptionResponse.errors().get("fullName")).isNotNull();
+        assertThat(exceptionResponse.getPath()).isEqualTo("/auth/complete-auth");
+        assertThat(exceptionResponse.getCode()).isEqualTo(HttpStatus.BAD_REQUEST.value());
+        assertThat(exceptionResponse.getErrors()).isNotNull();
+        assertThat(exceptionResponse.getErrors().size()).isEqualTo(2);
+        assertThat(exceptionResponse.getErrors().get("birthDate")).isNotNull();
+        assertThat(exceptionResponse.getErrors().get("fullName")).isNotNull();
     }
 
     @Test
@@ -450,9 +451,9 @@ class AuthControllerIntegrationTest {
         ExceptionResponse exceptionResponse = objectMapper.readValue(content, ExceptionResponse.class);
 
         assertThat(exceptionResponse).isNotNull();
-        assertThat(exceptionResponse.path()).isEqualTo("/auth/complete-auth");
-        assertThat(exceptionResponse.code()).isEqualTo(HttpStatus.NOT_FOUND.value());
-        assertThat(exceptionResponse.message()).isEqualTo("User not found.");
+        assertThat(exceptionResponse.getPath()).isEqualTo("/auth/complete-auth");
+        assertThat(exceptionResponse.getCode()).isEqualTo(HttpStatus.NOT_FOUND.value());
+        assertThat(exceptionResponse.getMessage()).isEqualTo("User not found.");
     }
 
     @Test
@@ -475,9 +476,9 @@ class AuthControllerIntegrationTest {
         ExceptionResponse exceptionResponse = objectMapper.readValue(content, ExceptionResponse.class);
 
         assertThat(exceptionResponse).isNotNull();
-        assertThat(exceptionResponse.path()).isEqualTo("/auth/complete-auth");
-        assertThat(exceptionResponse.code()).isEqualTo(HttpStatus.FORBIDDEN.value());
-        assertThat(exceptionResponse.message()).isEqualTo("Your account is blocked.");
+        assertThat(exceptionResponse.getPath()).isEqualTo("/auth/complete-auth");
+        assertThat(exceptionResponse.getCode()).isEqualTo(HttpStatus.FORBIDDEN.value());
+        assertThat(exceptionResponse.getMessage()).isEqualTo("Your account is blocked.");
     }
 
     @Test
@@ -500,10 +501,10 @@ class AuthControllerIntegrationTest {
         ExceptionResponse exceptionResponse = objectMapper.readValue(content, ExceptionResponse.class);
 
         assertThat(exceptionResponse).isNotNull();
-        assertThat(exceptionResponse.path()).isEqualTo("/auth/complete-auth");
-        assertThat(exceptionResponse.code()).isEqualTo(HttpStatus.CONFLICT.value());
-        assertThat(exceptionResponse.errors()).isNull();
-        assertThat(exceptionResponse.message()).isEqualTo("Your account is already activated.");
+        assertThat(exceptionResponse.getPath()).isEqualTo("/auth/complete-auth");
+        assertThat(exceptionResponse.getCode()).isEqualTo(HttpStatus.CONFLICT.value());
+        assertThat(exceptionResponse.getErrors()).isNull();
+        assertThat(exceptionResponse.getMessage()).isEqualTo("Your account is already activated.");
     }
 
     @Test
@@ -557,9 +558,9 @@ class AuthControllerIntegrationTest {
         ExceptionResponse exceptionResponse = objectMapper.readValue(content, ExceptionResponse.class);
 
         assertThat(exceptionResponse).isNotNull();
-        assertThat(exceptionResponse.path()).isEqualTo("/auth/me");
-        assertThat(exceptionResponse.code()).isEqualTo(HttpStatus.UNAUTHORIZED.value());
-        assertThat(exceptionResponse.message()).isEqualTo("Unauthorized.");
+        assertThat(exceptionResponse.getPath()).isEqualTo("/auth/me");
+        assertThat(exceptionResponse.getCode()).isEqualTo(HttpStatus.UNAUTHORIZED.value());
+        assertThat(exceptionResponse.getMessage()).isEqualTo("Unauthorized.");
     }
 
     @Test
@@ -580,8 +581,8 @@ class AuthControllerIntegrationTest {
         ExceptionResponse exceptionResponse = objectMapper.readValue(content, ExceptionResponse.class);
 
         assertThat(exceptionResponse).isNotNull();
-        assertThat(exceptionResponse.path()).isEqualTo("/auth/me");
-        assertThat(exceptionResponse.code()).isEqualTo(HttpStatus.NOT_FOUND.value());
-        assertThat(exceptionResponse.message()).isEqualTo("User not found.");
+        assertThat(exceptionResponse.getPath()).isEqualTo("/auth/me");
+        assertThat(exceptionResponse.getCode()).isEqualTo(HttpStatus.NOT_FOUND.value());
+        assertThat(exceptionResponse.getMessage()).isEqualTo("User not found.");
     }
 }
