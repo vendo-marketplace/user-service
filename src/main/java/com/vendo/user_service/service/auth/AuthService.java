@@ -3,12 +3,12 @@ package com.vendo.user_service.service.auth;
 import com.google.api.client.googleapis.auth.oauth2.GoogleIdToken;
 import com.vendo.domain.user.common.type.ProviderType;
 import com.vendo.domain.user.common.type.UserStatus;
-import com.vendo.security.common.exception.AccessDeniedException;
 import com.vendo.security.common.exception.InvalidTokenException;
+import com.vendo.security.common.exception.UserBlockedException;
+import com.vendo.security.common.exception.UserEmailNotVerifiedException;
+import com.vendo.security.common.exception.UserIsUnactiveException;
 import com.vendo.user_service.common.exception.UserAlreadyActivatedException;
 import com.vendo.user_service.common.exception.UserAlreadyExistsException;
-import com.vendo.user_service.common.exception.UserBlockedException;
-import com.vendo.user_service.common.exception.UserEmailNotVerifiedException;
 import com.vendo.user_service.common.type.UserRole;
 import com.vendo.user_service.model.User;
 import com.vendo.user_service.security.common.dto.TokenPayload;
@@ -41,7 +41,7 @@ public class AuthService {
         User user = userService.loadUserByUsername(authRequest.email());
 
         if (user.getStatus() != UserStatus.ACTIVE) {
-            throw new AccessDeniedException("User is unactive.");
+            throw new UserIsUnactiveException("User is unactive.");
         }
         matchPasswordsOrThrow(authRequest.password(), user.getPassword());
 
@@ -107,8 +107,7 @@ public class AuthService {
         if (user.getStatus() == UserStatus.INCOMPLETE) {
             userService.update(user.getId(), UserUpdateRequest.builder()
                     .status(UserStatus.ACTIVE)
-                    .providerType(ProviderType.GOOGLE)
-                    .build()
+                    .providerType(ProviderType.GOOGLE).build()
             );
         }
 

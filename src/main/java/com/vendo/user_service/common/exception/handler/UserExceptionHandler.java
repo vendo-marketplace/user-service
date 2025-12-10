@@ -1,7 +1,11 @@
 package com.vendo.user_service.common.exception.handler;
 
 import com.vendo.common.exception.ExceptionResponse;
-import com.vendo.user_service.common.exception.*;
+import com.vendo.security.common.exception.UserBlockedException;
+import com.vendo.security.common.exception.UserEmailNotVerifiedException;
+import com.vendo.security.common.exception.UserIsUnactiveException;
+import com.vendo.user_service.common.exception.UserAlreadyActivatedException;
+import com.vendo.user_service.common.exception.UserAlreadyExistsException;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -54,6 +58,16 @@ public class UserExceptionHandler {
 
     @ExceptionHandler(UserEmailNotVerifiedException.class)
     public ResponseEntity<ExceptionResponse> handleUserEmailNotVerifiedException(UserEmailNotVerifiedException e, HttpServletRequest request) {
+        ExceptionResponse exceptionResponse = ExceptionResponse.builder()
+                .message(e.getMessage())
+                .code(HttpStatus.FORBIDDEN.value())
+                .path(request.getRequestURI())
+                .build();
+        return ResponseEntity.status(HttpStatus.FORBIDDEN).body(exceptionResponse);
+    }
+
+    @ExceptionHandler(UserIsUnactiveException.class)
+    public ResponseEntity<ExceptionResponse> handleUserIsUnactiveException(UserIsUnactiveException e, HttpServletRequest request) {
         ExceptionResponse exceptionResponse = ExceptionResponse.builder()
                 .message(e.getMessage())
                 .code(HttpStatus.FORBIDDEN.value())
