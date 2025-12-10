@@ -84,8 +84,7 @@ public class JwtAuthFilter extends OncePerRequestFilter {
     }
 
     private User validateUserAccessibility(Claims claims) {
-        String email = claims.getSubject();
-        User user = userService.loadUserByUsername(email);
+        User user = userService.loadUserByUsername(claims.getSubject());
 
         if (user.getStatus() == UserStatus.BLOCKED) {
             throw new UserBlockedException("User is blocked.");
