@@ -4,7 +4,7 @@ import com.vendo.domain.user.common.type.ProviderType;
 import com.vendo.domain.user.common.type.UserStatus;
 import com.vendo.user_service.common.exception.UserAlreadyExistsException;
 import com.vendo.user_service.common.mapper.UserMapper;
-import com.vendo.user_service.common.type.UserRole;
+import com.vendo.user_service.security.common.type.UserAuthorities;
 import com.vendo.user_service.model.User;
 import com.vendo.user_service.repository.UserRepository;
 import com.vendo.user_service.web.dto.UserProfileResponse;
@@ -56,7 +56,7 @@ public class UserService implements UserDetailsService {
     public User findUserByEmailOrSave(String email) {
         return findByEmail(email).orElseGet(() -> save(User.builder()
                 .email(email)
-                .role(UserRole.USER)
+                .role(UserAuthorities.USER)
                 .status(UserStatus.ACTIVE)
                 .providerType(ProviderType.LOCAL)
                 .build()));
