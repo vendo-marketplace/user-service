@@ -23,12 +23,12 @@ public class JwtService {
     private final JwtProperties jwtProperties;
 
     public String generateAccessToken(User user) {
-        List<String> roles = jwtHelper.getRoles(user);
+        List<String> authorities = jwtHelper.getAuthorities(user);
 
         return generateAccessToken(user, Map.of(
                 USER_ID_CLAIM.getClaim(), user.getId(),
                 EMAIL_VERIFIED_CLAIM.getClaim(), user.isEmailVerified(),
-                ROLES_CLAIM.getClaim(), roles,
+                ROLES_CLAIM.getClaim(), authorities,
                 STATUS_CLAIM.getClaim(), user.getStatus()
         ));
     }
@@ -42,8 +42,8 @@ public class JwtService {
     }
 
     public String generateTokenWithExpiration(User user, int expiration) {
-        List<String> roles = jwtHelper.getRoles(user);
-        return buildToken(user, Map.of(ROLES_CLAIM.getClaim(), roles), expiration);
+        List<String> authorities = jwtHelper.getAuthorities(user);
+        return buildToken(user, Map.of(ROLES_CLAIM.getClaim(), authorities), expiration);
     }
 
     private String buildToken(User user, Map<String, Object> claims, int expiration) {

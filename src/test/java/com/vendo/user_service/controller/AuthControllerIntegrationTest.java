@@ -7,7 +7,7 @@ import com.vendo.domain.user.common.type.UserStatus;
 import com.vendo.user_service.common.builder.AuthRequestDataBuilder;
 import com.vendo.user_service.common.builder.CompleteAuthRequestDataBuilder;
 import com.vendo.user_service.common.builder.UserDataBuilder;
-import com.vendo.user_service.security.common.type.UserAuthorities;
+import com.vendo.user_service.security.common.type.UserAuthority;
 import com.vendo.user_service.model.User;
 import com.vendo.user_service.repository.UserRepository;
 import com.vendo.user_service.security.common.helper.JwtHelper;
@@ -103,7 +103,7 @@ class AuthControllerIntegrationTest {
 
         assertThat(user.getEmail()).isEqualTo(authRequest.email());
         assertThat(passwordEncoder.matches(authRequest.password(), user.getPassword())).isTrue();
-        assertThat(user.getRole()).isEqualTo(UserAuthorities.USER);
+        assertThat(user.getRole()).isEqualTo(UserAuthority.USER);
         assertThat(user.getStatus()).isEqualTo(UserStatus.INCOMPLETE);
         assertThat(user.getProviderType()).isEqualTo(ProviderType.LOCAL);
     }
@@ -532,7 +532,7 @@ class AuthControllerIntegrationTest {
         assertThat(responseDto.id()).isEqualTo("1");
         assertThat(responseDto.email()).isEqualTo("test@gmail.com");
         assertThat(responseDto.fullName()).isEqualTo("Test Name");
-        assertThat(responseDto.role()).isEqualTo(UserAuthorities.USER);
+        assertThat(responseDto.role()).isEqualTo(UserAuthority.USER);
         assertThat(responseDto.status()).isEqualTo(UserStatus.ACTIVE);
         assertThat(responseDto.providerType()).isEqualTo(ProviderType.LOCAL);
         assertThat(responseDto.createdAt()).isNotNull();

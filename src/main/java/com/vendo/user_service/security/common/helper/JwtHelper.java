@@ -22,7 +22,7 @@ public class JwtHelper {
 
     private final JwtProperties jwtProperties;
 
-    public List<String> getRoles(User user) {
+    public List<String> getAuthorities(User user) {
         return user.getAuthorities().stream()
                 .map(GrantedAuthority::getAuthority)
                 .toList();

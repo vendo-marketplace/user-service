@@ -6,7 +6,7 @@ import lombok.AllArgsConstructor;
 import org.springframework.security.core.GrantedAuthority;
 
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
-public enum UserAuthorities implements GrantedAuthority {
+public enum UserAuthority implements GrantedAuthority {
 
     USER(UserRole.USER),
     ADMIN(UserRole.ADMIN);
