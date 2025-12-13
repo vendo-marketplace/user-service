@@ -9,7 +9,7 @@ import com.vendo.security.common.exception.UserEmailNotVerifiedException;
 import com.vendo.security.common.exception.UserIsUnactiveException;
 import com.vendo.user_service.common.exception.UserAlreadyActivatedException;
 import com.vendo.user_service.common.exception.UserAlreadyExistsException;
-import com.vendo.user_service.common.type.UserRole;
+import com.vendo.user_service.security.common.type.UserAuthority;
 import com.vendo.user_service.model.User;
 import com.vendo.user_service.security.common.dto.TokenPayload;
 import com.vendo.user_service.security.common.helper.JwtHelper;
@@ -63,7 +63,7 @@ public class AuthService {
 
         userService.save(User.builder()
                 .email(authRequest.email())
-                .role(UserRole.USER)
+                .role(UserAuthority.USER)
                 .status(UserStatus.INCOMPLETE)
                 .providerType(ProviderType.LOCAL)
                 .password(encodedPassword)

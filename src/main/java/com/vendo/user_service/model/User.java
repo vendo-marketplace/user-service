@@ -3,7 +3,7 @@ package com.vendo.user_service.model;
 import com.vendo.domain.user.common.type.ProviderType;
 import com.vendo.domain.user.common.type.UserStatus;
 import com.vendo.user_service.common.annotation.Adult;
-import com.vendo.user_service.common.type.UserRole;
+import com.vendo.user_service.security.common.type.UserAuthority;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
 import lombok.Builder;
@@ -33,7 +33,7 @@ public class User implements UserDetails {
     private boolean emailVerified;
 
     @NotNull(message = "Role is required.")
-    private UserRole role;
+    private UserAuthority role;
 
     @NotNull(message = "Status is required.")
     private UserStatus status;
