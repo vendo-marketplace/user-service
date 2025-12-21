@@ -3,7 +3,7 @@ package com.vendo.user_service.common.builder;
 import com.vendo.domain.user.common.type.ProviderType;
 import com.vendo.domain.user.common.type.UserStatus;
 import com.vendo.user_service.common.type.UserRole;
-import com.vendo.user_service.model.User;
+import com.vendo.user_service.db.model.User;
 
 import java.time.Instant;
 import java.time.LocalDate;

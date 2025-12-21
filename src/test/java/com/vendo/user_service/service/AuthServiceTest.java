@@ -6,9 +6,11 @@ import com.vendo.domain.user.common.type.UserStatus;
 import com.vendo.security.common.exception.AccessDeniedException;
 import com.vendo.user_service.common.builder.TokenPayloadDataBuilder;
 import com.vendo.user_service.common.builder.UserDataBuilder;
-import com.vendo.user_service.model.User;
+import com.vendo.user_service.db.command.UserCommandService;
+import com.vendo.user_service.db.model.User;
 import com.vendo.user_service.security.common.dto.TokenPayload;
 import com.vendo.user_service.security.service.JwtService;
+import com.vendo.user_service.service.user.UserProvisioningService;
 import com.vendo.user_service.service.user.UserService;
 import com.vendo.user_service.service.auth.AuthService;
 import com.vendo.user_service.service.auth.GoogleOAuthService;
@@ -35,7 +37,10 @@ public class AuthServiceTest {
     private AuthService authService;
 
     @Mock
-    private UserService userService;
+    private UserCommandService userCommandService;
+
+    @Mock
+    private UserProvisioningService userProvisioningService;
 
     @Mock
     private JwtService jwtService;
@@ -54,10 +59,10 @@ public class AuthServiceTest {
 
         when(googleOauthService.verify(idToken)).thenReturn(mockPayload);
         when(mockPayload.getEmail()).thenReturn(email);
-        when(userService.findUserByEmailOrSave(email)).thenReturn(user);
+        when(userProvisioningService.ensureUserExists(email)).thenReturn(user);
         when(jwtService.generateTokenPayload(user)).thenReturn(tokenPayload);
 
-        verify(userService, never()).save(user);
+        verify(userCommandService, never()).save(user);
         AuthResponse authResponse = authService.googleAuth(googleAuthRequest);
         assertThat(authResponse).isNotNull();
         assertThat(authResponse.accessToken()).isEqualTo(tokenPayload.accessToken());
@@ -65,9 +70,9 @@ public class AuthServiceTest {
 
         ArgumentCaptor<UserUpdateRequest> userArgumentCaptor = ArgumentCaptor.forClass(UserUpdateRequest.class);
         verify(googleOauthService).verify(idToken);
-        verify(userService).findUserByEmailOrSave(email);
+        verify(userProvisioningService).ensureUserExists(email);
         verify(jwtService).generateTokenPayload(user);
-        verify(userService).update(eq(user.getId()), userArgumentCaptor.capture());
+        verify(userCommandService).update(eq(user.getId()), userArgumentCaptor.capture());
 
         UserUpdateRequest userCaptorValue = userArgumentCaptor.getValue();
         assertThat(userCaptorValue).isNotNull();
@@ -86,7 +91,7 @@ public class AuthServiceTest {
 
         when(googleOauthService.verify(idToken)).thenReturn(mockPayload);
         when(mockPayload.getEmail()).thenReturn(email);
-        when(userService.findUserByEmailOrSave(email)).thenReturn(user);
+        when(userProvisioningService.ensureUserExists(email)).thenReturn(user);
         when(jwtService.generateTokenPayload(user)).thenReturn(tokenPayload);
 
         AuthResponse authResponse = authService.googleAuth(googleAuthRequest);
@@ -97,9 +102,9 @@ public class AuthServiceTest {
 
         ArgumentCaptor<UserUpdateRequest> userCaptor = ArgumentCaptor.forClass(UserUpdateRequest.class);
         verify(googleOauthService).verify(idToken);
-        verify(userService).findUserByEmailOrSave(email);
+        verify(userProvisioningService).ensureUserExists(email);
         verify(jwtService).generateTokenPayload(user);
-        verify(userService).update(eq(user.getId()), userCaptor.capture());
+        verify(userCommandService).update(eq(user.getId()), userCaptor.capture());
 
         UserUpdateRequest captorValue = userCaptor.getValue();
         assertThat(captorValue.status()).isEqualTo(UserStatus.ACTIVE);
@@ -117,7 +122,7 @@ public class AuthServiceTest {
 
         when(googleOauthService.verify(idToken)).thenReturn(mockPayload);
         when(mockPayload.getEmail()).thenReturn(email);
-        when(userService.findUserByEmailOrSave(email)).thenReturn(user);
+        when(userProvisioningService.ensureUserExists(email)).thenReturn(user);
         when(jwtService.generateTokenPayload(user)).thenReturn(tokenPayload);
 
         AuthResponse authResponse = authService.googleAuth(googleAuthRequest);
@@ -127,9 +132,9 @@ public class AuthServiceTest {
         assertThat(authResponse.refreshToken()).isEqualTo(tokenPayload.refreshToken());
 
         verify(googleOauthService).verify(idToken);
-        verify(userService).findUserByEmailOrSave(email);
+        verify(userProvisioningService).ensureUserExists(email);
         verify(jwtService).generateTokenPayload(user);
-        verify(userService, never()).update(eq(user.getId()), any(UserUpdateRequest.class));
+        verify(userCommandService, never()).update(eq(user.getId()), any(UserUpdateRequest.class));
     }
 
     @Test
@@ -145,7 +150,7 @@ public class AuthServiceTest {
                 .isInstanceOf(AccessDeniedException.class);
 
         verify(googleOauthService).verify(idToken);
-        verify(userService, never()).findUserByEmailOrSave(email);
+        verify(userProvisioningService, never()).ensureUserExists(email);
         verify(jwtService, never()).generateTokenPayload(user);
     }
 }

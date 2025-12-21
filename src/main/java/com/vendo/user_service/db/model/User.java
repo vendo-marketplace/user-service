@@ -1,4 +1,4 @@
-package com.vendo.user_service.model;
+package com.vendo.user_service.db.model;
 
 import com.vendo.domain.user.common.type.ProviderType;
 import com.vendo.domain.user.common.type.UserStatus;
@@ -7,10 +7,10 @@ import com.vendo.user_service.common.dto.AuditingEntity;
 import com.vendo.user_service.common.type.UserRole;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
-import lombok.Builder;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
-import lombok.ToString;
+import lombok.NoArgsConstructor;
+import lombok.experimental.SuperBuilder;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 import org.springframework.security.core.GrantedAuthority;
@@ -21,14 +21,13 @@ import java.util.Collection;
 import java.util.Collections;
 
 @Data
-@Builder(toBuilder = true)
 @Document
-@EqualsAndHashCode(callSuper = false, onlyExplicitlyIncluded = true)
-@ToString(exclude = "password")
+@SuperBuilder(toBuilder = true)
+@NoArgsConstructor
+@EqualsAndHashCode(callSuper = true)
 public class User extends AuditingEntity implements UserDetails {
 
     @Id
-    @EqualsAndHashCode.Include
     private String id;
 
     @NotNull(message = "Email is required.")
@@ -70,5 +69,4 @@ public class User extends AuditingEntity implements UserDetails {
     public String getUsername() {
         return email;
     }
-    
 }

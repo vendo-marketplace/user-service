@@ -1,6 +1,6 @@
 package com.vendo.user_service.security.common.helper;
 
-import com.vendo.user_service.model.User;
+import com.vendo.user_service.db.model.User;
 import com.vendo.user_service.security.common.config.JwtProperties;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jws;

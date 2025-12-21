@@ -5,9 +5,9 @@ import com.vendo.security.common.exception.InvalidTokenException;
 import com.vendo.security.common.exception.UserBlockedException;
 import com.vendo.security.common.exception.UserEmailNotVerifiedException;
 import com.vendo.security.common.exception.UserIsUnactiveException;
-import com.vendo.user_service.model.User;
+import com.vendo.user_service.db.model.User;
+import com.vendo.user_service.db.query.UserQueryService;
 import com.vendo.user_service.security.common.helper.JwtHelper;
-import com.vendo.user_service.service.user.UserService;
 import io.jsonwebtoken.Claims;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -36,7 +36,7 @@ public class JwtAuthFilter extends OncePerRequestFilter {
 
     private final JwtHelper jwtHelper;
 
-    private final UserService userService;
+    private final UserQueryService userQueryService;
 
     private final UserAntPathResolver userAntPathResolver;
 
@@ -84,7 +84,7 @@ public class JwtAuthFilter extends OncePerRequestFilter {
     }
 
     private User validateUserAccessibility(Claims claims) {
-        User user = userService.loadUserByUsername(claims.getSubject());
+        User user = userQueryService.loadUserByUsername(claims.getSubject());
 
         if (user.getStatus() == UserStatus.BLOCKED) {
             throw new UserBlockedException("User is blocked.");
