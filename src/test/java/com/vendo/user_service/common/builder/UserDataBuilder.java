@@ -4,6 +4,8 @@ import com.vendo.domain.user.common.type.ProviderType;
 import com.vendo.domain.user.common.type.UserStatus;
 import com.vendo.user_service.common.type.UserRole;
 import com.vendo.user_service.db.model.User;
+import com.vendo.user_service.security.common.type.UserAuthority;
+import com.vendo.user_service.model.User;
 
 import java.time.Instant;
 import java.time.LocalDate;
@@ -15,7 +17,7 @@ public class UserDataBuilder {
                 .id("1")
                 .email("test@gmail.com")
                 .password("Qwerty1234@")
-                .role(UserRole.USER)
+                .role(UserAuthority.USER)
                 .fullName("Test Name")
                 .birthDate(LocalDate.of(2000, 1, 1))
                 .providerType(ProviderType.LOCAL)

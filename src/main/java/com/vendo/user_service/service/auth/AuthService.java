@@ -9,7 +9,6 @@ import com.vendo.security.common.exception.UserEmailNotVerifiedException;
 import com.vendo.security.common.exception.UserIsUnactiveException;
 import com.vendo.user_service.common.exception.UserAlreadyActivatedException;
 import com.vendo.user_service.common.exception.UserAlreadyExistsException;
-import com.vendo.user_service.common.type.UserRole;
 import com.vendo.user_service.db.command.UserCommandService;
 import com.vendo.user_service.db.model.User;
 import com.vendo.user_service.db.query.UserQueryService;
@@ -46,9 +45,19 @@ public class AuthService {
     public AuthResponse signIn(AuthRequest authRequest) {
         User user = userQueryService.loadUserByUsername(authRequest.email());
 
+        // TODO avoid duplication - refactor
+        if (user.getStatus() == UserStatus.BLOCKED) {
+            throw new UserBlockedException("User is blocked.");
+        }
+
+        if (!user.isEmailVerified()) {
+            throw new UserEmailNotVerifiedException("User email is not verified.");
+        }
+
         if (user.getStatus() != UserStatus.ACTIVE) {
             throw new UserIsUnactiveException("User is unactive.");
         }
+
         matchPasswordsOrThrow(authRequest.password(), user.getPassword());
 
         String accessToken = jwtService.generateAccessToken(user);
@@ -69,7 +78,7 @@ public class AuthService {
 
         userCommandService.save(User.builder()
                 .email(authRequest.email())
-                .role(UserRole.USER)
+                .role(UserAuthority.USER)
                 .status(UserStatus.INCOMPLETE)
                 .providerType(ProviderType.LOCAL)
                 .password(encodedPassword)

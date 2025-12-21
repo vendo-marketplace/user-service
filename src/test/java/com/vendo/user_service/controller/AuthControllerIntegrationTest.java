@@ -10,6 +10,9 @@ import com.vendo.user_service.common.builder.UserDataBuilder;
 import com.vendo.user_service.common.type.UserRole;
 import com.vendo.user_service.db.model.User;
 import com.vendo.user_service.db.repository.UserRepository;
+import com.vendo.user_service.security.common.type.UserAuthority;
+import com.vendo.user_service.model.User;
+import com.vendo.user_service.repository.UserRepository;
 import com.vendo.user_service.security.common.helper.JwtHelper;
 import com.vendo.user_service.security.service.JwtService;
 import com.vendo.user_service.web.dto.*;
@@ -103,7 +106,7 @@ class AuthControllerIntegrationTest {
 
         assertThat(user.getEmail()).isEqualTo(authRequest.email());
         assertThat(passwordEncoder.matches(authRequest.password(), user.getPassword())).isTrue();
-        assertThat(user.getRole()).isEqualTo(UserRole.USER);
+        assertThat(user.getRole()).isEqualTo(UserAuthority.USER);
         assertThat(user.getStatus()).isEqualTo(UserStatus.INCOMPLETE);
         assertThat(user.getProviderType()).isEqualTo(ProviderType.LOCAL);
     }
@@ -139,6 +142,7 @@ class AuthControllerIntegrationTest {
         User user = UserDataBuilder.buildUserAllFields()
                 .status(UserStatus.ACTIVE)
                 .email(authRequest.email())
+                .emailVerified(true)
                 .password(passwordEncoder.encode(authRequest.password()))
                 .build();
         userRepository.save(user);
@@ -201,7 +205,7 @@ class AuthControllerIntegrationTest {
         assertThat(content).isNotBlank();
         ExceptionResponse exceptionResponse = objectMapper.readValue(content, ExceptionResponse.class);
 
-        assertThat(exceptionResponse.getMessage()).isEqualTo("User is unactive.");
+        assertThat(exceptionResponse.getMessage()).isEqualTo("User is blocked.");
         assertThat(exceptionResponse.getCode()).isEqualTo(HttpStatus.FORBIDDEN.value());
         assertThat(exceptionResponse.getPath()).isEqualTo("/auth/sign-in");
     }
@@ -211,6 +215,7 @@ class AuthControllerIntegrationTest {
         AuthRequest authRequest = AuthRequestDataBuilder.buildUserWithAllFields().build();
         User user = UserDataBuilder.buildUserAllFields()
                 .status(UserStatus.INCOMPLETE)
+                .emailVerified(true)
                 .email(authRequest.email())
                 .password(passwordEncoder.encode(authRequest.password()))
                 .build();
@@ -228,6 +233,33 @@ class AuthControllerIntegrationTest {
         ExceptionResponse exceptionResponse = objectMapper.readValue(content, ExceptionResponse.class);
 
         assertThat(exceptionResponse.getMessage()).isEqualTo("User is unactive.");
+        assertThat(exceptionResponse.getCode()).isEqualTo(HttpStatus.FORBIDDEN.value());
+        assertThat(exceptionResponse.getPath()).isEqualTo("/auth/sign-in");
+    }
+
+    @Test
+    void signIn_shouldReturnForbidden_whenUserEmailIsNotVerified() throws Exception {
+        AuthRequest authRequest = AuthRequestDataBuilder.buildUserWithAllFields().build();
+        User user = UserDataBuilder.buildUserAllFields()
+                .status(UserStatus.INCOMPLETE)
+                .emailVerified(false)
+                .email(authRequest.email())
+                .password(passwordEncoder.encode(authRequest.password()))
+                .build();
+        userRepository.save(user);
+
+        String content = mockMvc.perform(post("/auth/sign-in")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(authRequest)))
+                .andExpect(status().isForbidden())
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
+
+        assertThat(content).isNotBlank();
+        ExceptionResponse exceptionResponse = objectMapper.readValue(content, ExceptionResponse.class);
+
+        assertThat(exceptionResponse.getMessage()).isEqualTo("User email is not verified.");
         assertThat(exceptionResponse.getCode()).isEqualTo(HttpStatus.FORBIDDEN.value());
         assertThat(exceptionResponse.getPath()).isEqualTo("/auth/sign-in");
     }
@@ -532,7 +564,7 @@ class AuthControllerIntegrationTest {
         assertThat(responseDto.id()).isEqualTo("1");
         assertThat(responseDto.email()).isEqualTo("test@gmail.com");
         assertThat(responseDto.fullName()).isEqualTo("Test Name");
-        assertThat(responseDto.role()).isEqualTo(UserRole.USER);
+        assertThat(responseDto.role()).isEqualTo(UserAuthority.USER);
         assertThat(responseDto.status()).isEqualTo(UserStatus.ACTIVE);
         assertThat(responseDto.providerType()).isEqualTo(ProviderType.LOCAL);
         assertThat(responseDto.createdAt()).isNotNull();

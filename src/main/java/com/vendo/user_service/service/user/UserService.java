@@ -3,10 +3,10 @@ package com.vendo.user_service.service.user;
 import com.vendo.domain.user.common.type.ProviderType;
 import com.vendo.domain.user.common.type.UserStatus;
 import com.vendo.user_service.common.mapper.UserMapper;
-import com.vendo.user_service.common.type.UserRole;
 import com.vendo.user_service.db.command.UserCommandService;
 import com.vendo.user_service.db.model.User;
 import com.vendo.user_service.db.query.UserQueryService;
+import com.vendo.user_service.security.common.type.UserAuthority;
 import com.vendo.user_service.web.dto.UserProfileResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -35,7 +35,7 @@ public class UserService implements UserProvisioningService {
     public User ensureUserExists(String email) {
         return userQueryService.findByEmail(email).orElseGet(() -> userCommandService.save(User.builder()
                 .email(email)
-                .role(UserRole.USER)
+                .role(UserAuthority.USER)
                 .status(UserStatus.ACTIVE)
                 .providerType(ProviderType.LOCAL)
                 .build()));

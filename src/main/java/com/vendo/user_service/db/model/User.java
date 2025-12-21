@@ -1,12 +1,13 @@
-package com.vendo.user_service.db.model;
+package com.vendo.user_service.model;
 
 import com.vendo.domain.user.common.type.ProviderType;
 import com.vendo.domain.user.common.type.UserStatus;
 import com.vendo.user_service.common.annotation.Adult;
+import com.vendo.user_service.security.common.type.UserAuthority;
 import com.vendo.user_service.common.dto.AuditingEntity;
-import com.vendo.user_service.common.type.UserRole;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
+import lombok.Builder;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
@@ -16,6 +17,7 @@ import org.springframework.data.mongodb.core.mapping.Document;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
+import java.time.Instant;
 import java.time.LocalDate;
 import java.util.Collection;
 import java.util.Collections;
@@ -37,7 +39,7 @@ public class User extends AuditingEntity implements UserDetails {
     private boolean emailVerified;
 
     @NotNull(message = "Role is required.")
-    private UserRole role;
+    private UserAuthority role;
 
     @NotNull(message = "Status is required.")
     private UserStatus status;
@@ -69,4 +71,5 @@ public class User extends AuditingEntity implements UserDetails {
     public String getUsername() {
         return email;
     }
+    
 }

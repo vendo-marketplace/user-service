@@ -88,12 +88,14 @@ public class JwtAuthFilter extends OncePerRequestFilter {
 
         if (user.getStatus() == UserStatus.BLOCKED) {
             throw new UserBlockedException("User is blocked.");
-        } else if (user.getStatus() != UserStatus.ACTIVE) {
-            throw new UserIsUnactiveException("User is unactive.");
         }
 
         if (!user.isEmailVerified()) {
             throw new UserEmailNotVerifiedException("User email is not verified.");
+        }
+
+        if (user.getStatus() != UserStatus.ACTIVE) {
+            throw new UserIsUnactiveException("User is unactive.");
         }
 
         return user;

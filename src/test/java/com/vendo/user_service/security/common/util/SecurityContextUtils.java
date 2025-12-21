@@ -6,7 +6,6 @@ import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 
-// TODO use instead of building every time
 public class SecurityContextUtils {
 
     public static SecurityContext initializeSecurityContext(UserDetails userDetails) {

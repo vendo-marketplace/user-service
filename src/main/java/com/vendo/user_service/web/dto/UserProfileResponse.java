@@ -2,7 +2,7 @@ package com.vendo.user_service.web.dto;
 
 import com.vendo.domain.user.common.type.ProviderType;
 import com.vendo.domain.user.common.type.UserStatus;
-import com.vendo.user_service.common.type.UserRole;
+import com.vendo.user_service.security.common.type.UserAuthority;
 import lombok.Builder;
 
 import java.time.Instant;
@@ -12,7 +12,7 @@ import java.time.LocalDate;
 public record UserProfileResponse(
         String id,
         String email,
-        UserRole role,
+        UserAuthority role,
         UserStatus status,
         ProviderType providerType,
         LocalDate birthDate,
