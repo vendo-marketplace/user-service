@@ -224,4 +224,23 @@ public class JwtAuthFilterIntegrationTest {
         assertThat(exceptionResponse.getMessage()).isEqualTo("User email is not verified.");
         assertThat(exceptionResponse.getCode()).isEqualTo(HttpStatus.FORBIDDEN.value());
     }
+
+    @Test
+    void doFilterInternal_shouldReturnForbiddenForEmailNotVerifiedFirst_whenUserEmailIsNotVerifiedAndStatusIsIncomplete() throws Exception {
+        User user = UserDataBuilder.buildUserAllFields().build();
+        userRepository.save(user);
+        String accessToken = jwtService.generateAccessToken(user);
+
+        String content = mockMvc.perform(get("/test/ping").header(AUTHORIZATION, BEARER_PREFIX + accessToken))
+                .andExpect(status().isForbidden())
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
+
+        assertThat(content).isNotBlank();
+
+        ExceptionResponse exceptionResponse = objectMapper.readValue(content, ExceptionResponse.class);
+        assertThat(exceptionResponse.getMessage()).isEqualTo("User email is not verified.");
+        assertThat(exceptionResponse.getCode()).isEqualTo(HttpStatus.FORBIDDEN.value());
+    }
 }
