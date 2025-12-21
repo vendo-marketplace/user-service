@@ -12,8 +12,8 @@ import org.springframework.test.context.ActiveProfiles;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 
-import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.assertj.core.api.Assertions.within;
+import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 
 @SpringBootTest
 @ActiveProfiles("test")

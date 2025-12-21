@@ -39,7 +39,7 @@ public class EmailOtpService {
         emailOtpEventProducer.sendEmailOtpEvent(event);
     }
 
-    public void resendOtp(EmailOtpEvent event,OtpNamespace otpNamespace) {
+    public void resendOtp(EmailOtpEvent event, OtpNamespace otpNamespace) {
         redisService.getValue(otpNamespace.getEmail().buildPrefix(event.getEmail()))
                 .orElseThrow(() -> new OtpExpiredException("Otp session expired."));
 

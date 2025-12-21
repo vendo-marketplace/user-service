@@ -14,6 +14,7 @@ import com.vendo.user_service.db.model.User;
 import com.vendo.user_service.db.query.UserQueryService;
 import com.vendo.user_service.security.common.dto.TokenPayload;
 import com.vendo.user_service.security.common.helper.JwtHelper;
+import com.vendo.user_service.security.common.type.UserAuthority;
 import com.vendo.user_service.security.service.JwtService;
 import com.vendo.user_service.service.user.UserProvisioningService;
 import com.vendo.user_service.web.dto.*;

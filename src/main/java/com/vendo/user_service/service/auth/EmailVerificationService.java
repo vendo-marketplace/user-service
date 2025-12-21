@@ -5,7 +5,6 @@ import com.vendo.user_service.db.command.UserCommandService;
 import com.vendo.user_service.db.model.User;
 import com.vendo.user_service.db.query.UserQueryService;
 import com.vendo.user_service.service.otp.EmailOtpService;
-import com.vendo.user_service.service.user.UserService;
 import com.vendo.user_service.system.redis.common.dto.ValidateRequest;
 import com.vendo.user_service.system.redis.common.namespace.otp.EmailVerificationOtpNamespace;
 import com.vendo.user_service.web.dto.UserUpdateRequest;
