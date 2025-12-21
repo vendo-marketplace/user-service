@@ -40,9 +40,19 @@ public class AuthService {
     public AuthResponse signIn(AuthRequest authRequest) {
         User user = userService.loadUserByUsername(authRequest.email());
 
+        // TODO avoid duplication - refactor
+        if (user.getStatus() == UserStatus.BLOCKED) {
+            throw new UserBlockedException("User is blocked.");
+        }
+
+        if (!user.isEmailVerified()) {
+            throw new UserEmailNotVerifiedException("User email is not verified.");
+        }
+
         if (user.getStatus() != UserStatus.ACTIVE) {
             throw new UserIsUnactiveException("User is unactive.");
         }
+
         matchPasswordsOrThrow(authRequest.password(), user.getPassword());
 
         String accessToken = jwtService.generateAccessToken(user);

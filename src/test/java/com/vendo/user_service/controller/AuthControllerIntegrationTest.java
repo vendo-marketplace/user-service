@@ -139,6 +139,7 @@ class AuthControllerIntegrationTest {
         User user = UserDataBuilder.buildUserAllFields()
                 .status(UserStatus.ACTIVE)
                 .email(authRequest.email())
+                .emailVerified(true)
                 .password(passwordEncoder.encode(authRequest.password()))
                 .build();
         userRepository.save(user);
@@ -201,7 +202,7 @@ class AuthControllerIntegrationTest {
         assertThat(content).isNotBlank();
         ExceptionResponse exceptionResponse = objectMapper.readValue(content, ExceptionResponse.class);
 
-        assertThat(exceptionResponse.getMessage()).isEqualTo("User is unactive.");
+        assertThat(exceptionResponse.getMessage()).isEqualTo("User is blocked.");
         assertThat(exceptionResponse.getCode()).isEqualTo(HttpStatus.FORBIDDEN.value());
         assertThat(exceptionResponse.getPath()).isEqualTo("/auth/sign-in");
     }
@@ -211,6 +212,7 @@ class AuthControllerIntegrationTest {
         AuthRequest authRequest = AuthRequestDataBuilder.buildUserWithAllFields().build();
         User user = UserDataBuilder.buildUserAllFields()
                 .status(UserStatus.INCOMPLETE)
+                .emailVerified(true)
                 .email(authRequest.email())
                 .password(passwordEncoder.encode(authRequest.password()))
                 .build();
@@ -228,6 +230,33 @@ class AuthControllerIntegrationTest {
         ExceptionResponse exceptionResponse = objectMapper.readValue(content, ExceptionResponse.class);
 
         assertThat(exceptionResponse.getMessage()).isEqualTo("User is unactive.");
+        assertThat(exceptionResponse.getCode()).isEqualTo(HttpStatus.FORBIDDEN.value());
+        assertThat(exceptionResponse.getPath()).isEqualTo("/auth/sign-in");
+    }
+
+    @Test
+    void signIn_shouldReturnForbidden_whenUserEmailIsNotVerified() throws Exception {
+        AuthRequest authRequest = AuthRequestDataBuilder.buildUserWithAllFields().build();
+        User user = UserDataBuilder.buildUserAllFields()
+                .status(UserStatus.INCOMPLETE)
+                .emailVerified(false)
+                .email(authRequest.email())
+                .password(passwordEncoder.encode(authRequest.password()))
+                .build();
+        userRepository.save(user);
+
+        String content = mockMvc.perform(post("/auth/sign-in")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(authRequest)))
+                .andExpect(status().isForbidden())
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
+
+        assertThat(content).isNotBlank();
+        ExceptionResponse exceptionResponse = objectMapper.readValue(content, ExceptionResponse.class);
+
+        assertThat(exceptionResponse.getMessage()).isEqualTo("User email is not verified.");
         assertThat(exceptionResponse.getCode()).isEqualTo(HttpStatus.FORBIDDEN.value());
         assertThat(exceptionResponse.getPath()).isEqualTo("/auth/sign-in");
     }
