@@ -19,7 +19,7 @@ import static com.vendo.user_service.security.common.helper.SecurityContextHelpe
 
 @Service
 @RequiredArgsConstructor
-public class UserService implements UserProvisioningService, UserValidationService {
+public class UserService implements UserProvisioningService, UserActivityValidationService {
 
     private final UserQueryService userQueryService;
 
@@ -45,7 +45,7 @@ public class UserService implements UserProvisioningService, UserValidationServi
     }
 
     @Override
-    public void validate(User user) {
+    public void validateActivity(User user) {
         if (user.getStatus() == UserStatus.BLOCKED) {
             throw new UserBlockedException("User is blocked.");
         }

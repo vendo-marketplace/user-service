@@ -2,7 +2,6 @@ package com.vendo.user_service.db.query;
 
 import com.vendo.user_service.db.model.User;
 import com.vendo.user_service.db.repository.UserRepository;
-import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -16,12 +15,7 @@ public class UserQueryService implements UserDetailsService {
 
     private final UserRepository userRepository;
 
-    public User findByIdOrThrow(@NonNull String userId) {
-        return userRepository.findById(userId)
-                .orElseThrow(() -> new UsernameNotFoundException("User not found."));
-    }
-
-    public Optional<User> findByEmail(@NonNull String email) {
+    public Optional<User> findByEmail(String email) {
         return userRepository.findByEmail(email);
     }
 

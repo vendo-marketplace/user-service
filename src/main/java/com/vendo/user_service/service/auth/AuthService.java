@@ -15,8 +15,8 @@ import com.vendo.user_service.security.common.dto.TokenPayload;
 import com.vendo.user_service.security.common.helper.JwtHelper;
 import com.vendo.user_service.security.common.type.UserAuthority;
 import com.vendo.user_service.security.service.JwtService;
+import com.vendo.user_service.service.user.UserActivityValidationService;
 import com.vendo.user_service.service.user.UserProvisioningService;
-import com.vendo.user_service.service.user.UserValidationService;
 import com.vendo.user_service.web.dto.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.BadCredentialsException;
@@ -35,7 +35,7 @@ public class AuthService {
 
     private final UserProvisioningService userProvisioningService;
 
-    private final UserValidationService userValidationService;
+    private final UserActivityValidationService userActivityValidationService;
 
     private final JwtService jwtService;
 
@@ -48,7 +48,7 @@ public class AuthService {
     public AuthResponse signIn(AuthRequest authRequest) {
         User user = userQueryService.loadUserByUsername(authRequest.email());
 
-        userValidationService.validate(user);
+        userActivityValidationService.validateActivity(user);
 
         matchPasswordsOrThrow(authRequest.password(), user.getPassword());
 

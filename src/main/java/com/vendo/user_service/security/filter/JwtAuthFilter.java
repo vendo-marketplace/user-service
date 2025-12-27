@@ -2,9 +2,8 @@ package com.vendo.user_service.security.filter;
 
 import com.vendo.security.common.exception.InvalidTokenException;
 import com.vendo.user_service.db.model.User;
-import com.vendo.user_service.db.query.UserQueryService;
 import com.vendo.user_service.security.common.helper.JwtHelper;
-import com.vendo.user_service.service.user.UserValidationService;
+import com.vendo.user_service.service.user.UserActivityValidationService;
 import io.jsonwebtoken.Claims;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -17,6 +16,7 @@ import org.springframework.security.authentication.AuthenticationCredentialsNotF
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 import org.springframework.web.servlet.HandlerExceptionResolver;
@@ -33,11 +33,11 @@ public class JwtAuthFilter extends OncePerRequestFilter {
 
     private final JwtHelper jwtHelper;
 
-    private final UserQueryService userQueryService;
+    private final UserDetailsService userDetailsService;
 
     private final UserAntPathResolver userAntPathResolver;
 
-    private final UserValidationService userValidationService;
+    private final UserActivityValidationService userActivityValidationService;
 
     @Qualifier("handlerExceptionResolver")
     private final HandlerExceptionResolver handlerExceptionResolver;
@@ -83,9 +83,9 @@ public class JwtAuthFilter extends OncePerRequestFilter {
     }
 
     private User validateUserAccessibility(Claims claims) {
-        User user = userQueryService.loadUserByUsername(claims.getSubject());
+        User user = (User) userDetailsService.loadUserByUsername(claims.getSubject());
 
-        userValidationService.validate(user);
+        userActivityValidationService.validateActivity(user);
 
         return user;
     }
