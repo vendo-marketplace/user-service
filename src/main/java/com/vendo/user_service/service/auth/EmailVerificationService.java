@@ -1,9 +1,10 @@
 package com.vendo.user_service.service.auth;
 
 import com.vendo.integration.kafka.event.EmailOtpEvent;
-import com.vendo.user_service.model.User;
+import com.vendo.user_service.db.command.UserCommandService;
+import com.vendo.user_service.db.model.User;
+import com.vendo.user_service.db.query.UserQueryService;
 import com.vendo.user_service.service.otp.EmailOtpService;
-import com.vendo.user_service.service.user.UserService;
 import com.vendo.user_service.system.redis.common.dto.ValidateRequest;
 import com.vendo.user_service.system.redis.common.namespace.otp.EmailVerificationOtpNamespace;
 import com.vendo.user_service.web.dto.UserUpdateRequest;
@@ -16,14 +17,16 @@ import static com.vendo.integration.kafka.event.EmailOtpEvent.OtpEventType.EMAIL
 @RequiredArgsConstructor
 public class EmailVerificationService {
 
-    private final UserService userService;
+    private final UserQueryService userQueryService;
+
+    private final UserCommandService userCommandService;
 
     private final EmailOtpService emailOtpService;
 
     private final EmailVerificationOtpNamespace emailVerificationOtpNamespace;
 
     public void sendOtp(String email) {
-        userService.loadUserByUsername(email);
+        userQueryService.loadUserByUsername(email);
 
         EmailOtpEvent event = EmailOtpEvent.builder()
                 .email(email)
@@ -33,7 +36,7 @@ public class EmailVerificationService {
     }
 
     public void resendOtp(String email) {
-        userService.loadUserByUsername(email);
+        userQueryService.loadUserByUsername(email);
 
         EmailOtpEvent event = EmailOtpEvent.builder()
                 .email(email)
@@ -43,11 +46,11 @@ public class EmailVerificationService {
     }
 
     public void validate(String otp, ValidateRequest validateRequest) {
-        User user = userService.loadUserByUsername(validateRequest.email());
+        User user = userQueryService.loadUserByUsername(validateRequest.email());
 
         emailOtpService.verifyOtp(otp, validateRequest.email(), emailVerificationOtpNamespace);
 
-        userService.update(user.getId(), UserUpdateRequest.builder()
+        userCommandService.update(user.getId(), UserUpdateRequest.builder()
                 .emailVerified(true)
                 .build());
     }

@@ -6,15 +6,17 @@ import com.vendo.domain.user.common.type.UserStatus;
 import com.vendo.security.common.exception.InvalidTokenException;
 import com.vendo.security.common.exception.UserBlockedException;
 import com.vendo.security.common.exception.UserEmailNotVerifiedException;
-import com.vendo.security.common.exception.UserIsUnactiveException;
 import com.vendo.user_service.common.exception.UserAlreadyActivatedException;
 import com.vendo.user_service.common.exception.UserAlreadyExistsException;
-import com.vendo.user_service.security.common.type.UserAuthority;
-import com.vendo.user_service.model.User;
+import com.vendo.user_service.db.command.UserCommandService;
+import com.vendo.user_service.db.model.User;
+import com.vendo.user_service.db.query.UserQueryService;
 import com.vendo.user_service.security.common.dto.TokenPayload;
 import com.vendo.user_service.security.common.helper.JwtHelper;
+import com.vendo.user_service.security.common.type.UserAuthority;
 import com.vendo.user_service.security.service.JwtService;
-import com.vendo.user_service.service.user.UserService;
+import com.vendo.user_service.service.user.UserActivityValidationService;
+import com.vendo.user_service.service.user.UserProvisioningService;
 import com.vendo.user_service.web.dto.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.BadCredentialsException;
@@ -27,7 +29,13 @@ import static com.vendo.security.common.constants.AuthConstants.BEARER_PREFIX;
 @RequiredArgsConstructor
 public class AuthService {
 
-    private final UserService userService;
+    private final UserCommandService userCommandService;
+
+    private final UserQueryService userQueryService;
+
+    private final UserProvisioningService userProvisioningService;
+
+    private final UserActivityValidationService userActivityValidationService;
 
     private final JwtService jwtService;
 
@@ -38,20 +46,9 @@ public class AuthService {
     private final GoogleOAuthService googleOauthService;
 
     public AuthResponse signIn(AuthRequest authRequest) {
-        User user = userService.loadUserByUsername(authRequest.email());
+        User user = userQueryService.loadUserByUsername(authRequest.email());
 
-        // TODO avoid duplication - refactor
-        if (user.getStatus() == UserStatus.BLOCKED) {
-            throw new UserBlockedException("User is blocked.");
-        }
-
-        if (!user.isEmailVerified()) {
-            throw new UserEmailNotVerifiedException("User email is not verified.");
-        }
-
-        if (user.getStatus() != UserStatus.ACTIVE) {
-            throw new UserIsUnactiveException("User is unactive.");
-        }
+        userActivityValidationService.validateActivity(user);
 
         matchPasswordsOrThrow(authRequest.password(), user.getPassword());
 
@@ -65,13 +62,13 @@ public class AuthService {
     }
 
     public void signUp(AuthRequest authRequest) {
-        userService.findByEmail(authRequest.email()).ifPresent(user -> {
+        userQueryService.findByEmail(authRequest.email()).ifPresent(user -> {
             throw new UserAlreadyExistsException("User already exists.");
         });
 
         String encodedPassword = passwordEncoder.encode(authRequest.password());
 
-        userService.save(User.builder()
+        userCommandService.save(User.builder()
                 .email(authRequest.email())
                 .role(UserAuthority.USER)
                 .status(UserStatus.INCOMPLETE)
@@ -82,11 +79,11 @@ public class AuthService {
     }
 
     public void completeAuth(String email, CompleteAuthRequest completeAuthRequest) {
-        User user = userService.loadUserByUsername(email);
+        User user = userQueryService.loadUserByUsername(email);
 
         validateUserBeforeCompleteAuth(user);
 
-        userService.update(user.getId(), UserUpdateRequest.builder()
+        userCommandService.update(user.getId(), UserUpdateRequest.builder()
                 .status(UserStatus.ACTIVE)
                 .fullName(completeAuthRequest.fullName())
                 .birthDate(completeAuthRequest.birthDate())
@@ -100,7 +97,7 @@ public class AuthService {
         String token = refreshRequest.refreshToken().substring(BEARER_PREFIX.length());
 
         String email = jwtHelper.extractAllClaims(token).getSubject();
-        User user = userService.loadUserByUsername(email);
+        User user = userQueryService.loadUserByUsername(email);
         TokenPayload tokenPayload = jwtService.generateTokenPayload(user);
 
         return AuthResponse.builder()
@@ -112,10 +109,10 @@ public class AuthService {
     public AuthResponse googleAuth(GoogleAuthRequest googleAuthRequest) {
         GoogleIdToken.Payload payload = googleOauthService.verify(googleAuthRequest.idToken());
 
-        User user = userService.findUserByEmailOrSave(payload.getEmail());
+        User user = userProvisioningService.ensureUserExists(payload.getEmail());
 
         if (user.getStatus() == UserStatus.INCOMPLETE) {
-            userService.update(user.getId(), UserUpdateRequest.builder()
+            userCommandService.update(user.getId(), UserUpdateRequest.builder()
                     .status(UserStatus.ACTIVE)
                     .providerType(ProviderType.GOOGLE).build()
             );
