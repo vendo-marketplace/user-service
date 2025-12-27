@@ -2,6 +2,9 @@ package com.vendo.user_service.service.user;
 
 import com.vendo.domain.user.common.type.ProviderType;
 import com.vendo.domain.user.common.type.UserStatus;
+import com.vendo.security.common.exception.UserBlockedException;
+import com.vendo.security.common.exception.UserEmailNotVerifiedException;
+import com.vendo.security.common.exception.UserIsUnactiveException;
 import com.vendo.user_service.common.mapper.UserMapper;
 import com.vendo.user_service.db.command.UserCommandService;
 import com.vendo.user_service.db.model.User;
@@ -16,7 +19,7 @@ import static com.vendo.user_service.security.common.helper.SecurityContextHelpe
 
 @Service
 @RequiredArgsConstructor
-public class UserService implements UserProvisioningService {
+public class UserService implements UserProvisioningService, UserValidationService {
 
     private final UserQueryService userQueryService;
 
@@ -39,5 +42,20 @@ public class UserService implements UserProvisioningService {
                 .status(UserStatus.ACTIVE)
                 .providerType(ProviderType.LOCAL)
                 .build()));
+    }
+
+    @Override
+    public void validate(User user) {
+        if (user.getStatus() == UserStatus.BLOCKED) {
+            throw new UserBlockedException("User is blocked.");
+        }
+
+        if (!user.isEmailVerified()) {
+            throw new UserEmailNotVerifiedException("User email is not verified.");
+        }
+
+        if (user.getStatus() != UserStatus.ACTIVE) {
+            throw new UserIsUnactiveException("User is unactive.");
+        }
     }
 }

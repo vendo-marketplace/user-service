@@ -6,7 +6,6 @@ import com.vendo.domain.user.common.type.UserStatus;
 import com.vendo.security.common.exception.InvalidTokenException;
 import com.vendo.security.common.exception.UserBlockedException;
 import com.vendo.security.common.exception.UserEmailNotVerifiedException;
-import com.vendo.security.common.exception.UserIsUnactiveException;
 import com.vendo.user_service.common.exception.UserAlreadyActivatedException;
 import com.vendo.user_service.common.exception.UserAlreadyExistsException;
 import com.vendo.user_service.db.command.UserCommandService;
@@ -17,6 +16,7 @@ import com.vendo.user_service.security.common.helper.JwtHelper;
 import com.vendo.user_service.security.common.type.UserAuthority;
 import com.vendo.user_service.security.service.JwtService;
 import com.vendo.user_service.service.user.UserProvisioningService;
+import com.vendo.user_service.service.user.UserValidationService;
 import com.vendo.user_service.web.dto.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.BadCredentialsException;
@@ -35,6 +35,8 @@ public class AuthService {
 
     private final UserProvisioningService userProvisioningService;
 
+    private final UserValidationService userValidationService;
+
     private final JwtService jwtService;
 
     private final JwtHelper jwtHelper;
@@ -46,18 +48,7 @@ public class AuthService {
     public AuthResponse signIn(AuthRequest authRequest) {
         User user = userQueryService.loadUserByUsername(authRequest.email());
 
-        // TODO avoid duplication - refactor
-        if (user.getStatus() == UserStatus.BLOCKED) {
-            throw new UserBlockedException("User is blocked.");
-        }
-
-        if (!user.isEmailVerified()) {
-            throw new UserEmailNotVerifiedException("User email is not verified.");
-        }
-
-        if (user.getStatus() != UserStatus.ACTIVE) {
-            throw new UserIsUnactiveException("User is unactive.");
-        }
+        userValidationService.validate(user);
 
         matchPasswordsOrThrow(authRequest.password(), user.getPassword());
 
