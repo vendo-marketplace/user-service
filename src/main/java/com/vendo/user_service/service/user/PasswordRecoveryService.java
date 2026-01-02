@@ -2,7 +2,9 @@ package com.vendo.user_service.service.user;
 
 import com.vendo.integration.kafka.event.EmailOtpEvent;
 import com.vendo.integration.redis.common.exception.OtpExpiredException;
-import com.vendo.user_service.model.User;
+import com.vendo.user_service.db.command.UserCommandService;
+import com.vendo.user_service.db.model.User;
+import com.vendo.user_service.db.query.UserQueryService;
 import com.vendo.user_service.service.otp.EmailOtpService;
 import com.vendo.user_service.system.redis.common.dto.ResetPasswordRequest;
 import com.vendo.user_service.system.redis.common.namespace.otp.PasswordRecoveryOtpNamespace;
@@ -26,12 +28,14 @@ public class PasswordRecoveryService {
 
     private final PasswordRecoveryOtpNamespace passwordRecoveryOtpNamespace;
 
-    private final UserService userService;
+    private final UserQueryService userQueryService;
+
+    private final UserCommandService userCommandService;
 
     private final EmailOtpService emailOtpService;
 
     public void forgotPassword(String email) {
-        userService.loadUserByUsername(email);
+        userQueryService.loadUserByUsername(email);
 
         EmailOtpEvent event = EmailOtpEvent.builder()
                 .email(email)
@@ -44,8 +48,8 @@ public class PasswordRecoveryService {
         String email = redisService.getValue(passwordRecoveryOtpNamespace.getOtp().buildPrefix(String.valueOf(otp)))
                 .orElseThrow(() -> new OtpExpiredException("Otp session expired."));
 
-        User user = userService.loadUserByUsername(email);
-        userService.update(user.getId(), UserUpdateRequest.builder()
+        User user = userQueryService.loadUserByUsername(email);
+        userCommandService.update(user.getId(), UserUpdateRequest.builder()
                 .password(passwordEncoder.encode(resetPasswordRequest.password()))
                 .build());
 
@@ -55,7 +59,7 @@ public class PasswordRecoveryService {
     }
 
     public void resendOtp(String email) {
-        userService.loadUserByUsername(email);
+        userQueryService.loadUserByUsername(email);
 
         EmailOtpEvent event = EmailOtpEvent.builder()
                 .email(email)

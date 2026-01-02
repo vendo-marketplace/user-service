@@ -2,7 +2,8 @@ package com.vendo.user_service.model;
 
 import com.vendo.user_service.common.builder.UserDataBuilder;
 import com.vendo.user_service.common.util.WaitUtils;
-import com.vendo.user_service.repository.UserRepository;
+import com.vendo.user_service.db.model.User;
+import com.vendo.user_service.db.repository.UserRepository;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -11,8 +12,8 @@ import org.springframework.test.context.ActiveProfiles;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 
-import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.assertj.core.api.Assertions.within;
+import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 
 @SpringBootTest
 @ActiveProfiles("test")

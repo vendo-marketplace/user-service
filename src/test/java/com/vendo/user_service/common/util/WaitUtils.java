@@ -6,7 +6,7 @@ import lombok.extern.slf4j.Slf4j;
 public class WaitUtils {
 
     public static void waitSafely(long mills) {
-        try{
+        try {
             Thread.sleep(mills);
         } catch (InterruptedException e) {
             log.error("Error waiting: ", e);

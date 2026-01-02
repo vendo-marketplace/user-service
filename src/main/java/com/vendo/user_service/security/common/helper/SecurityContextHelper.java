@@ -1,6 +1,6 @@
 package com.vendo.user_service.security.common.helper;
 
-import com.vendo.user_service.model.User;
+import com.vendo.user_service.db.model.User;
 import org.springframework.security.authentication.AuthenticationCredentialsNotFoundException;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -16,5 +16,4 @@ public class SecurityContextHelper {
 
         return user;
     }
-
 }

@@ -1,6 +1,6 @@
-package com.vendo.user_service.repository;
+package com.vendo.user_service.db.repository;
 
-import com.vendo.user_service.model.User;
+import com.vendo.user_service.db.model.User;
 import org.springframework.data.mongodb.repository.MongoRepository;
 
 import java.util.Optional;
