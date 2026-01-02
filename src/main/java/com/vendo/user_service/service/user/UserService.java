@@ -47,8 +47,8 @@ public class UserService implements UserProvisioningService, UserActivityValidat
 
     @Override
     public void validateActivity(User user) {
-        checkNotBlocked(user);
-        checkEmailVerified(user);
+        throwIfBlocked(user);
+        throwIfEmailNotVerified(user);
 
         if (user.getStatus() != UserStatus.ACTIVE) {
             throw new UserIsUnactiveException("User is unactive.");
@@ -57,20 +57,20 @@ public class UserService implements UserProvisioningService, UserActivityValidat
 
     @Override
     public void validateBeforeActivation(User user) {
-        checkNotBlocked(user);
+        throwIfBlocked(user);
 
         if (user.getStatus() == UserStatus.ACTIVE) {
             throw new UserAlreadyActivatedException("Your account is already activated.");
         }
     }
 
-    private void checkNotBlocked(User user) {
+    private void throwIfBlocked(User user) {
         if (user.getStatus() == UserStatus.BLOCKED) {
             throw new UserBlockedException("User is blocked.");
         }
     }
 
-    private void checkEmailVerified(User user) {
+    private void throwIfEmailNotVerified(User user) {
         if (!user.isEmailVerified()) {
             throw new UserEmailNotVerifiedException("User email is not verified.");
         }
