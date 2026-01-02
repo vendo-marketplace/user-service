@@ -507,7 +507,7 @@ class AuthControllerIntegrationTest {
         assertThat(exceptionResponse).isNotNull();
         assertThat(exceptionResponse.getPath()).isEqualTo("/auth/complete-auth");
         assertThat(exceptionResponse.getCode()).isEqualTo(HttpStatus.FORBIDDEN.value());
-        assertThat(exceptionResponse.getMessage()).isEqualTo("Your account is blocked.");
+        assertThat(exceptionResponse.getMessage()).isEqualTo("User is blocked.");
     }
 
     @Test

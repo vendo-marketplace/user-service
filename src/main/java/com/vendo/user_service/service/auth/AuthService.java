@@ -4,9 +4,6 @@ import com.google.api.client.googleapis.auth.oauth2.GoogleIdToken;
 import com.vendo.domain.user.common.type.ProviderType;
 import com.vendo.domain.user.common.type.UserStatus;
 import com.vendo.security.common.exception.InvalidTokenException;
-import com.vendo.security.common.exception.UserBlockedException;
-import com.vendo.security.common.exception.UserEmailNotVerifiedException;
-import com.vendo.user_service.common.exception.UserAlreadyActivatedException;
 import com.vendo.user_service.common.exception.UserAlreadyExistsException;
 import com.vendo.user_service.db.command.UserCommandService;
 import com.vendo.user_service.db.model.User;
@@ -81,7 +78,7 @@ public class AuthService {
     public void completeAuth(String email, CompleteAuthRequest completeAuthRequest) {
         User user = userQueryService.loadUserByUsername(email);
 
-        validateUserBeforeCompleteAuth(user);
+        userActivityValidationService.validateBeforeActivation(user);
 
         userCommandService.update(user.getId(), UserUpdateRequest.builder()
                 .status(UserStatus.ACTIVE)
@@ -131,19 +128,4 @@ public class AuthService {
             throw new BadCredentialsException("Wrong credentials");
         }
     }
-
-    private void validateUserBeforeCompleteAuth(User user) {
-        if (!user.isEmailVerified()) {
-            throw new UserEmailNotVerifiedException("Your email is not verified.");
-        }
-
-        if (user.getStatus() == UserStatus.BLOCKED) {
-            throw new UserBlockedException("Your account is blocked.");
-        }
-
-        if (user.getStatus() == UserStatus.ACTIVE) {
-            throw new UserAlreadyActivatedException("Your account is already activated.");
-        }
-    }
-
 }

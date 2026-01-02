@@ -5,6 +5,7 @@ import com.vendo.domain.user.common.type.UserStatus;
 import com.vendo.security.common.exception.UserBlockedException;
 import com.vendo.security.common.exception.UserEmailNotVerifiedException;
 import com.vendo.security.common.exception.UserIsUnactiveException;
+import com.vendo.user_service.common.exception.UserAlreadyActivatedException;
 import com.vendo.user_service.common.mapper.UserMapper;
 import com.vendo.user_service.db.command.UserCommandService;
 import com.vendo.user_service.db.model.User;
@@ -46,16 +47,34 @@ public class UserService implements UserProvisioningService, UserActivityValidat
 
     @Override
     public void validateActivity(User user) {
-        if (user.getStatus() == UserStatus.BLOCKED) {
-            throw new UserBlockedException("User is blocked.");
-        }
-
-        if (!user.isEmailVerified()) {
-            throw new UserEmailNotVerifiedException("User email is not verified.");
-        }
+        checkNotBlocked(user);
+        checkEmailVerified(user);
 
         if (user.getStatus() != UserStatus.ACTIVE) {
             throw new UserIsUnactiveException("User is unactive.");
         }
     }
+
+    @Override
+    public void validateBeforeActivation(User user) {
+        checkNotBlocked(user);
+
+        if (user.getStatus() == UserStatus.ACTIVE) {
+            throw new UserAlreadyActivatedException("Your account is already activated.");
+        }
+    }
+
+    private void checkNotBlocked(User user) {
+        if (user.getStatus() == UserStatus.BLOCKED) {
+            throw new UserBlockedException("User is blocked.");
+        }
+    }
+
+    private void checkEmailVerified(User user) {
+        if (!user.isEmailVerified()) {
+            throw new UserEmailNotVerifiedException("User email is not verified.");
+        }
+    }
+
+
 }
