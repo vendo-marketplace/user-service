@@ -18,6 +18,8 @@ class UserValidationTest {
 
     Validator validator;
 
+    // TODO rewrite for request dtos
+
     @BeforeEach
     void setUp() {
         try (ValidatorFactory validatorFactory = Validation.buildDefaultValidatorFactory()) {

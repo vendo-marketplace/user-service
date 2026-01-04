@@ -11,7 +11,8 @@ import com.vendo.user_service.db.model.User;
 import com.vendo.user_service.db.repository.UserRepository;
 import com.vendo.user_service.security.common.helper.JwtHelper;
 import com.vendo.user_service.security.common.type.UserAuthority;
-import com.vendo.user_service.security.service.JwtService;
+import com.vendo.user_service.security.service.TestJwtService;
+import com.vendo.user_service.security.service.TokenGenerationService;
 import com.vendo.user_service.web.dto.*;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -35,6 +36,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import java.time.LocalDate;
 import java.util.Optional;
 
+import static com.vendo.security.common.constants.AuthConstants.AUTHORIZATION_HEADER;
 import static com.vendo.security.common.constants.AuthConstants.BEARER_PREFIX;
 import static com.vendo.user_service.security.common.util.SecurityContextUtils.initializeSecurityContext;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
@@ -60,7 +62,10 @@ class AuthControllerIntegrationTest {
     private PasswordEncoder passwordEncoder;
 
     @Autowired
-    private JwtService jwtService;
+    private TestJwtService testJwtService;
+
+    @Autowired
+    private TokenGenerationService tokenGenerationService;
 
     @Autowired
     private JwtHelper jwtHelper;
@@ -265,7 +270,7 @@ class AuthControllerIntegrationTest {
     void refresh_shouldReturnPairOfTokens() throws Exception {
         User user = UserDataBuilder.buildUserAllFields().build();
         userRepository.save(user);
-        String refreshToken = jwtService.generateRefreshToken(user);
+        String refreshToken = tokenGenerationService.generateTokensPair(user).refreshToken();
         RefreshRequest refreshRequest = RefreshRequest.builder().refreshToken(BEARER_PREFIX + refreshToken).build();
 
         String content = mockMvc.perform(post("/auth/refresh")
@@ -290,7 +295,7 @@ class AuthControllerIntegrationTest {
     @Test
     void refresh_shouldReturnNotFound_whenUserNotFound() throws Exception {
         User user = UserDataBuilder.buildUserAllFields().build();
-        String refreshToken = jwtService.generateRefreshToken(user);
+        String refreshToken = tokenGenerationService.generateTokensPair(user).refreshToken();
         RefreshRequest refreshRequest = RefreshRequest.builder().refreshToken(BEARER_PREFIX + refreshToken).build();
 
         String content = mockMvc.perform(post("/auth/refresh")
@@ -313,7 +318,7 @@ class AuthControllerIntegrationTest {
     void refresh_shouldReturnUnauthorized_whenTokenWithoutBearerPrefix() throws Exception {
         User user = UserDataBuilder.buildUserAllFields().build();
         userRepository.save(user);
-        String refreshToken = jwtService.generateRefreshToken(user);
+        String refreshToken = tokenGenerationService.generateTokensPair(user).refreshToken();
         refreshToken = refreshToken.substring(BEARER_PREFIX.length() + 1);
 
         RefreshRequest refreshRequest = RefreshRequest.builder().refreshToken(refreshToken).build();
@@ -338,7 +343,7 @@ class AuthControllerIntegrationTest {
     void refresh_shouldReturnUnauthorized_whenTokenIsExpired() throws Exception {
         User user = UserDataBuilder.buildUserAllFields().build();
         userRepository.save(user);
-        String expiredRefreshToken = jwtService.generateTokenWithExpiration(user, 0);
+        String expiredRefreshToken = testJwtService.generateTokenWithExpiration(user, 0);
         RefreshRequest refreshRequest = RefreshRequest.builder().refreshToken(BEARER_PREFIX + expiredRefreshToken).build();
 
         String content = mockMvc.perform(post("/auth/refresh")
@@ -597,10 +602,10 @@ class AuthControllerIntegrationTest {
         User user = UserDataBuilder.buildUserAllFields()
                 .status(UserStatus.ACTIVE)
                 .build();
-        SecurityContext securityContext = initializeSecurityContext(user);
 
+        String accessToken = testJwtService.generateAccessToken(user);
         String content = mockMvc.perform(get("/auth/me")
-                        .with(SecurityMockMvcRequestPostProcessors.securityContext(securityContext))
+                        .header(AUTHORIZATION_HEADER, BEARER_PREFIX + accessToken)
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isNotFound())
                 .andReturn()

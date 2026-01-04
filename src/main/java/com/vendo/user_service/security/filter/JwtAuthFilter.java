@@ -82,9 +82,7 @@ public class JwtAuthFilter extends OncePerRequestFilter {
 
     private User validateUserAccessibility(Claims claims) {
         User user = (User) userDetailsService.loadUserByUsername(claims.getSubject());
-
         UserActivityPolicy.validateActivity(user);
-
         return user;
     }
 

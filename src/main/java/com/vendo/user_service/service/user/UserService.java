@@ -46,16 +46,20 @@ public class UserService implements UserProvisioningService, UserActivityValidat
 
     @Override
     public void validateBeforeActivation(User user) {
-        throwIfBlocked(user.getStatus());
-
-        if (user.getStatus() == UserStatus.ACTIVE) {
-            throw new UserAlreadyActivatedException("Your account is already activated.");
-        }
+        UserStatus status = user.getStatus();
+        throwIfBlocked(status);
+        throwIfActive(status);
     }
 
     private void throwIfBlocked(UserStatus userStatus) {
         if (userStatus == UserStatus.BLOCKED) {
             throw new UserBlockedException("User is blocked.");
+        }
+    }
+    
+    private void throwIfActive(UserStatus userStatus) {
+        if (userStatus == UserStatus.ACTIVE) {
+            throw new UserAlreadyActivatedException("Your account is already activated.");
         }
     }
 }

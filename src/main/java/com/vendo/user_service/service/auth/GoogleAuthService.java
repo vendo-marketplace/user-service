@@ -6,7 +6,7 @@ import com.vendo.domain.user.common.type.UserStatus;
 import com.vendo.user_service.db.command.UserCommandService;
 import com.vendo.user_service.db.model.User;
 import com.vendo.user_service.security.common.dto.TokenPayload;
-import com.vendo.user_service.security.service.JwtService;
+import com.vendo.user_service.security.service.TokenGenerationService;
 import com.vendo.user_service.service.user.UserProvisioningService;
 import com.vendo.user_service.web.dto.AuthResponse;
 import com.vendo.user_service.web.dto.GoogleAuthRequest;
@@ -18,7 +18,7 @@ import org.springframework.stereotype.Service;
 @RequiredArgsConstructor
 public class GoogleAuthService {
 
-    private final JwtService jwtService;
+    private final TokenGenerationService tokenGenerationService;
 
     private final UserCommandService userCommandService;
 
@@ -38,7 +38,7 @@ public class GoogleAuthService {
             );
         }
 
-        TokenPayload tokenPayload = jwtService.generateTokenPayload(user);
+        TokenPayload tokenPayload = tokenGenerationService.generateTokensPair(user);
         return AuthResponse.builder()
                 .accessToken(tokenPayload.accessToken())
                 .refreshToken(tokenPayload.refreshToken())
