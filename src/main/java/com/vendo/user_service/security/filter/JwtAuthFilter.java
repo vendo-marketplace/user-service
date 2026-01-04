@@ -1,9 +1,9 @@
 package com.vendo.user_service.security.filter;
 
+import com.vendo.domain.user.service.UserActivityPolicy;
 import com.vendo.security.common.exception.InvalidTokenException;
 import com.vendo.user_service.db.model.User;
 import com.vendo.user_service.security.common.helper.JwtHelper;
-import com.vendo.user_service.service.user.UserActivityValidationService;
 import io.jsonwebtoken.Claims;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -36,8 +36,6 @@ public class JwtAuthFilter extends OncePerRequestFilter {
     private final UserDetailsService userDetailsService;
 
     private final UserAntPathResolver userAntPathResolver;
-
-    private final UserActivityValidationService userActivityValidationService;
 
     @Qualifier("handlerExceptionResolver")
     private final HandlerExceptionResolver handlerExceptionResolver;
@@ -85,7 +83,7 @@ public class JwtAuthFilter extends OncePerRequestFilter {
     private User validateUserAccessibility(Claims claims) {
         User user = (User) userDetailsService.loadUserByUsername(claims.getSubject());
 
-        userActivityValidationService.validateActivity(user);
+        UserActivityPolicy.validateActivity(user);
 
         return user;
     }

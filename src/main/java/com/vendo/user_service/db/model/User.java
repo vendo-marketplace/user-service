@@ -2,6 +2,7 @@ package com.vendo.user_service.db.model;
 
 import com.vendo.domain.user.common.type.ProviderType;
 import com.vendo.domain.user.common.type.UserStatus;
+import com.vendo.domain.user.service.UserActivityView;
 import com.vendo.user_service.common.annotation.Adult;
 import com.vendo.user_service.common.dto.AuditingEntity;
 import com.vendo.user_service.security.common.type.UserAuthority;
@@ -25,7 +26,7 @@ import java.util.Collections;
 @SuperBuilder(toBuilder = true)
 @NoArgsConstructor
 @EqualsAndHashCode(callSuper = true)
-public class User extends AuditingEntity implements UserDetails {
+public class User extends AuditingEntity implements UserDetails, UserActivityView {
 
     @Id
     private String id;

@@ -44,9 +44,4 @@ public class AuthController {
     ResponseEntity<UserProfileResponse> getAuthenticatedUserProfile() {
         return ResponseEntity.ok(userService.getAuthenticatedUserProfile());
     }
-
-    @PostMapping("/google")
-    ResponseEntity<AuthResponse> googleAuth(@Valid @RequestBody GoogleAuthRequest googleAuthRequest) {
-        return ResponseEntity.ok(authService.googleAuth(googleAuthRequest));
-    }
 }
