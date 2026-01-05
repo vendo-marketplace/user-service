@@ -1,6 +1,6 @@
 package com.vendo.user_service.web.controller;
 
-import com.vendo.user_service.service.auth.GoogleAuthService;
+import com.vendo.user_service.service.auth.GoogleOAuthService;
 import com.vendo.user_service.web.dto.AuthResponse;
 import com.vendo.user_service.web.dto.GoogleAuthRequest;
 import jakarta.validation.Valid;
@@ -16,11 +16,11 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 @RequestMapping("/auth")
 public class GoogleAuthController {
 
-    private final GoogleAuthService googleAuthService;
+    private final GoogleOAuthService googleOAuthService;
 
     @PostMapping("/google")
     ResponseEntity<AuthResponse> googleAuth(@Valid @RequestBody GoogleAuthRequest googleAuthRequest) {
-        return ResponseEntity.ok(googleAuthService.googleAuth(googleAuthRequest));
+        return ResponseEntity.ok(googleOAuthService.googleAuth(googleAuthRequest));
     }
 
 }
