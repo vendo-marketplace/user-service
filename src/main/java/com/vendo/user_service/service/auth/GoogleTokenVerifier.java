@@ -1,6 +1,7 @@
 package com.vendo.user_service.service.auth;
 
 import com.google.api.client.googleapis.auth.oauth2.GoogleIdToken;
+import com.google.api.client.googleapis.auth.oauth2.GoogleIdTokenVerifier;
 import com.vendo.security.common.exception.AccessDeniedException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -12,9 +13,9 @@ import java.security.GeneralSecurityException;
 @Slf4j
 @Service
 @RequiredArgsConstructor
-public class GoogleIdTokenVerifier {
+public class GoogleTokenVerifier {
 
-    private final com.google.api.client.googleapis.auth.oauth2.GoogleIdTokenVerifier googleIdTokenVerifier;
+    private final GoogleIdTokenVerifier googleIdTokenVerifier;
 
     public GoogleIdToken.Payload verify(String token) {
         try {

@@ -30,7 +30,7 @@ public class EmailOtpService {
             throw new OtpAlreadySentException("Otp has already sent.");
         }
 
-        String otp = otpGenerator.generateSixDigitOtp();
+        String otp = otpGenerator.generate();
         event.setOtp(otp);
 
         otpStorage.saveValue(otpNamespace.getOtp().buildPrefix(otp), event.getEmail(), otpNamespace.getOtp().getTtl());
@@ -86,7 +86,7 @@ public class EmailOtpService {
         Optional<String> otp = otpStorage.getValue(otpNamespace.getEmail().buildPrefix(email));
 
         if (otp.isEmpty()) {
-            otp = otp.map(o -> otpGenerator.generateSixDigitOtp());
+            otp = otp.map(o -> otpGenerator.generate());
             otpStorage.saveValue(otpNamespace.getEmail().buildPrefix(email), otp.get(), otpNamespace.getOtp().getTtl());
         }
 

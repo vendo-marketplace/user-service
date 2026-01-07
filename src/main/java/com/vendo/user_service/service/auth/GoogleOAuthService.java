@@ -24,10 +24,10 @@ public class GoogleOAuthService {
 
     private final UserProvisioningService userProvisioningService;
 
-    private final GoogleIdTokenVerifier googleIdTokenVerifier;
+    private final GoogleTokenVerifier googleTokenVerifier;
 
     public AuthResponse googleAuth(GoogleAuthRequest googleAuthRequest) {
-        GoogleIdToken.Payload payload = googleIdTokenVerifier.verify(googleAuthRequest.idToken());
+        GoogleIdToken.Payload payload = googleTokenVerifier.verify(googleAuthRequest.idToken());
 
         User user = userProvisioningService.ensureExists(payload.getEmail());
 
