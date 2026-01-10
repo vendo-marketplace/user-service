@@ -32,14 +32,14 @@ public class JwtHelper {
         return parseSignedClaims(token).getPayload();
     }
 
+    public Key getSignInKey() {
+        return Keys.hmacShaKeyFor(jwtProperties.getSecretKey().getBytes(StandardCharsets.UTF_8));
+    }
+
     private Jws<Claims> parseSignedClaims(String token) throws JwtException {
         return Jwts.parser()
                 .verifyWith((SecretKey) getSignInKey())
                 .build()
                 .parseSignedClaims(token);
-    }
-
-    public Key getSignInKey() {
-        return Keys.hmacShaKeyFor(jwtProperties.getSecretKey().getBytes(StandardCharsets.UTF_8));
     }
 }

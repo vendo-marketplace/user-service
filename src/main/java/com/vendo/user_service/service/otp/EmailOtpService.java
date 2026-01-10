@@ -7,9 +7,9 @@ import com.vendo.user_service.service.otp.common.exception.OtpAlreadySentExcepti
 import com.vendo.user_service.service.otp.common.exception.TooManyOtpRequestsException;
 import com.vendo.user_service.system.kafka.producer.EmailOtpEventProducer;
 import com.vendo.user_service.system.redis.common.namespace.otp.OtpNamespace;
-import com.vendo.user_service.system.redis.service.RedisService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
 
 import java.util.Optional;
@@ -21,26 +21,26 @@ public class EmailOtpService {
 
     private final OtpGenerator otpGenerator;
 
-    private final RedisService redisService;
+    private final OtpStorage otpStorage;
 
     private final EmailOtpEventProducer emailOtpEventProducer;
 
     public void sendOtp(EmailOtpEvent event, OtpNamespace otpNamespace) {
-        if (redisService.hasActiveKey(otpNamespace.getEmail().buildPrefix(event.getEmail()))) {
+        if (otpStorage.hasActiveKey(otpNamespace.getEmail().buildPrefix(event.getEmail()))) {
             throw new OtpAlreadySentException("Otp has already sent.");
         }
 
-        String otp = otpGenerator.generateSixDigitOtp();
+        String otp = otpGenerator.generate();
         event.setOtp(otp);
 
-        redisService.saveValue(otpNamespace.getOtp().buildPrefix(otp), event.getEmail(), otpNamespace.getOtp().getTtl());
-        redisService.saveValue(otpNamespace.getEmail().buildPrefix(event.getEmail()), otp, otpNamespace.getEmail().getTtl());
+        otpStorage.saveValue(otpNamespace.getOtp().buildPrefix(otp), event.getEmail(), otpNamespace.getOtp().getTtl());
+        otpStorage.saveValue(otpNamespace.getEmail().buildPrefix(event.getEmail()), otp, otpNamespace.getEmail().getTtl());
 
         emailOtpEventProducer.sendEmailOtpEvent(event);
     }
 
     public void resendOtp(EmailOtpEvent event, OtpNamespace otpNamespace) {
-        redisService.getValue(otpNamespace.getEmail().buildPrefix(event.getEmail()))
+        otpStorage.getValue(otpNamespace.getEmail().buildPrefix(event.getEmail()))
                 .orElseThrow(() -> new OtpExpiredException("Otp session expired."));
 
         increaseResendAttemptsOrThrow(event.getEmail(), otpNamespace);
@@ -51,41 +51,43 @@ public class EmailOtpService {
         emailOtpEventProducer.sendEmailOtpEvent(event);
     }
 
-    public void verifyOtp(String otp, String email, OtpNamespace otpNamespace) {
-        String redisEmail = redisService.getValue(otpNamespace.getOtp().buildPrefix(otp))
+    public String verifyOtpAndConsume(String otp, @Nullable String expectedEmail, OtpNamespace namespace) {
+        String actualEmail = otpStorage.getValue(namespace.getOtp().buildPrefix(otp))
                 .orElseThrow(() -> new OtpExpiredException("Otp session expired."));
 
-        if (!redisEmail.equals(email)) {
+        if (expectedEmail != null && !actualEmail.equals(expectedEmail)) {
             throw new InvalidOtpException("Invalid otp.");
         }
 
-        redisService.deleteValues(
-                otpNamespace.getOtp().buildPrefix(otp),
-                otpNamespace.getEmail().buildPrefix(email),
-                otpNamespace.getAttempts().buildPrefix(email)
+        otpStorage.deleteValues(
+                namespace.getOtp().buildPrefix(otp),
+                namespace.getEmail().buildPrefix(actualEmail),
+                namespace.getAttempts().buildPrefix(actualEmail)
         );
+
+        return actualEmail;
     }
 
     private void increaseResendAttemptsOrThrow(String email, OtpNamespace otpNamespace) {
-        Optional<String> attempts = redisService.getValue(otpNamespace.getAttempts().buildPrefix(email));
+        Optional<String> attempts = otpStorage.getValue(otpNamespace.getAttempts().buildPrefix(email));
         int attempt = attempts.map(Integer::parseInt).orElse(0);
 
         if (attempt >= 3) {
             throw new TooManyOtpRequestsException("Reached maximum attempts.");
         }
 
-        redisService.saveValue(
+        otpStorage.saveValue(
                 otpNamespace.getAttempts().buildPrefix(email),
                 String.valueOf(attempt + 1),
                 otpNamespace.getAttempts().getTtl());
     }
 
     private String getOtpOrGenerate(String email, OtpNamespace otpNamespace) {
-        Optional<String> otp = redisService.getValue(otpNamespace.getEmail().buildPrefix(email));
+        Optional<String> otp = otpStorage.getValue(otpNamespace.getEmail().buildPrefix(email));
 
         if (otp.isEmpty()) {
-            otp = otp.map(o -> otpGenerator.generateSixDigitOtp());
-            redisService.saveValue(otpNamespace.getEmail().buildPrefix(email), otp.get(), otpNamespace.getOtp().getTtl());
+            otp = otp.map(o -> otpGenerator.generate());
+            otpStorage.saveValue(otpNamespace.getEmail().buildPrefix(email), otp.get(), otpNamespace.getOtp().getTtl());
         }
 
         return otp.get();

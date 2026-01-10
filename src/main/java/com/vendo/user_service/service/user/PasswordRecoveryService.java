@@ -1,14 +1,12 @@
 package com.vendo.user_service.service.user;
 
 import com.vendo.integration.kafka.event.EmailOtpEvent;
-import com.vendo.integration.redis.common.exception.OtpExpiredException;
 import com.vendo.user_service.db.command.UserCommandService;
 import com.vendo.user_service.db.model.User;
 import com.vendo.user_service.db.query.UserQueryService;
 import com.vendo.user_service.service.otp.EmailOtpService;
 import com.vendo.user_service.system.redis.common.dto.ResetPasswordRequest;
 import com.vendo.user_service.system.redis.common.namespace.otp.PasswordRecoveryOtpNamespace;
-import com.vendo.user_service.system.redis.service.RedisService;
 import com.vendo.user_service.web.dto.UserUpdateRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -21,8 +19,6 @@ import static com.vendo.integration.kafka.event.EmailOtpEvent.OtpEventType.PASSW
 @Service
 @RequiredArgsConstructor
 public class PasswordRecoveryService {
-
-    private final RedisService redisService;
 
     private final PasswordEncoder passwordEncoder;
 
@@ -45,17 +41,12 @@ public class PasswordRecoveryService {
     }
 
     public void resetPassword(String otp, ResetPasswordRequest resetPasswordRequest) {
-        String email = redisService.getValue(passwordRecoveryOtpNamespace.getOtp().buildPrefix(String.valueOf(otp)))
-                .orElseThrow(() -> new OtpExpiredException("Otp session expired."));
+        String email = emailOtpService.verifyOtpAndConsume(otp, null, passwordRecoveryOtpNamespace);
 
         User user = userQueryService.loadUserByUsername(email);
         userCommandService.update(user.getId(), UserUpdateRequest.builder()
                 .password(passwordEncoder.encode(resetPasswordRequest.password()))
                 .build());
-
-        redisService.deleteValues(
-                passwordRecoveryOtpNamespace.getOtp().buildPrefix(String.valueOf(otp)),
-                passwordRecoveryOtpNamespace.getEmail().buildPrefix(email));
     }
 
     public void resendOtp(String email) {

@@ -48,11 +48,10 @@ public class EmailVerificationService {
     public void validate(String otp, ValidateRequest validateRequest) {
         User user = userQueryService.loadUserByUsername(validateRequest.email());
 
-        emailOtpService.verifyOtp(otp, validateRequest.email(), emailVerificationOtpNamespace);
+        emailOtpService.verifyOtpAndConsume(otp, validateRequest.email(), emailVerificationOtpNamespace);
 
         userCommandService.update(user.getId(), UserUpdateRequest.builder()
                 .emailVerified(true)
                 .build());
     }
-
 }

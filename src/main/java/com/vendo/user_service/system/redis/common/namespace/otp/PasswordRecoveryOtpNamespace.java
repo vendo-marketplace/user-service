@@ -5,5 +5,5 @@ import org.springframework.context.annotation.Configuration;
 
 @Configuration
 @ConfigurationProperties(prefix = "redis.password-recovery")
-public class PasswordRecoveryOtpNamespace extends OtpNamespace{
+public class PasswordRecoveryOtpNamespace extends OtpNamespace {
 }
