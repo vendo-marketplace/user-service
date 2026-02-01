@@ -1,9 +1,9 @@
 package com.vendo.user_service.model;
 
+import com.vendo.user_service.adapter.out.user.persistence.MongoUser;
 import com.vendo.user_service.common.builder.UserDataBuilder;
 import com.vendo.user_service.common.util.WaitUtils;
-import com.vendo.user_service.adapter.out.user.model.User;
-import com.vendo.user_service.adapter.out.user.repository.UserRepository;
+import com.vendo.user_service.adapter.out.user.persistence.UserRepository;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -17,16 +17,16 @@ import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 
 @SpringBootTest
 @ActiveProfiles("test")
-class UserAuditingTest {
+class MongoUserAuditingTest {
     @Autowired
     private UserRepository userRepository;
 
     @Test
     void shouldSetCreatedAtAndUpdatedAt_whenUserSaved() {
-        User user = UserDataBuilder.buildUserAllFields().build();
+        MongoUser mongoUser = UserDataBuilder.buildUserAllFields().build();
         Instant now = Instant.now();
 
-        User saved = userRepository.save(user);
+        MongoUser saved = userRepository.save(mongoUser);
 
         assertThat(saved.getCreatedAt()).isNotNull();
         assertThat(saved.getUpdatedAt()).isNotNull();
@@ -36,15 +36,15 @@ class UserAuditingTest {
 
     @Test
     void shouldUpdateFieldUpdatedAt_whenUserModified() {
-        User user = UserDataBuilder.buildUserAllFields().build();
+        MongoUser mongoUser = UserDataBuilder.buildUserAllFields().build();
 
-        User saved = userRepository.save(user);
+        MongoUser saved = userRepository.save(mongoUser);
         Instant beforeUpdatedAt = saved.getUpdatedAt();
 
         WaitUtils.waitSafely(1);
 
         saved.setEmail("testupdate@gmail.com");
-        User updated = userRepository.save(saved);
+        MongoUser updated = userRepository.save(saved);
         Instant afterUpdatedAt = updated.getUpdatedAt();
 
         assertThat(saved.getCreatedAt()).isNotNull();

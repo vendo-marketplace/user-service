@@ -2,15 +2,16 @@ package com.vendo.user_service.common.builder;
 
 import com.vendo.domain.user.common.type.ProviderType;
 import com.vendo.domain.user.common.type.UserStatus;
-import com.vendo.user_service.adapter.out.user.model.User;
+import com.vendo.user_service.adapter.out.user.common.type.UserAuthority;
+import com.vendo.user_service.adapter.out.user.persistence.MongoUser;
 
 import java.time.Instant;
 import java.time.LocalDate;
 
 public class UserDataBuilder {
 
-    public static User.UserBuilder buildUserAllFields() {
-        return User.builder()
+    public static MongoUser.MongoUserBuilder buildUserAllFields() {
+        return MongoUser.builder()
                 .id("1")
                 .email("test@gmail.com")
                 .password("Qwerty1234@")

@@ -1,4 +1,4 @@
-package com.vendo.user_service.common.config;
+package com.vendo.user_service.adapter.out.common.config;
 
 import io.swagger.v3.oas.models.Components;
 import io.swagger.v3.oas.models.OpenAPI;

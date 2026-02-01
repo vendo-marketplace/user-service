@@ -9,10 +9,10 @@
 		<relativePath/> <!-- lookup parent from repository -->
 	</parent>
 	<groupId>com.vendo</groupId>
-	<artifactId>user-service</artifactId>
+	<artifactId>mongoUser-service</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
-	<name>user-service</name>
-	<description>Vendo marketplace user service</description>
+	<name>mongoUser-service</name>
+	<description>Vendo marketplace mongoUser service</description>
 	<url/>
 	<licenses>
 		<license/>

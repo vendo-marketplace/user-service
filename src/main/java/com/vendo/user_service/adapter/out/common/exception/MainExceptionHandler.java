@@ -1,4 +1,4 @@
-package com.vendo.user_service.common.exception.handler;
+package com.vendo.user_service.adapter.out.common.exception;
 
 import com.vendo.common.exception.ExceptionResponse;
 import jakarta.servlet.http.HttpServletRequest;
@@ -16,7 +16,7 @@ import java.util.stream.Collectors;
 
 @Slf4j
 @ControllerAdvice
-public class CommonExceptionHandler {
+public class MainExceptionHandler {
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
     protected ResponseEntity<ExceptionResponse> handleMethodArgumentNotValidException(MethodArgumentNotValidException e, HttpServletRequest request) {
