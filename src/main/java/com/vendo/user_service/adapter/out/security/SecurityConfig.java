@@ -20,7 +20,6 @@ public class SecurityConfig {
 
     private final InternalGatewayFilter internalGatewayFilter;
 
-    // TODO find out why HttpSecurity versions are different comparing to auth-service's
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) {
         http.csrf(AbstractHttpConfigurer::disable)
