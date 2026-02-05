@@ -1,19 +1,23 @@
 package com.vendo.user_service.adapter.out.user.persistence;
 
+import com.vendo.user_service.domain.user.User;
+import com.vendo.user_service.port.user.UserQueryPort;
 import lombok.RequiredArgsConstructor;
-import org.springframework.security.core.userdetails.UserDetailsService;
-import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Component;
 
 @Component
 @RequiredArgsConstructor
-public class UserQueryAdapter implements UserDetailsService {
+public class UserQueryAdapter implements UserQueryPort {
 
     private final UserRepository userRepository;
 
     @Override
-    public MongoUser loadUserByUsername(String username) throws UsernameNotFoundException {
-        return userRepository.findByEmail(username)
-                .orElseThrow(() -> new UsernameNotFoundException("User not found."));
+    public User getByEmail(String email) {
+        return userRepository.findByEmail(email).orElseThrow();
+    }
+
+    @Override
+    public boolean existsByEmail(String email) {
+        return userRepository.existsByEmail(email);
     }
 }

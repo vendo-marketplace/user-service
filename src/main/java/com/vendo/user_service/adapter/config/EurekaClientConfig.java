@@ -1,4 +1,4 @@
-package com.vendo.user_service.adapter.out.common.config;
+package com.vendo.user_service.adapter.config;
 
 import org.springframework.cloud.client.discovery.EnableDiscoveryClient;
 import org.springframework.context.annotation.Configuration;

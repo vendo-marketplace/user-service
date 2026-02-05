@@ -1,7 +1,10 @@
 package com.vendo.user_service.adapter.out.user.persistence;
 
 import com.vendo.user_service.adapter.out.user.common.exception.UserAlreadyExistsException;
-import com.vendo.user_service.domain.user.dto.UserUpdateRequest;
+import com.vendo.user_service.adapter.out.user.common.mapper.UserMapper;
+import com.vendo.user_service.domain.user.dto.SaveUserRequest;
+import com.vendo.user_service.domain.user.dto.UpdateUserRequest;
+import com.vendo.user_service.port.user.UserCommandPort;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Component;
@@ -10,19 +13,23 @@ import java.util.Optional;
 
 @Component
 @RequiredArgsConstructor
-public class UserCommandAdapter {
+public class UserCommandAdapter implements UserCommandPort {
 
     private final UserRepository userRepository;
 
-    public MongoUser save(MongoUser mongoUser) {
-        userRepository.findByEmail(mongoUser.getEmail()).ifPresent(u -> {
+    private final UserMapper userMapper;
+
+    @Override
+    public MongoUser save(SaveUserRequest request) {
+        userRepository.findByEmail(request.email()).ifPresent(u -> {
             throw new UserAlreadyExistsException("User already exists.");
         });
 
-        return userRepository.save(mongoUser);
+        return userRepository.save(userMapper.mapToUser(request));
     }
 
-    public void update(String userId, UserUpdateRequest requestUser) {
+    @Override
+    public void update(String userId, UpdateUserRequest requestUser) {
         MongoUser mongoUser = userRepository.findById(userId)
                 .orElseThrow(() -> new UsernameNotFoundException("User not found."));
 
