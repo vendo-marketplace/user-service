@@ -4,57 +4,9 @@ server:
 client:
   url: client_test_url
 
-spring:
-  kafka:
-    bootstrap-servers: localhost:9092
-  data:
-    redis:
-      host: localhost
-      port: 6379
-    mongodb:
-      uri: mongodb://root:secret@localhost:27017/mydatabase?authSource=admin&authMechanism=SCRAM-SHA-256
-      authentication-database: admin
-
-google:
-  client_id: test_google_client_id
-
-security:
-  jwt:
-    secret-key: secretkeysecretkeysecretkeysecretkeysecretkeysecretkeysecretkeysecretkeysecretkey
-    access-expiration-time: 60000
-    refresh-expiration-time: 120000
+internal:
+  api-key: api-key
 
 eureka:
   client:
     enabled: false
-
-redis:
-  password-recovery:
-    email:
-      prefix: "test-email-prefix:"
-      ttl: 600
-    otp:
-      prefix: "test-otp-prefix:"
-      ttl: 600
-    attempts:
-      prefix: "test-attempts-prefix:"
-      ttl: 3600
-  email-verification:
-    email:
-      prefix: "test-email-prefix:"
-      ttl: 600
-    otp:
-      prefix: "test-otp-prefix:"
-      ttl: 600
-    attempts:
-      prefix: "test-attempts-prefix:"
-      ttl: 3600
-
-kafka:
-  events:
-    email-otp-notification-event:
-      topic: "EMAIL_OTP_NOTIFICATION_TEST_TOPIC"
-      groupId: "email_otp_notification_test_group"
-      container-factory: "consumerContainerFactory"
-      properties:
-        auto-offset-reset: "earliest"

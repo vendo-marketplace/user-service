@@ -1,13 +1,12 @@
 package com.vendo.user_service.adapter.in.security.exception;
 
 import com.vendo.common.exception.ExceptionResponse;
+import com.vendo.security.common.exception.AccessDeniedException;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
-
-import java.nio.file.AccessDeniedException;
 
 @RestControllerAdvice
 public class SecurityExceptionHandler {
