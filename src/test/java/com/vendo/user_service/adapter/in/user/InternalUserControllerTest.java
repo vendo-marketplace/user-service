@@ -1,11 +1,16 @@
 package com.vendo.user_service.adapter.in.user;
 
 import com.vendo.common.exception.ExceptionResponse;
+import com.vendo.user_service.adapter.AssertionUtils;
 import com.vendo.user_service.adapter.in.security.InternalAntPathResolver;
 import com.vendo.user_service.application.InternalUserService;
+import com.vendo.user_service.domain.user.SaveUserRequestDataBuilder;
+import com.vendo.user_service.domain.user.UpdateUserRequestDataBuilder;
 import com.vendo.user_service.domain.user.User;
 import com.vendo.user_service.domain.user.UserDataBuilder;
 import com.vendo.user_service.domain.user.dto.ExistsUserResponse;
+import com.vendo.user_service.domain.user.dto.SaveUserRequest;
+import com.vendo.user_service.domain.user.dto.UpdateUserRequest;
 import com.vendo.user_service.domain.user.exception.UserNotFoundException;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -14,14 +19,17 @@ import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import tools.jackson.databind.ObjectMapper;
 
+import java.util.UUID;
+
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.mockito.Mockito.*;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @AutoConfigureMockMvc
@@ -58,17 +66,9 @@ public class InternalUserControllerTest {
                 .andReturn().getResponse().getContentAsString();
 
         assertThat(content).isNotBlank();
+        User userResponse = objectMapper.readValue(content, User.class);
 
-         User userResponse = objectMapper.readValue(content, User.class);
-
-         assertThat(userResponse).isNotNull();
-         assertThat(userResponse.getEmail()).isEqualTo(user.getEmail());
-         assertThat(userResponse.getPassword()).isEqualTo(user.getPassword());
-         assertThat(userResponse.getEmailVerified()).isEqualTo(user.getEmailVerified());
-         assertThat(userResponse.getFullName()).isEqualTo(user.getFullName());
-         assertThat(userResponse.getBirthDate()).isEqualTo(user.getBirthDate());
-         assertThat(userResponse.getProviderType()).isEqualTo(user.getProviderType());
-         assertThat(userResponse.getStatus()).isEqualTo(user.getStatus());
+        AssertionUtils.assertFromDto(user, userResponse);
     }
 
     @Test
@@ -114,5 +114,90 @@ public class InternalUserControllerTest {
         ExistsUserResponse existsUserResponse = objectMapper.readValue(content, ExistsUserResponse.class);
         assertThat(existsUserResponse).isNotNull();
         assertThat(existsUserResponse.exists()).isEqualTo(existsUserResponseMock.exists());
+    }
+
+    @Test
+    void update_shouldSuccessfullyUpdate() throws Exception {
+        String id = String.valueOf(UUID.randomUUID());
+        UpdateUserRequest request = UpdateUserRequestDataBuilder.withAllFields().build();
+
+        doNothing().when(internalUserService).update(id, request);
+
+        mockMvc.perform(put("/internal/users")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request))
+                        .param("id", id)
+                        .header(INTERNAL_HEADER, INTERNAL_API_KEY))
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    void update_shouldReturnNotFound() throws Exception {
+        String id = String.valueOf(UUID.randomUUID());
+        UpdateUserRequest request = UpdateUserRequestDataBuilder.withAllFields().build();
+        String requestUri = "/internal/users";
+
+        doThrow(new UserNotFoundException("User not found.")).when(internalUserService).update(id, request);
+
+        String content = mockMvc.perform(put(requestUri)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request))
+                        .param("id", id)
+                        .header(INTERNAL_HEADER, INTERNAL_API_KEY))
+                .andExpect(status().isNotFound())
+                .andReturn().getResponse().getContentAsString();
+
+        assertThat(content).isNotBlank();
+
+        ExceptionResponse response = objectMapper.readValue(content, ExceptionResponse.class);
+
+        assertThat(response).isNotNull();
+        assertThat(response.getMessage()).isEqualTo("User not found.");
+        assertThat(response.getPath()).isEqualTo(requestUri);
+        assertThat(response.getCode()).isEqualTo(HttpStatus.NOT_FOUND.value());
+    }
+
+    @Test
+    void save_shouldSuccessfullyPersist() throws Exception {
+        User user = UserDataBuilder.withAllFields().build();
+        SaveUserRequest request = SaveUserRequestDataBuilder.withAllFields().build();
+
+        when(internalUserService.save(request)).thenReturn(user);
+
+        String content = mockMvc.perform(post("/internal/users")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request))
+                        .header(INTERNAL_HEADER, INTERNAL_API_KEY))
+                .andExpect(status().isOk())
+                .andReturn().getResponse().getContentAsString();
+
+        assertThat(content).isNotBlank();
+        User userResponse = objectMapper.readValue(content, User.class);
+
+        AssertionUtils.assertFromDto(userResponse, request);
+    }
+
+    @Test
+    void save_shouldReturnNotFound() throws Exception {
+        SaveUserRequest request = SaveUserRequestDataBuilder.withAllFields().build();
+        String requestUri = "/internal/users";
+
+        doThrow(new UserNotFoundException("User not found.")).when(internalUserService).save(request);
+
+        String content = mockMvc.perform(post(requestUri)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request))
+                        .header(INTERNAL_HEADER, INTERNAL_API_KEY))
+                .andExpect(status().isNotFound())
+                .andReturn().getResponse().getContentAsString();
+
+        assertThat(content).isNotBlank();
+
+        ExceptionResponse response = objectMapper.readValue(content, ExceptionResponse.class);
+
+        assertThat(response).isNotNull();
+        assertThat(response.getMessage()).isEqualTo("User not found.");
+        assertThat(response.getPath()).isEqualTo(requestUri);
+        assertThat(response.getCode()).isEqualTo(HttpStatus.NOT_FOUND.value());
     }
 }

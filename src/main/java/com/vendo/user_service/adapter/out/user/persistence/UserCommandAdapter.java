@@ -9,8 +9,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Component;
 
-import java.util.Optional;
-
 @Component
 @RequiredArgsConstructor
 public class UserCommandAdapter implements UserCommandPort {
@@ -29,16 +27,12 @@ public class UserCommandAdapter implements UserCommandPort {
     }
 
     @Override
-    public void update(String userId, UpdateUserRequest requestUser) {
-        MongoUser mongoUser = userRepository.findById(userId)
+    public void update(String id, UpdateUserRequest request) {
+        userRepository.findById(id)
                 .orElseThrow(() -> new UsernameNotFoundException("User not found."));
 
-        Optional.ofNullable(requestUser.password()).ifPresent(mongoUser::setPassword);
-        Optional.ofNullable(requestUser.status()).ifPresent(mongoUser::setStatus);
-        Optional.ofNullable(requestUser.providerType()).ifPresent(mongoUser::setProviderType);
-        Optional.ofNullable(requestUser.fullName()).ifPresent(mongoUser::setFullName);
-        Optional.ofNullable(requestUser.birthDate()).ifPresent(mongoUser::setBirthDate);
-        Optional.ofNullable(requestUser.emailVerified()).ifPresent(mongoUser::setEmailVerified);
+        MongoUser mongoUser = userMapper.mapToUser(request);
+        mongoUser.setId(id);
 
         userRepository.save(mongoUser);
     }
