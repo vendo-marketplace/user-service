@@ -1,4 +1,4 @@
-package com.vendo.user_service.adapter.out.common.exception;
+package com.vendo.user_service.adapter.in.web;
 
 import com.vendo.common.exception.ExceptionResponse;
 import jakarta.servlet.http.HttpServletRequest;

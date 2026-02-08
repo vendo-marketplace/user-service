@@ -1,4 +1,4 @@
-package com.vendo.user_service.adapter.config;
+package com.vendo.user_service.adapter.in.web;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Configuration;

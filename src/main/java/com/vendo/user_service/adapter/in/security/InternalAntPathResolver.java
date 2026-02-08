@@ -17,6 +17,6 @@ public class InternalAntPathResolver implements AntPathResolver {
 
     @Override
     public boolean isPermittedPath(String path) {
-        return Arrays.stream(INTERNAL_PATHS).anyMatch(pr -> antPathMatcher.match(pr, path));
+        return Arrays.stream(INTERNAL_PATHS).noneMatch(pr -> antPathMatcher.match(pr, path));
     }
 }

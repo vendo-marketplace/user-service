@@ -1,4 +1,4 @@
-package com.vendo.user_service.adapter.out.common.config;
+package com.vendo.user_service.adapter.out.mapper;
 
 import org.mapstruct.InjectionStrategy;
 import org.mapstruct.MapperConfig;
