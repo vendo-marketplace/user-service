@@ -3,6 +3,5 @@ spring:
     name: user-service
   profiles:
     active: ${APP_PROFILE}
-    include: kafka,redis
   config:
     import: "optional:configserver:${CONFIG_SERVER_URL}"
