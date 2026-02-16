@@ -1,6 +1,6 @@
 package com.vendo.user_service.adapter.out.user.persistence;
 
-import com.vendo.user_service.adapter.out.user.common.type.UserAuthority;
+import com.vendo.user_service.adapter.out.user.type.UserAuthority;
 import com.vendo.user_service.domain.user.User;
 import lombok.Data;
 import lombok.EqualsAndHashCode;

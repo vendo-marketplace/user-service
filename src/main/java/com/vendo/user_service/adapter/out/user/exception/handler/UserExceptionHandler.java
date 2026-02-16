@@ -1,11 +1,11 @@
-package com.vendo.user_service.adapter.out.user.common.exception.handler;
+package com.vendo.user_service.adapter.out.user.exception.handler;
 
 import com.vendo.common.exception.ExceptionResponse;
 import com.vendo.security.common.exception.UserBlockedException;
 import com.vendo.security.common.exception.UserEmailNotVerifiedException;
 import com.vendo.security.common.exception.UserIsUnactiveException;
-import com.vendo.user_service.adapter.out.user.common.exception.UserAlreadyActivatedException;
-import com.vendo.user_service.adapter.out.user.common.exception.UserAlreadyExistsException;
+import com.vendo.user_service.adapter.out.user.exception.UserAlreadyActivatedException;
+import com.vendo.user_service.adapter.out.user.exception.UserAlreadyExistsException;
 import com.vendo.user_service.domain.user.exception.UserNotFoundException;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.http.HttpStatus;

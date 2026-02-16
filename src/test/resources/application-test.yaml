@@ -4,9 +4,6 @@ server:
 client:
   url: client_test_url
 
-internal:
-  api-key: api-key
-
 eureka:
   client:
     enabled: false

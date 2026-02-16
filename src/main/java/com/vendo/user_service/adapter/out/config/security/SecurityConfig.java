@@ -1,4 +1,4 @@
-package com.vendo.user_service.adapter.out.security;
+package com.vendo.user_service.adapter.out.config.security;
 
 import com.vendo.user_service.adapter.in.security.InternalGatewayFilter;
 import lombok.RequiredArgsConstructor;

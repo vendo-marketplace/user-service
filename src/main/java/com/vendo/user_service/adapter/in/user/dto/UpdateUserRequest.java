@@ -1,4 +1,4 @@
-package com.vendo.user_service.domain.user.dto;
+package com.vendo.user_service.adapter.in.user.dto;
 
 import com.vendo.domain.user.common.type.ProviderType;
 import com.vendo.domain.user.common.type.UserStatus;

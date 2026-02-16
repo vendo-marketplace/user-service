@@ -57,6 +57,14 @@
             <artifactId>spring-cloud-starter-netflix-eureka-client</artifactId>
         </dependency>
 
+        <!--JWT dependencies-->
+
+        <dependency>
+            <groupId>io.jsonwebtoken</groupId>
+            <artifactId>jjwt-api</artifactId>
+            <version>0.12.6</version>
+        </dependency>
+
         <!--metrics dependencies-->
 
 		<dependency>
@@ -84,7 +92,7 @@
 		<dependency>
 			<groupId>io.github.vendo-marketplace-be</groupId>
 			<artifactId>common</artifactId>
-			<version>1.4.15</version>
+			<version>1.4.18</version>
 		</dependency>
         <dependency>
             <groupId>org.apache.commons</groupId>

@@ -1,4 +1,4 @@
-package com.vendo.user_service.domain.user.dto;
+package com.vendo.user_service.application.command;
 
 import lombok.Builder;
 
