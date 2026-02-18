@@ -1,6 +1,6 @@
 package com.vendo.user_service.adapter.in.web;
 
-import com.vendo.common.exception.ExceptionResponse;
+import com.vendo.core_lib.exception.ExceptionResponse;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;

@@ -1,6 +1,6 @@
 package com.vendo.user_service.adapter.out.user.persistence;
 
-import com.vendo.user_service.adapter.out.user.exception.UserAlreadyExistsException;
+import com.vendo.user_lib.exception.UserAlreadyExistsException;
 import com.vendo.user_service.adapter.out.user.mapper.UserMapper;
 import com.vendo.user_service.domain.user.User;
 import com.vendo.user_service.port.user.UserCommandPort;

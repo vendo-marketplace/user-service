@@ -1,15 +1,17 @@
 package com.vendo.user_service.adapter.in.security;
 
-import com.vendo.common.type.Service;
-import com.vendo.security.AntPathResolver;
-import com.vendo.security.common.exception.InvalidTokenException;
-import com.vendo.user_service.adapter.out.security.jwt.TokenValidationService;
-import com.vendo.user_service.adapter.out.user.type.UserAuthority;
+import com.vendo.core_lib.type.ServiceName;
+import com.vendo.core_lib.type.ServiceRole;
+import com.vendo.security_lib.exception.InvalidTokenException;
+import com.vendo.security_lib.resolver.AntPathResolver;
+import com.vendo.user_service.adapter.out.security.jwt.TokenClaimsParser;
+import com.vendo.user_service.adapter.out.security.jwt.dto.InternalClaimPayload;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.security.authentication.AuthenticationCredentialsNotFoundException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -23,21 +25,21 @@ import org.springframework.web.servlet.HandlerExceptionResolver;
 import java.io.IOException;
 import java.util.List;
 
-import static com.vendo.security.common.constants.AuthConstants.AUTHORIZATION_HEADER;
-import static com.vendo.security.common.constants.AuthConstants.BEARER_PREFIX;
+import static com.vendo.security_lib.constants.AuthConstants.AUTHORIZATION_HEADER;
+import static com.vendo.security_lib.constants.AuthConstants.BEARER_PREFIX;
 
+@Slf4j
 @Component
 @RequiredArgsConstructor
 public class InternalGatewayFilter extends OncePerRequestFilter {
 
-    private final TokenValidationService tokenValidationService;
+    private final TokenClaimsParser tokenClaimsParser;
 
     private final AntPathResolver antPathResolver;
 
     @Qualifier("handlerExceptionResolver")
     private final HandlerExceptionResolver handlerExceptionResolver;
 
-    // TODO rewrite tests for filter
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
         SecurityContext securityContext = SecurityContextHolder.getContext();
@@ -48,8 +50,8 @@ public class InternalGatewayFilter extends OncePerRequestFilter {
 
         try {
             String token = getTokenFromRequest(request.getHeader(AUTHORIZATION_HEADER));
-            validateAuthorization(token);
-            addAuthenticationToContext();
+            InternalClaimPayload claims = validateClaims(token);
+            addAuthenticationToContext(claims);
         } catch (Exception e) {
             handlerExceptionResolver.resolveException(request, response, null, e);
             return;
@@ -74,16 +76,29 @@ public class InternalGatewayFilter extends OncePerRequestFilter {
         return authorization.substring(BEARER_PREFIX.length());
     }
 
-    private void validateAuthorization(String token) {
-        boolean validate = tokenValidationService.validate(token);
-        if (!validate) {
-            throw new InvalidTokenException("Token is not valid.");
+    private InternalClaimPayload validateClaims(String token) {
+        InternalClaimPayload claims = tokenClaimsParser.parseInternalClaims(token);
+
+        if (ServiceName.valueOf(claims.audience()) != ServiceName.USER_SERVICE) {
+            log.error("Invalid token audience {}.", claims.audience());
+            throw new InvalidTokenException("Invalid token.");
         }
+
+        if (!claims.roles().contains(ServiceRole.INTERNAL.toString())) {
+            log.error("Invalid token roles {}.", claims.roles());
+            throw new InvalidTokenException("Invalid token.");
+        }
+
+        return claims;
     }
 
-    private void addAuthenticationToContext() {
+    private void addAuthenticationToContext(InternalClaimPayload claims) {
+        List<SimpleGrantedAuthority> grantedAuthorities = claims.roles().stream()
+                .map(SimpleGrantedAuthority::new)
+                .toList();
+
         UsernamePasswordAuthenticationToken authToken =
-                new UsernamePasswordAuthenticationToken(Service.USER_SERVICE.getName(), List.of(new SimpleGrantedAuthority(UserAuthority.INTERNAL.getAuthority())));
+                new UsernamePasswordAuthenticationToken(claims.subject(), null, grantedAuthorities);
 
         SecurityContextHolder.getContext().setAuthentication(authToken);
     }

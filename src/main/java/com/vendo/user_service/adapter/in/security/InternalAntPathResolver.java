@@ -1,6 +1,6 @@
 package com.vendo.user_service.adapter.in.security;
 
-import com.vendo.security.AntPathResolver;
+import com.vendo.security_lib.resolver.AntPathResolver;
 import org.springframework.stereotype.Component;
 import org.springframework.util.AntPathMatcher;
 

@@ -1,8 +1,9 @@
 package com.vendo.user_service.domain.user;
 
-import com.vendo.domain.user.common.type.ProviderType;
-import com.vendo.domain.user.common.type.UserStatus;
-import com.vendo.domain.user.service.UserActivityView;
+import com.vendo.user_lib.type.ProviderType;
+import com.vendo.user_lib.type.UserRole;
+import com.vendo.user_lib.type.UserStatus;
+import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
@@ -10,25 +11,18 @@ import lombok.experimental.SuperBuilder;
 import java.time.LocalDate;
 
 @Data
-@SuperBuilder(toBuilder = true)
+@SuperBuilder
 @NoArgsConstructor
-public class User implements UserActivityView {
+@AllArgsConstructor
+public class User {
 
     private String email;
     private boolean emailVerified;
+    private UserRole role;
     private UserStatus status;
     private ProviderType providerType;
     private String password;
     private LocalDate birthDate;
     private String fullName;
 
-    @Override
-    public UserStatus getStatus() {
-        return this.status;
-    }
-
-    @Override
-    public Boolean getEmailVerified() {
-        return this.emailVerified;
-    }
 }

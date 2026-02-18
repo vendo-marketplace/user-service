@@ -1,8 +1,8 @@
 package com.vendo.user_service.adapter.in.user.dto;
 
-import com.vendo.domain.user.common.type.ProviderType;
-import com.vendo.domain.user.common.type.UserRole;
-import com.vendo.domain.user.common.type.UserStatus;
+import com.vendo.user_lib.type.ProviderType;
+import com.vendo.user_lib.type.UserRole;
+import com.vendo.user_lib.type.UserStatus;
 import lombok.Builder;
 
 @Builder
