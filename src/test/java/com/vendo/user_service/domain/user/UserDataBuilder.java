@@ -1,7 +1,7 @@
 package com.vendo.user_service.domain.user;
 
-import com.vendo.domain.user.common.type.ProviderType;
-import com.vendo.domain.user.common.type.UserStatus;
+import com.vendo.user_lib.type.ProviderType;
+import com.vendo.user_lib.type.UserStatus;
 
 import java.time.LocalDate;
 

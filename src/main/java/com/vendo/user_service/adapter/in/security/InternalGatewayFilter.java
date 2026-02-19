@@ -14,6 +14,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.security.authentication.AuthenticationCredentialsNotFoundException;
+import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContext;
@@ -67,26 +68,27 @@ public class InternalGatewayFilter extends OncePerRequestFilter {
     }
 
     private String getTokenFromRequest(String authorization) {
-        if (authorization == null) {
-            throw new AuthenticationCredentialsNotFoundException("Unauthorized.");
-        } else if (!authorization.startsWith(BEARER_PREFIX)) {
-            throw new InvalidTokenException("Invalid token.");
+        if (authorization != null) {
+            boolean startsWithBearer = authorization.startsWith(BEARER_PREFIX);
+            boolean tokenIsNotEmpty = authorization.length() > BEARER_PREFIX.length() + 1;
+
+            if (startsWithBearer && tokenIsNotEmpty)  {
+                return authorization.substring(BEARER_PREFIX.length());
+            }
         }
 
-        return authorization.substring(BEARER_PREFIX.length());
+        throw new AuthenticationCredentialsNotFoundException("Unauthorized.");
     }
 
     private InternalClaimPayload validateClaims(String token) {
         InternalClaimPayload claims = tokenClaimsParser.parseInternalClaims(token);
 
-        if (ServiceName.valueOf(claims.audience()) != ServiceName.USER_SERVICE) {
-            log.error("Invalid token audience {}.", claims.audience());
-            throw new InvalidTokenException("Invalid token.");
-        }
+        boolean isUserService = ServiceName.valueOf(claims.audience()) == ServiceName.USER_SERVICE;
+        boolean hasInternalRole = claims.roles().contains(ServiceRole.INTERNAL.toString());
 
-        if (!claims.roles().contains(ServiceRole.INTERNAL.toString())) {
-            log.error("Invalid token roles {}.", claims.roles());
-            throw new InvalidTokenException("Invalid token.");
+        if (!isUserService || !hasInternalRole) {
+            log.error("Invalid token claims {}.", claims);
+            throw new BadCredentialsException("Invalid token.");
         }
 
         return claims;
