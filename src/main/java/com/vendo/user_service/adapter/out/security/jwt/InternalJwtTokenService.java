@@ -32,8 +32,8 @@ public class InternalJwtTokenService implements TokenClaimsParser {
 
             return new InternalClaimPayload(claims.getSubject(), roles, audience);
         } catch (JwtException e) {
-            log.error(e.getMessage());
-            throw new InvalidTokenException("Invalid token.");
+            log.error("Invalid JWT exception", e);
+            throw new InvalidTokenException(e.getMessage());
         }
     }
 

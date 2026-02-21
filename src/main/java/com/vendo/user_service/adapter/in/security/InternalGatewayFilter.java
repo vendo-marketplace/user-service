@@ -2,7 +2,6 @@ package com.vendo.user_service.adapter.in.security;
 
 import com.vendo.core_lib.type.ServiceName;
 import com.vendo.core_lib.type.ServiceRole;
-import com.vendo.security_lib.exception.InvalidTokenException;
 import com.vendo.security_lib.resolver.AntPathResolver;
 import com.vendo.user_service.adapter.out.security.jwt.TokenClaimsParser;
 import com.vendo.user_service.adapter.out.security.jwt.dto.InternalClaimPayload;
@@ -72,7 +71,7 @@ public class InternalGatewayFilter extends OncePerRequestFilter {
             boolean startsWithBearer = authorization.startsWith(BEARER_PREFIX);
             boolean tokenIsNotEmpty = authorization.length() > BEARER_PREFIX.length() + 1;
 
-            if (startsWithBearer && tokenIsNotEmpty)  {
+            if (startsWithBearer && tokenIsNotEmpty) {
                 return authorization.substring(BEARER_PREFIX.length());
             }
         }
