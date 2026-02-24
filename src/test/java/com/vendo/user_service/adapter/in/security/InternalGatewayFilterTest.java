@@ -66,7 +66,7 @@ public class InternalGatewayFilterTest {
         String subject = ServiceName.AUTH_SERVICE.toString();
         GrantedAuthority authority = new SimpleGrantedAuthority(ServiceRole.INTERNAL.toString());
 
-        Authentication auth = SecurityContextUtils.initializeAuthentication(subject, List.of(authority));
+        Authentication auth = SecurityContextUtils.initAuth(subject, List.of(authority));
         String content = mockMvc.perform(get("/internal/test/ping").with(authentication(auth)))
                 .andExpect(status().isOk())
                 .andReturn().getResponse().getContentAsString();

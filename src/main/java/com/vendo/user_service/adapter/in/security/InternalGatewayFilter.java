@@ -42,6 +42,7 @@ public class InternalGatewayFilter extends OncePerRequestFilter {
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
+
         SecurityContext securityContext = SecurityContextHolder.getContext();
         if (securityContext.getAuthentication() != null) {
             filterChain.doFilter(request, response);
