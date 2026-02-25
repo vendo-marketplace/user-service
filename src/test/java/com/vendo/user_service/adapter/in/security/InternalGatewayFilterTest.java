@@ -22,6 +22,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import tools.jackson.databind.ObjectMapper;
 
 import java.util.List;
+import java.util.Set;
 
 import static com.vendo.security_lib.constants.AuthConstants.AUTHORIZATION_HEADER;
 import static com.vendo.security_lib.constants.AuthConstants.BEARER_PREFIX;
@@ -150,7 +151,7 @@ public class InternalGatewayFilterTest {
     @Test
     void doFilterInternal_shouldReturnUnauthorized_whenAudienceClaimIsNotUserService() throws Exception {
         InternalClaimPayload payload = InternalClaimPayloadDataBuilder.buildWithAllFields()
-                .audience(ServiceName.AUTH_SERVICE.toString())
+                .audience(Set.of(ServiceName.AUTH_SERVICE.toString()))
                 .build();
         String requestPath = "/internal/test/ping";
         String token = "valid_token";

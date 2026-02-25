@@ -3,36 +3,36 @@ package com.vendo.user_service.adapter.out.security.jwt;
 import com.vendo.security_lib.exception.InvalidTokenException;
 import com.vendo.security_lib.type.InternalTokenClaim;
 import com.vendo.user_service.adapter.out.security.jwt.dto.InternalClaimPayload;
-import com.vendo.user_service.adapter.out.security.jwt.props.JwtProperties;
+import com.vendo.user_service.adapter.out.security.jwt.props.InternalJwtProperties;
 import com.vendo.user_service.adapter.out.security.jwt.utils.JwtUtils;
 import io.jsonwebtoken.Claims;
-import io.jsonwebtoken.JwtException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
+import java.util.Set;
 
 @Slf4j
 @Component
 @RequiredArgsConstructor
 public class InternalJwtTokenService implements TokenClaimsParser {
 
-    private final JwtProperties jwtProperties;
+    private final InternalJwtProperties internalJwtProperties;
 
     private final JwtUtils jwtUtils;
 
     @Override
     public InternalClaimPayload parseInternalClaims(String token) {
         try {
-            Claims claims = jwtUtils.parseSignedClaims(token, jwtProperties.getKey()).getPayload();
+            Claims claims = jwtUtils.parseSignedClaims(token, internalJwtProperties.getKey()).getPayload();
 
             List<String> roles = parseRoles(claims.get(InternalTokenClaim.ROLES.getClaim()));
-            String audience = claims.get(Claims.AUDIENCE, String.class);
+            Set<String> audience = claims.getAudience();
 
             return new InternalClaimPayload(claims.getSubject(), roles, audience);
-        } catch (JwtException e) {
-            log.error("Invalid JWT exception", e);
+        } catch (Exception e) {
+            log.error(e.getMessage());
             throw new InvalidTokenException(e.getMessage());
         }
     }

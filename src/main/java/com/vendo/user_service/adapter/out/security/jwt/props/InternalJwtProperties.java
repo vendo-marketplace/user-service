@@ -8,8 +8,8 @@ import org.springframework.stereotype.Component;
 @Setter
 @Getter
 @Component
-@ConfigurationProperties(prefix = "security.jwt.secret")
-public class JwtProperties {
+@ConfigurationProperties(prefix = "security.jwt.internal")
+public class InternalJwtProperties {
 
     private String key;
 

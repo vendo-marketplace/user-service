@@ -83,7 +83,7 @@ public class InternalGatewayFilter extends OncePerRequestFilter {
     private InternalClaimPayload validateClaims(String token) {
         InternalClaimPayload claims = tokenClaimsParser.parseInternalClaims(token);
 
-        boolean isUserService = ServiceName.valueOf(claims.audience()) == ServiceName.USER_SERVICE;
+        boolean isUserService = claims.audience().contains(ServiceName.USER_SERVICE.toString());
         boolean hasInternalRole = claims.roles().contains(ServiceRole.INTERNAL.toString());
 
         if (!isUserService || !hasInternalRole) {
