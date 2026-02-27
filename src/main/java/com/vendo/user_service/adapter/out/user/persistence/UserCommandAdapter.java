@@ -1,11 +1,11 @@
 package com.vendo.user_service.adapter.out.user.persistence;
 
 import com.vendo.user_lib.exception.UserAlreadyExistsException;
+import com.vendo.user_lib.exception.UserNotFoundException;
 import com.vendo.user_service.adapter.out.user.mapper.UserMapper;
 import com.vendo.user_service.domain.user.User;
 import com.vendo.user_service.port.user.UserCommandPort;
 import lombok.RequiredArgsConstructor;
-import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -28,7 +28,7 @@ public class UserCommandAdapter implements UserCommandPort {
     @Override
     public void update(String id, User user) {
         userRepository.findById(id)
-                .orElseThrow(() -> new UsernameNotFoundException("User not found."));
+                .orElseThrow(() -> new UserNotFoundException("User not found."));
 
         MongoUser mongoUser = userMapper.toMongoUser(user);
         mongoUser.setId(id);
