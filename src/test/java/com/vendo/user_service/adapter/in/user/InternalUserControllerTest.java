@@ -1,8 +1,8 @@
 package com.vendo.user_service.adapter.in.user;
 
 import com.vendo.core_lib.exception.ExceptionResponse;
+import com.vendo.test_utils_lib.AssertionUtils;
 import com.vendo.user_lib.exception.UserNotFoundException;
-import com.vendo.user_service.adapter.AssertionUtils;
 import com.vendo.user_service.adapter.in.user.dto.SaveUserRequest;
 import com.vendo.user_service.adapter.in.user.dto.UpdateUserRequest;
 import com.vendo.user_service.adapter.out.user.mapper.UserMapper;

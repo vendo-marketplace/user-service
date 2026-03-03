@@ -123,6 +123,11 @@
             <artifactId>security-lib</artifactId>
             <version>2.2.1</version>
         </dependency>
+        <dependency>
+            <groupId>io.github.vendo-marketplace-be</groupId>
+            <artifactId>test-utils-lib</artifactId>
+            <version>1.0.0</version>
+        </dependency>
 
         <!--test dependencies-->
 
