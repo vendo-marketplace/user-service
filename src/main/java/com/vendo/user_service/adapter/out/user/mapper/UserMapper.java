@@ -16,4 +16,6 @@ public interface UserMapper {
 
     MongoUser toMongoUser(User user);
 
+    User toUser(MongoUser entity);
+
 }

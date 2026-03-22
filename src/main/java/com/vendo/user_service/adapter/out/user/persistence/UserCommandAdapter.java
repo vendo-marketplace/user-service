@@ -19,14 +19,15 @@ public class UserCommandAdapter implements UserCommandPort {
     private final UserMapper userMapper;
 
     @Override
-    public MongoUser save(User user) {
+    public User save(User user) {
         userRepository.findByEmail(user.getEmail()).ifPresent(u -> {
             throw new UserAlreadyExistsException("User already exists.");
         });
         log.info("Checkout user: {}", user);
         MongoUser mongoUser = userMapper.toMongoUser(user);
         log.info("Checkout Mongo user: {}", mongoUser);
-        return userRepository.save(mongoUser);
+        MongoUser save = userRepository.save(mongoUser);
+        return userMapper.toUser(save);
     }
 
     @Override
