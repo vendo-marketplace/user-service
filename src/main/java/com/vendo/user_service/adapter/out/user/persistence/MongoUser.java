@@ -2,7 +2,6 @@ package com.vendo.user_service.adapter.out.user.persistence;
 
 import com.vendo.user_service.domain.user.User;
 import lombok.*;
-import lombok.experimental.SuperBuilder;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.annotation.LastModifiedDate;
@@ -12,7 +11,6 @@ import java.time.Instant;
 
 @Data
 @Document
-@SuperBuilder
 @NoArgsConstructor
 @AllArgsConstructor
 @EqualsAndHashCode(callSuper = true)

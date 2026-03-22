@@ -6,8 +6,10 @@ import com.vendo.user_service.adapter.out.user.mapper.UserMapper;
 import com.vendo.user_service.domain.user.User;
 import com.vendo.user_service.port.user.UserCommandPort;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
+@Slf4j
 @Component
 @RequiredArgsConstructor
 public class UserCommandAdapter implements UserCommandPort {
@@ -21,8 +23,10 @@ public class UserCommandAdapter implements UserCommandPort {
         userRepository.findByEmail(user.getEmail()).ifPresent(u -> {
             throw new UserAlreadyExistsException("User already exists.");
         });
-
-        return userRepository.save(userMapper.toMongoUser(user));
+        log.info("Checkout user: {}", user);
+        MongoUser mongoUser = userMapper.toMongoUser(user);
+        log.info("Checkout Mongo user: {}", mongoUser);
+        return userRepository.save(mongoUser);
     }
 
     @Override
