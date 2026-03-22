@@ -26,7 +26,8 @@ public class UserCommandAdapter implements UserCommandPort {
         log.info("Checkout user: {}", user);
         MongoUser mongoUser = userMapper.toMongoUser(user);
         log.info("Checkout Mongo user: {}", mongoUser);
-        return userRepository.save(mongoUser);
+        userRepository.save(mongoUser);
+        return userMapper.toUser(mongoUser);
     }
 
     @Override

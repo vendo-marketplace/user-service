@@ -17,4 +17,7 @@ public interface UserMapper {
     User toUser(SaveUserRequest request);
 
     MongoUser toMongoUser(User user);
+
+    User toUser(MongoUser mongoUser);
+
 }

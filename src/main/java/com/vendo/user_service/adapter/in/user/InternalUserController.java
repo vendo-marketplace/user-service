@@ -39,8 +39,6 @@ public class InternalUserController {
 
     @PostMapping
     ResponseEntity<User> save(@Valid @RequestBody SaveUserRequest body) {
-        User user = userMapper.toUser(body);
-        log.info("InternalUserContollerBodyMappedUser:{}",user);
-        return ResponseEntity.ok(internalUserService.save(user));
+        return ResponseEntity.ok(internalUserService.save(userMapper.toUser(body)));
     }
 }
