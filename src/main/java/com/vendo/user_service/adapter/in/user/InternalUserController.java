@@ -8,12 +8,14 @@ import com.vendo.user_service.application.command.ExistsUserResponse;
 import com.vendo.user_service.domain.user.User;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/internal/users")
+@Slf4j
 public class InternalUserController {
 
     private final InternalUserService internalUserService;
@@ -37,6 +39,8 @@ public class InternalUserController {
 
     @PostMapping
     ResponseEntity<User> save(@Valid @RequestBody SaveUserRequest body) {
-        return ResponseEntity.ok(internalUserService.save(userMapper.toUser(body)));
+        User user = userMapper.toUser(body);
+        log.info("InternalUserContollerBodyMappedUser:{}",user);
+        return ResponseEntity.ok(internalUserService.save(user));
     }
 }
