@@ -14,6 +14,6 @@ WORKDIR /app
 
 COPY --from=build /build/target/user-service*.jar user-service.jar
 
-EXPOSE xxxx
+EXPOSE 8040
 
 CMD ["java", "-jar", "user-service.jar"]
