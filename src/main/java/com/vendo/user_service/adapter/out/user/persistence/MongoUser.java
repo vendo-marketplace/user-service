@@ -10,22 +10,25 @@ import lombok.NoArgsConstructor;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.annotation.LastModifiedDate;
+import org.springframework.data.mongodb.core.index.Indexed;
 import org.springframework.data.mongodb.core.mapping.Document;
 
 import java.time.Instant;
 import java.time.LocalDate;
 
 @Data
+@Builder
 @Document
 @NoArgsConstructor
 @AllArgsConstructor
-@Builder
-public class MongoUser{
+public class MongoUser {
 
     @Id
     private String id;
 
+    @Indexed(unique = true)
     private String email;
+
     private boolean emailVerified;
     private UserRole role;
     private UserStatus status;

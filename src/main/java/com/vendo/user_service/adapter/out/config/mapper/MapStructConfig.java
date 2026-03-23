@@ -1,6 +1,5 @@
 package com.vendo.user_service.adapter.out.config.mapper;
 
-import org.mapstruct.Builder;
 import org.mapstruct.InjectionStrategy;
 import org.mapstruct.MapperConfig;
 import org.mapstruct.ReportingPolicy;
@@ -9,8 +8,7 @@ import org.mapstruct.ReportingPolicy;
         componentModel = "spring",
         unmappedTargetPolicy = ReportingPolicy.WARN,
         unmappedSourcePolicy = ReportingPolicy.WARN,
-        injectionStrategy = InjectionStrategy.CONSTRUCTOR,
-        builder = @Builder(disableBuilder = true)
+        injectionStrategy = InjectionStrategy.CONSTRUCTOR
 )
 public interface MapStructConfig {
 }

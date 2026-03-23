@@ -14,30 +14,40 @@ import org.springframework.stereotype.Component;
 @Slf4j
 public class UserCommandAdapter implements UserCommandPort {
 
-    private final UserRepository userRepository;
-
     private final UserMapper userMapper;
+
+    private final UserRepository userRepository;
 
     @Override
     public User save(User user) {
-        userRepository.findByEmail(user.getEmail()).ifPresent(u -> {
-            throw new UserAlreadyExistsException("User already exists.");
-        });
-        log.info("Checkout user: {}", user);
-        MongoUser mongoUser = userMapper.toMongoUser(user);
-        log.info("Checkout Mongo user: {}", mongoUser);
-        userRepository.save(mongoUser);
-        return userMapper.toUser(mongoUser);
+        throwIfUserExists(user.getEmail());
+        MongoUser saved = userRepository.save(userMapper.toMongoUser(user));
+        return userMapper.toUser(saved);
     }
 
     @Override
     public void update(String id, User user) {
-        userRepository.findById(id)
-                .orElseThrow(() -> new UserNotFoundException("User not found."));
+        throwIfUserNotExist(id);
+
+        log.info("Before save: {}", user);
 
         MongoUser mongoUser = userMapper.toMongoUser(user);
+        log.info("After mapping: {}", mongoUser);
         mongoUser.setId(id);
 
-        userRepository.save(mongoUser);
+        MongoUser saved = userRepository.save(mongoUser);
+        log.info("After save: {}", saved);
+    }
+
+    private void throwIfUserExists(String email) {
+        if (userRepository.existsByEmail(email)) {
+            throw new UserAlreadyExistsException("User already exists.");
+        }
+    }
+
+    private void throwIfUserNotExist(String id) {
+        if (!userRepository.existsById(id)) {
+            throw new UserNotFoundException("User not found.");
+        }
     }
 }
