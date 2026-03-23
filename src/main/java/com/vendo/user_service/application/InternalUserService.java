@@ -1,5 +1,7 @@
 package com.vendo.user_service.application;
 
+import com.vendo.user_service.adapter.in.user.dto.SaveUserRequest;
+import com.vendo.user_service.adapter.in.user.dto.UpdateUserRequest;
 import com.vendo.user_service.domain.user.User;
 import com.vendo.user_service.application.command.ExistsUserResponse;
 import com.vendo.user_service.port.user.UserCommandPort;
@@ -23,11 +25,11 @@ public class InternalUserService {
         return ExistsUserResponse.builder().exists(userQueryPort.existsByEmail(email)).build();
     }
 
-    public void update(String id, User user) {
-        userCommandPort.update(id, user);
+    public void update(String id, UpdateUserRequest body) {
+        userCommandPort.update(id, body);
     }
 
-    public User save(User user) {
-        return userCommandPort.save(user);
+    public User save(SaveUserRequest body) {
+        return userCommandPort.save(body);
     }
 }

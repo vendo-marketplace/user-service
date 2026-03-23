@@ -2,6 +2,8 @@ package com.vendo.user_service.adapter.out.user.persistence;
 
 import com.vendo.user_lib.exception.UserAlreadyExistsException;
 import com.vendo.user_lib.exception.UserNotFoundException;
+import com.vendo.user_service.adapter.in.user.dto.SaveUserRequest;
+import com.vendo.user_service.adapter.in.user.dto.UpdateUserRequest;
 import com.vendo.user_service.adapter.out.user.mapper.UserMapper;
 import com.vendo.user_service.domain.user.User;
 import com.vendo.user_service.port.user.UserCommandPort;
@@ -19,24 +21,16 @@ public class UserCommandAdapter implements UserCommandPort {
     private final UserRepository userRepository;
 
     @Override
-    public User save(User user) {
-        throwIfUserExists(user.getEmail());
-        MongoUser saved = userRepository.save(userMapper.toMongoUser(user));
+    public User save(SaveUserRequest body) {
+        throwIfUserExists(body.email());
+        MongoUser saved = userRepository.save(userMapper.toMongoUser(body));
         return userMapper.toUser(saved);
     }
 
     @Override
-    public void update(String id, User user) {
-        throwIfUserNotExist(id);
-
-        log.info("Before save: {}", user);
-
-        MongoUser mongoUser = userMapper.toMongoUser(user);
-        log.info("After mapping: {}", mongoUser);
-        mongoUser.setId(id);
-
-        MongoUser saved = userRepository.save(mongoUser);
-        log.info("After save: {}", saved);
+    public void update(String id, UpdateUserRequest body) {
+        MongoUser user = getOrThrow(id);
+        userMapper.updateUser(user, body);
     }
 
     private void throwIfUserExists(String email) {
@@ -45,9 +39,8 @@ public class UserCommandAdapter implements UserCommandPort {
         }
     }
 
-    private void throwIfUserNotExist(String id) {
-        if (!userRepository.existsById(id)) {
-            throw new UserNotFoundException("User not found.");
-        }
+    private MongoUser getOrThrow(String id) {
+        return userRepository.findById(id)
+                .orElseThrow(() -> new UserNotFoundException("User not found."));
     }
 }
