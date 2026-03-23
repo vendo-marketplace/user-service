@@ -31,6 +31,7 @@ public class UserCommandAdapter implements UserCommandPort {
     public void update(String id, UpdateUserRequest body) {
         MongoUser user = getOrThrow(id);
         userMapper.updateUser(user, body);
+        userRepository.save(user);
     }
 
     private void throwIfUserExists(String email) {
