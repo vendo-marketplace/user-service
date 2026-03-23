@@ -116,11 +116,9 @@ public class InternalUserControllerTest {
     @Test
     void update_shouldSuccessfullyUpdate() throws Exception {
         String id = String.valueOf(UUID.randomUUID());
-        User user = UserDataBuilder.withAllFields().build();
         UpdateUserRequest request = UpdateUserRequestDataBuilder.withAllFields().build();
 
-        when(userMapper.toUser(request)).thenReturn(user);
-        doNothing().when(userCommandPort).update(id, user);
+        doNothing().when(userCommandPort).update(id, request);
 
         mockMvc.perform(put("/internal/users")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -133,13 +131,11 @@ public class InternalUserControllerTest {
     @Test
     void update_shouldReturnNotFound() throws Exception {
         String id = String.valueOf(UUID.randomUUID());
-        User user = UserDataBuilder.withAllFields().build();
         UpdateUserRequest request = UpdateUserRequestDataBuilder.withAllFields().build();
 
         String requestUri = "/internal/users";
 
-        when(userMapper.toUser(request)).thenReturn(user);
-        doThrow(new UserNotFoundException("User not found.")).when(userCommandPort).update(id, user);
+        doThrow(new UserNotFoundException("User not found.")).when(userCommandPort).update(id, request);
 
         String content = mockMvc.perform(put(requestUri)
                         .contentType(MediaType.APPLICATION_JSON)
@@ -164,8 +160,7 @@ public class InternalUserControllerTest {
         User user = UserDataBuilder.withAllFields().build();
         SaveUserRequest request = SaveUserRequestDataBuilder.withAllFields().build();
 
-        when(userMapper.toUser(request)).thenReturn(user);
-        when(userCommandPort.save(user)).thenReturn(user);
+        when(userCommandPort.save(request)).thenReturn(user);
 
         String content = mockMvc.perform(post("/internal/users")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -182,12 +177,10 @@ public class InternalUserControllerTest {
 
     @Test
     void save_shouldReturnNotFound() throws Exception {
-        User user = UserDataBuilder.withAllFields().build();
         SaveUserRequest request = SaveUserRequestDataBuilder.withAllFields().build();
         String requestUri = "/internal/users";
 
-        when(userMapper.toUser(request)).thenReturn(user);
-        doThrow(new UserNotFoundException("User not found.")).when(userCommandPort).save(user);
+        doThrow(new UserNotFoundException("User not found.")).when(userCommandPort).save(request);
 
         String content = mockMvc.perform(post(requestUri)
                         .contentType(MediaType.APPLICATION_JSON)

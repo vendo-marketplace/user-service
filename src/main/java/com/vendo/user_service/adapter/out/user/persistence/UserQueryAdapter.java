@@ -1,6 +1,7 @@
 package com.vendo.user_service.adapter.out.user.persistence;
 
 import com.vendo.user_lib.exception.UserNotFoundException;
+import com.vendo.user_service.adapter.out.user.mapper.UserMapper;
 import com.vendo.user_service.domain.user.User;
 import com.vendo.user_service.port.user.UserQueryPort;
 import lombok.RequiredArgsConstructor;
@@ -11,11 +12,13 @@ import org.springframework.stereotype.Component;
 public class UserQueryAdapter implements UserQueryPort {
 
     private final UserRepository userRepository;
+    private final UserMapper userMapper;
 
     @Override
     public User getByEmail(String email) {
-        return userRepository.findByEmail(email)
+        MongoUser mongoUser = userRepository.findByEmail(email)
                 .orElseThrow(() -> new UserNotFoundException("User not found."));
+        return userMapper.toUser(mongoUser);
     }
 
     @Override
