@@ -1,8 +1,8 @@
 server:
-  url: server_test_url
+
 
 client:
-  url: client_test_url
+
 
 eureka:
   client:
