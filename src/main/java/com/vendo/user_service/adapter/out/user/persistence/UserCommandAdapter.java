@@ -8,12 +8,10 @@ import com.vendo.user_service.adapter.out.user.mapper.UserMapper;
 import com.vendo.user_service.domain.user.User;
 import com.vendo.user_service.port.user.UserCommandPort;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 @Component
 @RequiredArgsConstructor
-@Slf4j
 public class UserCommandAdapter implements UserCommandPort {
 
     private final UserMapper userMapper;
