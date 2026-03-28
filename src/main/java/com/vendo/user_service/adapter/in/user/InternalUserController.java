@@ -1,6 +1,5 @@
 package com.vendo.user_service.adapter.in.user;
 
-import com.vendo.user_service.adapter.out.user.mapper.UserMapper;
 import com.vendo.user_service.application.InternalUserService;
 import com.vendo.user_service.adapter.in.user.dto.SaveUserRequest;
 import com.vendo.user_service.adapter.in.user.dto.UpdateUserRequest;
@@ -18,8 +17,6 @@ public class InternalUserController {
 
     private final InternalUserService internalUserService;
 
-    private final UserMapper userMapper;
-
     @GetMapping
     ResponseEntity<User> getByEmail(@RequestParam String email) {
         return ResponseEntity.ok(internalUserService.getByEmail(email));
@@ -32,11 +29,11 @@ public class InternalUserController {
 
     @PutMapping
     void update(@RequestParam String id, @RequestBody UpdateUserRequest body) {
-        internalUserService.update(id, userMapper.toUser(body));
+        internalUserService.update(id, body);
     }
 
     @PostMapping
     ResponseEntity<User> save(@Valid @RequestBody SaveUserRequest body) {
-        return ResponseEntity.ok(internalUserService.save(userMapper.toUser(body)));
+        return ResponseEntity.ok(internalUserService.save(body));
     }
 }
