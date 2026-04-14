@@ -5,6 +5,7 @@ import com.vendo.user_service.adapter.security.out.dto.InternalClaimPayload;
 import com.vendo.user_service.adapter.security.out.props.InternalJwtProperties;
 import com.vendo.user_service.adapter.security.out.utils.JwtUtils;
 import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.ExpiredJwtException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.authentication.BadCredentialsException;
@@ -31,9 +32,12 @@ public class InternalJwtTokenService implements TokenClaimsParser {
             Set<String> audience = claims.getAudience();
 
             return new InternalClaimPayload(claims.getSubject(), roles, audience);
+        } catch (ExpiredJwtException e) {
+            log.error(e.getMessage());
+            throw new BadCredentialsException("Expired token.");
         } catch (Exception e) {
             log.error(e.getMessage());
-            throw new BadCredentialsException(e.getMessage());
+            throw new BadCredentialsException("Invalid token.");
         }
     }
 
@@ -47,7 +51,8 @@ public class InternalJwtTokenService implements TokenClaimsParser {
             }
         }
 
-        throw new BadCredentialsException("Invalid roles.");
+        log.error("Invalid roles: {}.", payload);
+        throw new BadCredentialsException("Invalid token.");
     }
 
 }

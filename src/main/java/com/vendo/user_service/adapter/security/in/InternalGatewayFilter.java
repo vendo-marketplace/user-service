@@ -68,16 +68,13 @@ public class InternalGatewayFilter extends OncePerRequestFilter {
     }
 
     private String getTokenFromRequest(String authorization) {
-        if (authorization != null) {
-            boolean startsWithBearer = authorization.startsWith(BEARER_PREFIX);
-            boolean tokenIsNotEmpty = authorization.length() > BEARER_PREFIX.length() + 1;
-
-            if (startsWithBearer && tokenIsNotEmpty) {
-                return authorization.substring(BEARER_PREFIX.length());
-            }
+        if (authorization == null) {
+            throw new AuthenticationCredentialsNotFoundException("Unauthorized.");
+        } else if (!authorization.startsWith(BEARER_PREFIX)) {
+            throw new BadCredentialsException("Invalid token.");
         }
 
-        throw new AuthenticationCredentialsNotFoundException("Unauthorized.");
+        return authorization.substring(BEARER_PREFIX.length());
     }
 
     private InternalClaimPayload validateClaims(String token) {

@@ -106,7 +106,7 @@ public class InternalGatewayFilterTest {
 
         ExceptionResponse exceptionResponse = objectMapper.readValue(content, ExceptionResponse.class);
         assertThat(exceptionResponse).isNotNull();
-        assertThat(exceptionResponse.getMessage()).isEqualTo("Unauthorized.");
+        assertThat(exceptionResponse.getMessage()).isEqualTo("Invalid token.");
         assertThat(exceptionResponse.getCode()).isEqualTo(HttpStatus.UNAUTHORIZED.value());
         assertThat(exceptionResponse.getPath()).isEqualTo(requestPath);
     }
