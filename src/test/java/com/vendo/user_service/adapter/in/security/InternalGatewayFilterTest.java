@@ -1,18 +1,18 @@
 package com.vendo.user_service.adapter.in.security;
 
-import com.vendo.core_lib.exception.ExceptionResponse;
 import com.vendo.core_lib.type.ServiceName;
 import com.vendo.core_lib.type.ServiceRole;
-import com.vendo.security_lib.exception.InvalidTokenException;
+import com.vendo.security_lib.exception.response.ExceptionResponse;
 import com.vendo.user_service.adapter.in.security.builder.InternalClaimPayloadDataBuilder;
-import com.vendo.user_service.adapter.out.security.jwt.TokenClaimsParser;
-import com.vendo.user_service.adapter.out.security.jwt.dto.InternalClaimPayload;
+import com.vendo.user_service.adapter.security.out.TokenClaimsParser;
+import com.vendo.user_service.adapter.security.out.dto.InternalClaimPayload;
 import com.vendo.user_service.adapter.out.security.util.SecurityContextUtils;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -133,7 +133,7 @@ public class InternalGatewayFilterTest {
         String requestPath = "/internal/test/ping";
         String invalidToken = "invalid_token";
 
-        when(tokenClaimsParser.parseInternalClaims(invalidToken)).thenThrow(new InvalidTokenException("Invalid token."));
+        when(tokenClaimsParser.parseInternalClaims(invalidToken)).thenThrow(new BadCredentialsException("Invalid token."));
 
         String content = mockMvc.perform(get(requestPath).header(AUTHORIZATION_HEADER, BEARER_PREFIX + invalidToken))
                 .andExpect(status().isUnauthorized())
