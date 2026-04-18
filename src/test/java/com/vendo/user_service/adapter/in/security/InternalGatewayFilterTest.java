@@ -1,5 +1,6 @@
 package com.vendo.user_service.adapter.in.security;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.vendo.core_lib.exception.ExceptionResponse;
 import com.vendo.core_lib.type.ServiceName;
 import com.vendo.core_lib.type.ServiceRole;
@@ -10,8 +11,8 @@ import com.vendo.user_service.adapter.out.security.jwt.dto.InternalClaimPayload;
 import com.vendo.user_service.adapter.out.security.util.SecurityContextUtils;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
@@ -19,7 +20,6 @@ import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
-import tools.jackson.databind.ObjectMapper;
 
 import java.util.List;
 import java.util.Set;
@@ -115,7 +115,7 @@ public class InternalGatewayFilterTest {
     void doFilterInternal_shouldReturnUnauthorized_whenNoTokenAfterBearerPrefix() throws Exception {
         String requestPath = "/internal/test/ping";
 
-        String content = mockMvc.perform(get(requestPath).header(AUTHORIZATION_HEADER))
+        String content = mockMvc.perform(get(requestPath).header(AUTHORIZATION_HEADER, ""))
                 .andExpect(status().isUnauthorized())
                 .andReturn().getResponse().getContentAsString();
 
