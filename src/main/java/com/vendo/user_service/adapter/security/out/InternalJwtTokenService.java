@@ -29,7 +29,7 @@ public class InternalJwtTokenService implements TokenClaimsParser {
             Claims claims = jwtUtils.parseSignedClaims(token, internalJwtProperties.getKey()).getPayload();
 
             List<String> roles = parseRoles(claims.get(InternalTokenClaim.ROLES.getClaim()));
-            Set<String> audience = claims.getAudience();
+            Set<String> audience = parseAudience(claims);
 
             return new InternalClaimPayload(claims.getSubject(), roles, audience);
         } catch (ExpiredJwtException e) {
@@ -55,4 +55,14 @@ public class InternalJwtTokenService implements TokenClaimsParser {
         throw new BadCredentialsException("Invalid token.");
     }
 
+    private Set<String> parseAudience(Claims claims) {
+        Set<String> audience = claims.getAudience();
+
+        if (audience == null || audience.isEmpty()) {
+            log.error("Empty audience.");
+            throw new BadCredentialsException("Invalid token.");
+        }
+
+        return audience;
+    }
 }
