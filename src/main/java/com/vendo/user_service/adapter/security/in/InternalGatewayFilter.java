@@ -64,11 +64,7 @@ public class InternalGatewayFilter extends OncePerRequestFilter {
     @Override
     protected boolean shouldNotFilter(HttpServletRequest request) {
         String requestURI = request.getRequestURI();
-        log.info("Request url: {}.", requestURI);
-        log.debug("Request url: {}.", requestURI);
-        boolean permittedPath = antPathResolver.isPermittedPath(requestURI);
-        log.info("Permitted: {}.", permittedPath);
-        return permittedPath;
+        return antPathResolver.isPermittedPath(requestURI);
     }
 
     private String getTokenFromRequest(String authorization) {

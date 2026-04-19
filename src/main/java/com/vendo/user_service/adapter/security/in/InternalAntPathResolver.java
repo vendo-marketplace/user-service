@@ -12,12 +12,11 @@ public class InternalAntPathResolver implements AntPathResolver {
     private static final AntPathMatcher antPathMatcher = new AntPathMatcher();
 
     public static final String[] INTERNAL_PATHS = new String[] {
-            "/internal/**",
             "/actuator/health"
     };
 
     @Override
     public boolean isPermittedPath(String path) {
-        return Arrays.stream(INTERNAL_PATHS).noneMatch(pr -> antPathMatcher.match(pr, path));
+        return Arrays.stream(INTERNAL_PATHS).anyMatch(pr -> antPathMatcher.match(pr, path));
     }
 }
