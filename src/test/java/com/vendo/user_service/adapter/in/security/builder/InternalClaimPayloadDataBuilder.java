@@ -2,7 +2,7 @@ package com.vendo.user_service.adapter.in.security.builder;
 
 import com.vendo.core_lib.type.ServiceName;
 import com.vendo.core_lib.type.ServiceRole;
-import com.vendo.user_service.adapter.out.security.jwt.dto.InternalClaimPayload;
+import com.vendo.user_service.adapter.security.out.dto.InternalClaimPayload;
 
 import java.util.List;
 import java.util.Set;

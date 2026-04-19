@@ -1,12 +1,11 @@
 package com.vendo.user_service.adapter.in.user;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.vendo.core_lib.exception.ExceptionResponse;
-import com.vendo.test_utils_lib.AssertionUtils;
+import com.vendo.security_lib.exception.response.ExceptionResponse;
 import com.vendo.user_lib.exception.UserNotFoundException;
-import com.vendo.user_service.adapter.in.user.dto.SaveUserRequest;
-import com.vendo.user_service.adapter.in.user.dto.UpdateUserRequest;
-import com.vendo.user_service.adapter.out.user.mapper.UserMapper;
+import com.vendo.user_service.adapter.user.in.dto.SaveUserRequest;
+import com.vendo.user_service.adapter.user.in.dto.UpdateUserRequest;
+import com.vendo.user_service.adapter.user.out.mapper.UserMapper;
 import com.vendo.user_service.application.command.ExistsUserResponse;
 import com.vendo.user_service.domain.user.SaveUserRequestDataBuilder;
 import com.vendo.user_service.domain.user.UpdateUserRequestDataBuilder;
@@ -14,6 +13,7 @@ import com.vendo.user_service.domain.user.User;
 import com.vendo.user_service.domain.user.UserDataBuilder;
 import com.vendo.user_service.port.user.UserCommandPort;
 import com.vendo.user_service.port.user.UserQueryPort;
+import com.vendo.utils_lib.AssertionUtils;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -68,7 +68,7 @@ public class InternalUserControllerTest {
         assertThat(content).isNotBlank();
         User userResponse = objectMapper.readValue(content, User.class);
 
-        AssertionUtils.assertFromDto(user, userResponse);
+        AssertionUtils.assertFrom(user, userResponse);
     }
 
     @Test
@@ -172,7 +172,7 @@ public class InternalUserControllerTest {
         assertThat(content).isNotBlank();
         User userResponse = objectMapper.readValue(content, User.class);
 
-        AssertionUtils.assertFromDto(userResponse, user);
+        AssertionUtils.assertFrom(userResponse, user);
     }
 
     @Test

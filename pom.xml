@@ -132,19 +132,19 @@
         <dependency>
             <groupId>io.github.vendo-marketplace-be</groupId>
             <artifactId>core-lib</artifactId>
-            <version>2.1.2</version>
+            <version>3.4.2</version>
         </dependency>
 
         <dependency>
             <groupId>io.github.vendo-marketplace-be</groupId>
             <artifactId>security-lib</artifactId>
-            <version>2.2.1</version>
+            <version>4.3.1</version>
         </dependency>
 
         <dependency>
             <groupId>io.github.vendo-marketplace-be</groupId>
-            <artifactId>test-utils-lib</artifactId>
-            <version>1.0.0</version>
+            <artifactId>utils-lib</artifactId>
+            <version>2.0.0</version>
         </dependency>
 
         <!-- Test dependencies -->

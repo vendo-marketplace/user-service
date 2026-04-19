@@ -3,7 +3,7 @@ package com.vendo.user_service.domain.user;
 import com.vendo.user_lib.type.ProviderType;
 import com.vendo.user_lib.type.UserRole;
 import com.vendo.user_lib.type.UserStatus;
-import com.vendo.user_service.adapter.in.user.dto.SaveUserRequest;
+import com.vendo.user_service.adapter.user.in.dto.SaveUserRequest;
 
 public class SaveUserRequestDataBuilder {
 

@@ -1,5 +1,3 @@
-server:
-  url: server_url
 eureka:
   client:
     enabled: false
