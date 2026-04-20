@@ -14,6 +14,8 @@ import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.access.ExceptionTranslationFilter;
 
+import static com.vendo.user_service.adapter.security.in.InternalAntPathResolver.INTERNAL_PATHS;
+
 @Configuration
 @EnableWebSecurity
 @EnableMethodSecurity
@@ -35,7 +37,10 @@ public class SecurityConfig {
                         .accessDeniedHandler(accessDeniedHandler)
                         .authenticationEntryPoint(authenticationEntryPoint))
                 .sessionManagement(sessionManager -> sessionManager.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-                .authorizeHttpRequests(auth -> auth.anyRequest().authenticated())
+                .authorizeHttpRequests(auth -> auth
+                        .requestMatchers(INTERNAL_PATHS).permitAll()
+                        .anyRequest().authenticated()
+                )
                 .addFilterAfter(internalGatewayFilter, ExceptionTranslationFilter.class);
 
         return http.build();
