@@ -4,15 +4,20 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.vendo.core_lib.type.ServiceName;
 import com.vendo.core_lib.type.ServiceRole;
 import com.vendo.security_lib.exception.response.ExceptionResponse;
+import com.vendo.user_lib.type.UserStatus;
 import com.vendo.user_service.adapter.in.security.builder.InternalClaimPayloadDataBuilder;
+import com.vendo.user_service.adapter.in.security.dto.PingRequest;
 import com.vendo.user_service.adapter.security.out.TokenClaimsParser;
 import com.vendo.user_service.adapter.security.out.dto.InternalClaimPayload;
 import com.vendo.user_service.adapter.out.security.util.SecurityContextUtils;
+import com.vendo.user_service.domain.user.User;
+import com.vendo.user_service.domain.user.UserDataBuilder;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
@@ -27,9 +32,12 @@ import java.util.Set;
 import static com.vendo.security_lib.constants.AuthConstants.AUTHORIZATION_HEADER;
 import static com.vendo.security_lib.constants.AuthConstants.BEARER_PREFIX;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.springframework.http.HttpHeaders.AUTHORIZATION;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.authentication;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @SpringBootTest
@@ -60,6 +68,8 @@ public class InternalGatewayFilterTest {
 
         assertThat(content).isNotBlank();
         assertThat(content).isEqualTo("pong");
+
+        verify(tokenClaimsParser).parseInternalClaims(token);
     }
 
     @Test
@@ -74,6 +84,28 @@ public class InternalGatewayFilterTest {
 
         assertThat(content).isNotBlank();
         assertThat(content).isEqualTo("pong");
+    }
+
+    @Test
+    void doFilterInternal_shouldReturnUnsupportedMediaType_whenTypeIsNotJson() throws Exception {
+        PingRequest request = new PingRequest("content");
+        String token = "access_token";
+        InternalClaimPayload payload = InternalClaimPayloadDataBuilder.buildWithAllFields().build();
+
+        when(tokenClaimsParser.parseInternalClaims(token)).thenReturn(payload);
+
+        String content = mockMvc.perform(post("/internal/test/ping")
+                        .header(AUTHORIZATION, BEARER_PREFIX + token)
+                        .contentType(MediaType.TEXT_PLAIN).content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isUnsupportedMediaType())
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
+
+        assertThat(content).isNotBlank();
+        ExceptionResponse exceptionResponse = objectMapper.readValue(content, ExceptionResponse.class);
+        assertThat(exceptionResponse.getMessage()).isEqualTo("Unsupported media type.");
+        assertThat(exceptionResponse.getCode()).isEqualTo(HttpStatus.UNSUPPORTED_MEDIA_TYPE.value());
     }
 
     @Test

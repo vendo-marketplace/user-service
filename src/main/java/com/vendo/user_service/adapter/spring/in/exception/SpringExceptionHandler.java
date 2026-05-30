@@ -1,12 +1,15 @@
-package com.vendo.user_service.adapter.server.in.exception;
+package com.vendo.user_service.adapter.spring.in.exception;
 
 import com.vendo.security_lib.exception.response.ExceptionResponse;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.core.Ordered;
+import org.springframework.core.annotation.Order;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.FieldError;
+import org.springframework.web.HttpMediaTypeNotSupportedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -15,8 +18,9 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 @Slf4j
+@Order(Ordered.HIGHEST_PRECEDENCE)
 @ControllerAdvice
-public class ServerExceptionHandler {
+class SpringExceptionHandler {
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
     protected ResponseEntity<ExceptionResponse> handleMethodArgumentNotValidException(MethodArgumentNotValidException e, HttpServletRequest request) {
@@ -44,5 +48,17 @@ public class ServerExceptionHandler {
                 .build();
 
         return ResponseEntity.badRequest().body(exceptionResponse);
+    }
+
+    @ExceptionHandler(HttpMediaTypeNotSupportedException.class)
+    protected ResponseEntity<ExceptionResponse> handleHttpMediaTypeNotSupportedException(HttpMediaTypeNotSupportedException e, HttpServletRequest request) {
+        log.error(e.getMessage());
+        ExceptionResponse exceptionResponse = ExceptionResponse.builder()
+                .message("Unsupported media type.")
+                .code(HttpStatus.UNSUPPORTED_MEDIA_TYPE.value())
+                .path(request.getRequestURI())
+                .build();
+
+        return ResponseEntity.status(HttpStatus.UNSUPPORTED_MEDIA_TYPE).body(exceptionResponse);
     }
 }
