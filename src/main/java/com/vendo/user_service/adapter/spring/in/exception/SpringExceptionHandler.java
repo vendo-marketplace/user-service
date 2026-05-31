@@ -4,8 +4,6 @@ import com.vendo.security_lib.exception.response.ExceptionResponse;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
-import org.springframework.core.Ordered;
-import org.springframework.core.annotation.Order;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.FieldError;
@@ -18,7 +16,6 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 @Slf4j
-@Order(Ordered.HIGHEST_PRECEDENCE)
 @ControllerAdvice
 class SpringExceptionHandler {
 
@@ -60,5 +57,16 @@ class SpringExceptionHandler {
                 .build();
 
         return ResponseEntity.status(HttpStatus.UNSUPPORTED_MEDIA_TYPE).body(exceptionResponse);
+    }
+
+    @ExceptionHandler({NullPointerException.class, IllegalArgumentException.class})
+    protected ResponseEntity<ExceptionResponse> handleNullPointerException(NullPointerException e, HttpServletRequest request) {
+        log.error(e.getMessage());
+        ExceptionResponse exceptionResponse = ExceptionResponse.builder()
+                .message("Internal server error.")
+                .code(HttpStatus.INTERNAL_SERVER_ERROR.value())
+                .path(request.getRequestURI()).build();
+
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(exceptionResponse);
     }
 }
