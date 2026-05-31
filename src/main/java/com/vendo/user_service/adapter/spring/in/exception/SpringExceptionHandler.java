@@ -35,18 +35,6 @@ class SpringExceptionHandler {
         return ResponseEntity.badRequest().body(exceptionResponse);
     }
 
-    @ExceptionHandler(IllegalArgumentException.class)
-    protected ResponseEntity<ExceptionResponse> handleIllegalArgumentException(IllegalArgumentException e, HttpServletRequest request) {
-        log.error(e.getMessage());
-        ExceptionResponse exceptionResponse = ExceptionResponse.builder()
-                .message("Internal server error.")
-                .code(HttpStatus.INTERNAL_SERVER_ERROR.value())
-                .path(request.getRequestURI())
-                .build();
-
-        return ResponseEntity.badRequest().body(exceptionResponse);
-    }
-
     @ExceptionHandler(HttpMediaTypeNotSupportedException.class)
     protected ResponseEntity<ExceptionResponse> handleHttpMediaTypeNotSupportedException(HttpMediaTypeNotSupportedException e, HttpServletRequest request) {
         log.error(e.getMessage());
