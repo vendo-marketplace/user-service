@@ -1,8 +1,7 @@
 package com.vendo.user_service.adapter.security.out.config;
 
-import com.vendo.user_service.adapter.security.in.InternalGatewayFilter;
-import com.vendo.user_service.adapter.security.in.exception.JwtAccessDeniedHandler;
-import com.vendo.user_service.adapter.security.in.exception.JwtAuthenticationEntryPoint;
+import com.vendo.user_service.adapter.security.in.InternalFilter;
+import com.vendo.user_service.infrastructure.props.PathProps;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -11,10 +10,10 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
+import org.springframework.security.web.AuthenticationEntryPoint;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.access.AccessDeniedHandler;
 import org.springframework.security.web.access.ExceptionTranslationFilter;
-
-import static com.vendo.user_service.adapter.security.in.InternalAntPathResolver.INTERNAL_PATHS;
 
 @Configuration
 @EnableWebSecurity
@@ -22,11 +21,12 @@ import static com.vendo.user_service.adapter.security.in.InternalAntPathResolver
 @RequiredArgsConstructor
 public class SecurityConfig {
 
-    private final InternalGatewayFilter internalGatewayFilter;
+    private final PathProps props;
 
-    private final JwtAccessDeniedHandler accessDeniedHandler;
+    private final InternalFilter internalFilter;
 
-    private final JwtAuthenticationEntryPoint authenticationEntryPoint;
+    private final AccessDeniedHandler accessDeniedHandler;
+    private final AuthenticationEntryPoint authenticationEntryPoint;
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
@@ -38,10 +38,10 @@ public class SecurityConfig {
                         .authenticationEntryPoint(authenticationEntryPoint))
                 .sessionManagement(sessionManager -> sessionManager.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers(INTERNAL_PATHS).permitAll()
+                        .requestMatchers(props.getAllPaths()).permitAll()
                         .anyRequest().authenticated()
                 )
-                .addFilterAfter(internalGatewayFilter, ExceptionTranslationFilter.class);
+                .addFilterAfter(internalFilter, ExceptionTranslationFilter.class);
 
         return http.build();
     }

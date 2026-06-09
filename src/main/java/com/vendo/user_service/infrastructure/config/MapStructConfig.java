@@ -1,4 +1,4 @@
-package com.vendo.user_service.infrastructure;
+package com.vendo.user_service.infrastructure.config;
 
 import org.mapstruct.InjectionStrategy;
 import org.mapstruct.MapperConfig;

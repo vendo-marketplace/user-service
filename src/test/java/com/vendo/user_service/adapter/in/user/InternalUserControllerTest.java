@@ -1,6 +1,7 @@
 package com.vendo.user_service.adapter.in.user;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.vendo.core_lib.utils.AssertionUtils;
 import com.vendo.security_lib.exception.response.ExceptionResponse;
 import com.vendo.user_lib.exception.UserNotFoundException;
 import com.vendo.user_service.adapter.user.in.dto.SaveUserRequest;
@@ -13,7 +14,6 @@ import com.vendo.user_service.domain.user.User;
 import com.vendo.user_service.domain.user.UserDataBuilder;
 import com.vendo.user_service.port.user.UserCommandPort;
 import com.vendo.user_service.port.user.UserQueryPort;
-import com.vendo.utils_lib.AssertionUtils;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
