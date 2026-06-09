@@ -9,11 +9,13 @@ import com.vendo.security_starter.jwt.parser.TokenClaimsParser;
 import com.vendo.user_service.adapter.in.security.builder.TokenClaimsDataBuilder;
 import com.vendo.user_service.adapter.out.security.util.SecurityContextUtils;
 import com.vendo.user_service.adapter.security.out.props.JwtProperties;
+import com.vendo.user_service.test_utils.controller.PongRequest;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
@@ -31,6 +33,7 @@ import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.mockito.Mockito.when;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.authentication;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @SpringBootTest
@@ -94,6 +97,30 @@ public class InternalFilterTest {
         assertThat(exceptionResponse).isNotNull();
         assertThat(exceptionResponse.getMessage()).isEqualTo("Unauthorized.");
         assertThat(exceptionResponse.getCode()).isEqualTo(HttpStatus.UNAUTHORIZED.value());
+        assertThat(exceptionResponse.getPath()).isEqualTo(requestPath);
+    }
+
+    @Test
+    void doFilterInternal_shouldReturnUnsupportedMediaType_whenMediaIsText() throws Exception {
+        String requestPath = "/internal/ping/pong";
+        PongRequest request = new PongRequest("content");
+        String subject = ServiceName.AUTH_SERVICE.toString();
+        GrantedAuthority authority = new SimpleGrantedAuthority(ServiceRole.INTERNAL.toString());
+
+        Authentication auth = SecurityContextUtils.initAuth(subject, List.of(authority));
+        String content = mockMvc.perform(post(requestPath)
+                        .with(authentication(auth))
+                        .content(objectMapper.writeValueAsString(request))
+                        .contentType(MediaType.TEXT_PLAIN))
+                .andExpect(status().isUnsupportedMediaType())
+                .andReturn().getResponse().getContentAsString();
+
+        assertThat(content).isNotBlank();
+
+        ExceptionResponse exceptionResponse = objectMapper.readValue(content, ExceptionResponse.class);
+        assertThat(exceptionResponse).isNotNull();
+        assertThat(exceptionResponse.getMessage()).isEqualTo("Unsupported media type.");
+        assertThat(exceptionResponse.getCode()).isEqualTo(HttpStatus.UNSUPPORTED_MEDIA_TYPE.value());
         assertThat(exceptionResponse.getPath()).isEqualTo(requestPath);
     }
 

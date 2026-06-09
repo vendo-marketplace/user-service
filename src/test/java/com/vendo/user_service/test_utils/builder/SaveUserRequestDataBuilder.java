@@ -1,4 +1,4 @@
-package com.vendo.user_service.domain.user;
+package com.vendo.user_service.test_utils.builder;
 
 import com.vendo.user_lib.type.ProviderType;
 import com.vendo.user_lib.type.UserRole;
