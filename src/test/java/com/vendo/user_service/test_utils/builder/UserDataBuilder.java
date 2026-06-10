@@ -10,6 +10,7 @@ public class UserDataBuilder {
 
     public static User.UserBuilder withAllFields() {
         return User.builder()
+                .id("id")
                 .email("test@mail.com")
                 .emailVerified(true)
                 .status(UserStatus.ACTIVE)

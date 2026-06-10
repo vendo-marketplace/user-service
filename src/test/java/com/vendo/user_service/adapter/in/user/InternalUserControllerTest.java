@@ -95,6 +95,47 @@ public class InternalUserControllerTest {
     }
 
     @Test
+    void getById_shouldReturnUser() throws Exception {
+        User user = UserDataBuilder.withAllFields().build();
+
+        when(userQueryPort.getById(user.getId())).thenReturn(user);
+
+        String content = mockMvc.perform(get("/internal/users")
+                        .param("id", user.getId())
+                        .with(authentication(initAuth(null, null))))
+                .andExpect(status().isOk())
+                .andReturn().getResponse().getContentAsString();
+
+        assertThat(content).isNotBlank();
+        User userResponse = objectMapper.readValue(content, User.class);
+
+        AssertionUtils.assertFrom(user, userResponse);
+    }
+
+    @Test
+    void getById_shouldReturnNotFound() throws Exception {
+        User user = UserDataBuilder.withAllFields().build();
+
+        when(userQueryPort.getById(user.getId())).thenThrow(new UserNotFoundException("User not found."));
+
+        String content = mockMvc.perform(get("/internal/users")
+                        .param("id", user.getId())
+                        .with(authentication(initAuth(null, null))))
+                .andExpect(status().isNotFound())
+                .andReturn().getResponse().getContentAsString();
+
+        assertThat(content).isNotBlank();
+
+        ExceptionResponse exceptionResponse = objectMapper.readValue(content, ExceptionResponse.class);
+
+        assertThat(exceptionResponse).isNotNull();
+        assertThat(exceptionResponse.getCode()).isEqualTo(HttpStatus.NOT_FOUND.value());
+        assertThat(exceptionResponse.getMessage()).isEqualTo("User not found.");
+        assertThat(exceptionResponse.getPath()).isEqualTo("/internal/users");
+        assertThat(exceptionResponse.getTimestamp()).isNotNull();
+    }
+
+    @Test
     void existsByEmail_shouldReturnExistenceStatus() throws Exception {
         String email = "test@gmail.com";
 

@@ -17,12 +17,12 @@ public class InternalUserController {
 
     private final InternalUserUseCase useCase;
 
-    @GetMapping
+    @GetMapping(params = "id")
     ResponseEntity<User> getById(@RequestParam String id) {
         return ResponseEntity.ok(useCase.getById(id));
     }
 
-    @GetMapping
+    @GetMapping(params = "email")
     ResponseEntity<User> getByEmail(@RequestParam String email) {
         return ResponseEntity.ok(useCase.getByEmail(email));
     }
