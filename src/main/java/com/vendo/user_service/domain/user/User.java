@@ -10,6 +10,7 @@ import lombok.NoArgsConstructor;
 
 import java.time.Instant;
 import java.time.LocalDate;
+import java.util.Set;
 
 @Data
 @Builder
@@ -20,7 +21,7 @@ public class User {
     private String id;
     private String email;
     private boolean emailVerified;
-    private UserRole role;
+    private Set<UserRole> roles;
     private UserStatus status;
     private ProviderType providerType;
     private String password;
