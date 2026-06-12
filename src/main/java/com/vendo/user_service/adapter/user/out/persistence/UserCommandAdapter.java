@@ -8,6 +8,7 @@ import com.vendo.user_service.adapter.user.out.mapper.UserMapper;
 import com.vendo.user_service.domain.user.User;
 import com.vendo.user_service.port.user.UserCommandPort;
 import lombok.RequiredArgsConstructor;
+import org.springframework.dao.DuplicateKeyException;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -20,9 +21,12 @@ public class UserCommandAdapter implements UserCommandPort {
 
     @Override
     public User save(SaveUserRequest body) {
-        throwIfUserExists(body.email());
-        MongoUser saved = userRepository.save(userMapper.toMongoUser(body));
-        return userMapper.toUser(saved);
+        try {
+            MongoUser saved = userRepository.save(userMapper.toMongoUser(body));
+            return userMapper.toUser(saved);
+        } catch (DuplicateKeyException e) {
+            throw new UserAlreadyExistsException("User already exists.");
+        }
     }
 
     @Override
@@ -30,12 +34,6 @@ public class UserCommandAdapter implements UserCommandPort {
         MongoUser user = getOrThrow(id);
         userMapper.updateUser(user, body);
         userRepository.save(user);
-    }
-
-    private void throwIfUserExists(String email) {
-        if (userRepository.existsByEmail(email)) {
-            throw new UserAlreadyExistsException("User already exists.");
-        }
     }
 
     private MongoUser getOrThrow(String id) {
