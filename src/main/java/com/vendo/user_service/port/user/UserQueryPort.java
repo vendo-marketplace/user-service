@@ -4,6 +4,8 @@ import com.vendo.user_service.domain.user.User;
 
 public interface UserQueryPort {
 
+    User getById(String id);
+
     User getByEmail(String email);
 
     boolean existsByEmail(String email);

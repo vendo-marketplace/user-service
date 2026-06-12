@@ -1,19 +1,19 @@
 package com.vendo.user_service.adapter.in.user;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.vendo.core_lib.utils.AssertionUtils;
 import com.vendo.security_lib.exception.response.ExceptionResponse;
 import com.vendo.user_lib.exception.UserNotFoundException;
 import com.vendo.user_service.adapter.user.in.dto.SaveUserRequest;
 import com.vendo.user_service.adapter.user.in.dto.UpdateUserRequest;
 import com.vendo.user_service.adapter.user.out.mapper.UserMapper;
 import com.vendo.user_service.application.command.ExistsUserResponse;
-import com.vendo.user_service.domain.user.SaveUserRequestDataBuilder;
-import com.vendo.user_service.domain.user.UpdateUserRequestDataBuilder;
+import com.vendo.user_service.test_utils.builder.SaveUserRequestDataBuilder;
+import com.vendo.user_service.test_utils.builder.UpdateUserRequestDataBuilder;
 import com.vendo.user_service.domain.user.User;
-import com.vendo.user_service.domain.user.UserDataBuilder;
+import com.vendo.user_service.test_utils.builder.UserDataBuilder;
 import com.vendo.user_service.port.user.UserCommandPort;
 import com.vendo.user_service.port.user.UserQueryPort;
-import com.vendo.utils_lib.AssertionUtils;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -79,6 +79,47 @@ public class InternalUserControllerTest {
 
         String content = mockMvc.perform(get("/internal/users")
                         .param("email", user.getEmail())
+                        .with(authentication(initAuth(null, null))))
+                .andExpect(status().isNotFound())
+                .andReturn().getResponse().getContentAsString();
+
+        assertThat(content).isNotBlank();
+
+        ExceptionResponse exceptionResponse = objectMapper.readValue(content, ExceptionResponse.class);
+
+        assertThat(exceptionResponse).isNotNull();
+        assertThat(exceptionResponse.getCode()).isEqualTo(HttpStatus.NOT_FOUND.value());
+        assertThat(exceptionResponse.getMessage()).isEqualTo("User not found.");
+        assertThat(exceptionResponse.getPath()).isEqualTo("/internal/users");
+        assertThat(exceptionResponse.getTimestamp()).isNotNull();
+    }
+
+    @Test
+    void getById_shouldReturnUser() throws Exception {
+        User user = UserDataBuilder.withAllFields().build();
+
+        when(userQueryPort.getById(user.getId())).thenReturn(user);
+
+        String content = mockMvc.perform(get("/internal/users")
+                        .param("id", user.getId())
+                        .with(authentication(initAuth(null, null))))
+                .andExpect(status().isOk())
+                .andReturn().getResponse().getContentAsString();
+
+        assertThat(content).isNotBlank();
+        User userResponse = objectMapper.readValue(content, User.class);
+
+        AssertionUtils.assertFrom(user, userResponse);
+    }
+
+    @Test
+    void getById_shouldReturnNotFound() throws Exception {
+        User user = UserDataBuilder.withAllFields().build();
+
+        when(userQueryPort.getById(user.getId())).thenThrow(new UserNotFoundException("User not found."));
+
+        String content = mockMvc.perform(get("/internal/users")
+                        .param("id", user.getId())
                         .with(authentication(initAuth(null, null))))
                 .andExpect(status().isNotFound())
                 .andReturn().getResponse().getContentAsString();

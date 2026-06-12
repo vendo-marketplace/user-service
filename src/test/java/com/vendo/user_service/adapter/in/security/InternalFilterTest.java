@@ -4,15 +4,18 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.vendo.core_lib.type.ServiceName;
 import com.vendo.core_lib.type.ServiceRole;
 import com.vendo.security_lib.exception.response.ExceptionResponse;
-import com.vendo.user_service.adapter.in.security.builder.InternalClaimPayloadDataBuilder;
-import com.vendo.user_service.adapter.security.out.TokenClaimsParser;
-import com.vendo.user_service.adapter.security.out.dto.InternalClaimPayload;
+import com.vendo.security_starter.jwt.parser.TokenClaims;
+import com.vendo.security_starter.jwt.parser.TokenClaimsParser;
+import com.vendo.user_service.adapter.in.security.builder.TokenClaimsDataBuilder;
 import com.vendo.user_service.adapter.out.security.util.SecurityContextUtils;
+import com.vendo.user_service.adapter.security.out.props.JwtProperties;
+import com.vendo.user_service.test_utils.controller.PongRequest;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
@@ -24,18 +27,19 @@ import org.springframework.test.web.servlet.MockMvc;
 import java.util.List;
 import java.util.Set;
 
-import static com.vendo.security_lib.constants.AuthConstants.AUTHORIZATION_HEADER;
-import static com.vendo.security_lib.constants.AuthConstants.BEARER_PREFIX;
+import static com.vendo.security_lib.http.HttpUtils.AUTHORIZATION_HEADER;
+import static com.vendo.security_lib.http.HttpUtils.BEARER_PREFIX;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.mockito.Mockito.when;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.authentication;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @SpringBootTest
 @AutoConfigureMockMvc
 @ActiveProfiles("test")
-public class InternalGatewayFilterTest {
+public class InternalFilterTest {
 
     @Autowired
     private MockMvc mockMvc;
@@ -43,15 +47,18 @@ public class InternalGatewayFilterTest {
     @Autowired
     private ObjectMapper objectMapper;
 
+    @Autowired
+    private JwtProperties props;
+
     @MockitoBean
     private TokenClaimsParser tokenClaimsParser;
 
     @Test
     void doFilterInternal_shouldSuccessfullyFilter() throws Exception {
         String token = "valid_token";
-        InternalClaimPayload payload = InternalClaimPayloadDataBuilder.buildWithAllFields().build();
+        TokenClaims payload = TokenClaimsDataBuilder.buildWithAllFields().build();
 
-        when(tokenClaimsParser.parseInternalClaims(token)).thenReturn(payload);
+        when(tokenClaimsParser.extract(token, props.getInternal().key())).thenReturn(payload);
 
         String content = mockMvc.perform(get("/internal/test/ping")
                         .header(AUTHORIZATION_HEADER, BEARER_PREFIX + token))
@@ -94,6 +101,30 @@ public class InternalGatewayFilterTest {
     }
 
     @Test
+    void doFilterInternal_shouldReturnUnsupportedMediaType_whenMediaIsText() throws Exception {
+        String requestPath = "/internal/ping/pong";
+        PongRequest request = new PongRequest("content");
+        String subject = ServiceName.AUTH_SERVICE.toString();
+        GrantedAuthority authority = new SimpleGrantedAuthority(ServiceRole.INTERNAL.toString());
+
+        Authentication auth = SecurityContextUtils.initAuth(subject, List.of(authority));
+        String content = mockMvc.perform(post(requestPath)
+                        .with(authentication(auth))
+                        .content(objectMapper.writeValueAsString(request))
+                        .contentType(MediaType.TEXT_PLAIN))
+                .andExpect(status().isUnsupportedMediaType())
+                .andReturn().getResponse().getContentAsString();
+
+        assertThat(content).isNotBlank();
+
+        ExceptionResponse exceptionResponse = objectMapper.readValue(content, ExceptionResponse.class);
+        assertThat(exceptionResponse).isNotNull();
+        assertThat(exceptionResponse.getMessage()).isEqualTo("Unsupported media type.");
+        assertThat(exceptionResponse.getCode()).isEqualTo(HttpStatus.UNSUPPORTED_MEDIA_TYPE.value());
+        assertThat(exceptionResponse.getPath()).isEqualTo(requestPath);
+    }
+
+    @Test
     void doFilterInternal_shouldReturnUnauthorized_whenTokenWithoutBearerPrefix() throws Exception {
         String requestPath = "/internal/test/ping";
         String token = "valid_token";
@@ -106,7 +137,7 @@ public class InternalGatewayFilterTest {
 
         ExceptionResponse exceptionResponse = objectMapper.readValue(content, ExceptionResponse.class);
         assertThat(exceptionResponse).isNotNull();
-        assertThat(exceptionResponse.getMessage()).isEqualTo("Invalid token.");
+        assertThat(exceptionResponse.getMessage()).isEqualTo("Unauthorized.");
         assertThat(exceptionResponse.getCode()).isEqualTo(HttpStatus.UNAUTHORIZED.value());
         assertThat(exceptionResponse.getPath()).isEqualTo(requestPath);
     }
@@ -116,7 +147,7 @@ public class InternalGatewayFilterTest {
         String requestPath = "/internal/test/ping";
         String invalidToken = "invalid_token";
 
-        when(tokenClaimsParser.parseInternalClaims(invalidToken)).thenThrow(new BadCredentialsException("Invalid token."));
+        when(tokenClaimsParser.extract(invalidToken, props.getInternal().key())).thenThrow(new BadCredentialsException("Unauthorized."));
 
         String content = mockMvc.perform(get(requestPath).header(AUTHORIZATION_HEADER, BEARER_PREFIX + invalidToken))
                 .andExpect(status().isUnauthorized())
@@ -126,20 +157,20 @@ public class InternalGatewayFilterTest {
 
         ExceptionResponse exceptionResponse = objectMapper.readValue(content, ExceptionResponse.class);
         assertThat(exceptionResponse).isNotNull();
-        assertThat(exceptionResponse.getMessage()).isEqualTo("Invalid token.");
+        assertThat(exceptionResponse.getMessage()).isEqualTo("Unauthorized.");
         assertThat(exceptionResponse.getCode()).isEqualTo(HttpStatus.UNAUTHORIZED.value());
         assertThat(exceptionResponse.getPath()).isEqualTo(requestPath);
     }
 
     @Test
     void doFilterInternal_shouldReturnUnauthorized_whenAudienceClaimIsNotUserService() throws Exception {
-        InternalClaimPayload payload = InternalClaimPayloadDataBuilder.buildWithAllFields()
+        TokenClaims payload = TokenClaimsDataBuilder.buildWithAllFields()
                 .audience(Set.of(ServiceName.AUTH_SERVICE.toString()))
                 .build();
         String requestPath = "/internal/test/ping";
         String token = "valid_token";
 
-        when(tokenClaimsParser.parseInternalClaims(token)).thenReturn(payload);
+        when(tokenClaimsParser.extract(token, props.getInternal().key())).thenReturn(payload);
 
         String content = mockMvc.perform(get(requestPath).header(AUTHORIZATION_HEADER, BEARER_PREFIX + token))
                 .andExpect(status().isUnauthorized())
@@ -149,20 +180,20 @@ public class InternalGatewayFilterTest {
 
         ExceptionResponse exceptionResponse = objectMapper.readValue(content, ExceptionResponse.class);
         assertThat(exceptionResponse).isNotNull();
-        assertThat(exceptionResponse.getMessage()).isEqualTo("Invalid token.");
+        assertThat(exceptionResponse.getMessage()).isEqualTo("Unauthorized.");
         assertThat(exceptionResponse.getCode()).isEqualTo(HttpStatus.UNAUTHORIZED.value());
         assertThat(exceptionResponse.getPath()).isEqualTo(requestPath);
     }
 
     @Test
     void doFilterInternal_shouldReturnUnauthorized_whenRoleIsNotInternal() throws Exception {
-        InternalClaimPayload payload = InternalClaimPayloadDataBuilder.buildWithAllFields()
-                .roles(List.of("NOT_INTERNAL"))
+        TokenClaims payload = TokenClaimsDataBuilder.buildWithAllFields()
+                .roles(Set.of("NOT_INTERNAL"))
                 .build();
         String requestPath = "/internal/test/ping";
         String token = "valid_token";
 
-        when(tokenClaimsParser.parseInternalClaims(token)).thenReturn(payload);
+        when(tokenClaimsParser.extract(token, props.getInternal().key())).thenReturn(payload);
 
         String content = mockMvc.perform(get(requestPath).header(AUTHORIZATION_HEADER, BEARER_PREFIX + token))
                 .andExpect(status().isUnauthorized())
@@ -172,7 +203,7 @@ public class InternalGatewayFilterTest {
 
         ExceptionResponse exceptionResponse = objectMapper.readValue(content, ExceptionResponse.class);
         assertThat(exceptionResponse).isNotNull();
-        assertThat(exceptionResponse.getMessage()).isEqualTo("Invalid token.");
+        assertThat(exceptionResponse.getMessage()).isEqualTo("Unauthorized.");
         assertThat(exceptionResponse.getCode()).isEqualTo(HttpStatus.UNAUTHORIZED.value());
         assertThat(exceptionResponse.getPath()).isEqualTo(requestPath);
     }

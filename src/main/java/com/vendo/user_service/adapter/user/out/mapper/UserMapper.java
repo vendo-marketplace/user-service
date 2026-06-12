@@ -2,7 +2,7 @@ package com.vendo.user_service.adapter.user.out.mapper;
 
 import com.vendo.user_service.adapter.user.in.dto.SaveUserRequest;
 import com.vendo.user_service.adapter.user.in.dto.UpdateUserRequest;
-import com.vendo.user_service.infrastructure.MapStructConfig;
+import com.vendo.user_service.infrastructure.config.MapStructConfig;
 import com.vendo.user_service.adapter.user.out.persistence.MongoUser;
 import com.vendo.user_service.domain.user.User;
 import org.mapstruct.BeanMapping;

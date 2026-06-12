@@ -15,6 +15,13 @@ public class UserQueryAdapter implements UserQueryPort {
     private final UserMapper userMapper;
 
     @Override
+    public User getById(String id) {
+        MongoUser mongoUser = userRepository.findById(id)
+                .orElseThrow(() -> new UserNotFoundException("User not found."));
+        return userMapper.toUser(mongoUser);
+    }
+
+    @Override
     public User getByEmail(String email) {
         MongoUser mongoUser = userRepository.findByEmail(email)
                 .orElseThrow(() -> new UserNotFoundException("User not found."));

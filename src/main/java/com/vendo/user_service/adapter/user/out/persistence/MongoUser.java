@@ -15,6 +15,7 @@ import org.springframework.data.mongodb.core.mapping.Document;
 
 import java.time.Instant;
 import java.time.LocalDate;
+import java.util.Set;
 
 @Data
 @Builder
@@ -30,7 +31,7 @@ public class MongoUser {
     private String email;
 
     private boolean emailVerified;
-    private UserRole role;
+    private Set<UserRole> roles;
     private UserStatus status;
     private ProviderType providerType;
     private String password;
