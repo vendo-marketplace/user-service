@@ -69,7 +69,7 @@ public class InternalFilter extends OncePerRequestFilter {
     private TokenClaims validateClaims(String token) {
         TokenClaims claims = tokenClaimsParser.extract(token, props.getInternal().key());
 
-        if (StringUtils.isEmpty(claims.subject()) || !claims.subject().equals(ServiceName.AUTH_SERVICE.name())) {
+        if (StringUtils.isEmpty(claims.subject()) || !ServiceName.getAllNames().contains(claims.subject())) {
             throw new BadCredentialsException("Invalid subject %s.".formatted(claims.subject()));
         }
 
@@ -77,7 +77,7 @@ public class InternalFilter extends OncePerRequestFilter {
             throw new BadCredentialsException("Invalid roles %s.".formatted(claims.roles()));
         }
 
-        if (CollectionUtils.isEmpty(claims.audience()) || !claims.audience().contains(ServiceName.USER_SERVICE.name())) {
+        if (CollectionUtils.isEmpty(claims.audience()) || !claims.audience().contains(ServiceName.USER_SERVICE.getServiceName())) {
             throw new BadCredentialsException("Invalid audience %s.".formatted(claims.audience()));
         }
 
