@@ -23,6 +23,8 @@ public class UserExceptionHandler {
 
     @ExceptionHandler(UserNotFoundException.class)
     public ResponseEntity<ExceptionResponse> handleUserNotFoundException(UserNotFoundException e, HttpServletRequest request) {
+        System.out.println("Handler: " + e.getMessage());
+
         ExceptionResponse exceptionResponse = ExceptionResponse.builder()
                 .message(e.getMessage())
                 .code(HttpStatus.NOT_FOUND.value())

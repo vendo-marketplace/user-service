@@ -23,6 +23,7 @@ public class UserQueryAdapter implements UserQueryPort {
 
     @Override
     public User getByEmail(String email) {
+        System.out.println("Getting user by email: " + email);
         MongoUser mongoUser = userRepository.findByEmail(email)
                 .orElseThrow(() -> new UserNotFoundException("User not found."));
         return userMapper.toUser(mongoUser);
