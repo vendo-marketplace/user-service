@@ -1,9 +1,9 @@
 package com.vendo.user_service.adapter.in.security;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.vendo.core_lib.type.ServiceName;
-import com.vendo.core_lib.type.ServiceRole;
-import com.vendo.security_lib.exception.response.ExceptionResponse;
+import com.vendo.core_lib.types.ServiceName;
+import com.vendo.core_lib.types.ServiceRole;
+import com.vendo.security_lib.exception.ExceptionResponse;
 import com.vendo.security_starter.jwt.parser.TokenClaims;
 import com.vendo.security_starter.jwt.parser.TokenClaimsParser;
 import com.vendo.user_service.adapter.in.security.builder.TokenClaimsDataBuilder;
