@@ -4,8 +4,6 @@ import com.vendo.user_lib.type.ProviderType;
 import com.vendo.user_lib.type.UserStatus;
 import com.vendo.user_service.domain.user.User;
 
-import java.time.LocalDate;
-
 public class UserDataBuilder {
 
     public static User.UserBuilder withAllFields() {
@@ -16,7 +14,6 @@ public class UserDataBuilder {
                 .status(UserStatus.ACTIVE)
                 .providerType(ProviderType.LOCAL)
                 .password("password")
-                .birthDate(LocalDate.now())
                 .fullName("Full Name");
     }
 

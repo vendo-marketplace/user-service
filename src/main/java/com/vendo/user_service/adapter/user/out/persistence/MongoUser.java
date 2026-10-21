@@ -14,7 +14,6 @@ import org.springframework.data.mongodb.core.index.Indexed;
 import org.springframework.data.mongodb.core.mapping.Document;
 
 import java.time.Instant;
-import java.time.LocalDate;
 import java.util.Set;
 
 @Data
@@ -35,7 +34,6 @@ public class MongoUser {
     private UserStatus status;
     private ProviderType providerType;
     private String password;
-    private LocalDate birthDate;
     private String fullName;
 
     @CreatedDate

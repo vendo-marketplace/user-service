@@ -9,7 +9,6 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.time.Instant;
-import java.time.LocalDate;
 import java.util.Set;
 
 @Data
@@ -25,7 +24,6 @@ public class User {
     private UserStatus status;
     private ProviderType providerType;
     private String password;
-    private LocalDate birthDate;
     private String fullName;
     private Instant createdAt;
     private Instant updatedAt;
