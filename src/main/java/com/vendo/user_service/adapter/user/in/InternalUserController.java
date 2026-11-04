@@ -33,8 +33,8 @@ public class InternalUserController {
     }
 
     @PutMapping
-    void update(@RequestParam String id, @RequestBody UpdateUserRequest body) {
-        useCase.update(id, body);
+    ResponseEntity<User> update(@RequestParam String id, @RequestBody UpdateUserRequest body) {
+        return ResponseEntity.ok(useCase.update(id, body));
     }
 
     @PostMapping

@@ -30,10 +30,13 @@ public class UserCommandAdapter implements UserCommandPort {
     }
 
     @Override
-    public void update(String id, UpdateUserRequest body) {
+    public User update(String id, UpdateUserRequest body) {
         MongoUser user = getOrThrow(id);
+
         userMapper.updateUser(user, body);
         userRepository.save(user);
+
+        return userMapper.toUser(user);
     }
 
     private MongoUser getOrThrow(String id) {

@@ -12,7 +12,7 @@ public interface InternalUserUseCase {
 
     ExistsUserResponse existsByEmail(String email);
 
-    void update(String id, UpdateUserRequest body);
+    User update(String id, UpdateUserRequest body);
     User save(SaveUserRequest body);
 
 }

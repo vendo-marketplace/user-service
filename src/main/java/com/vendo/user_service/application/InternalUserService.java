@@ -34,8 +34,8 @@ public class InternalUserService implements InternalUserUseCase {
     }
 
     @Override
-    public void update(String id, UpdateUserRequest body) {
-        userCommandPort.update(id, body);
+    public User update(String id, UpdateUserRequest body) {
+        return userCommandPort.update(id, body);
     }
 
     @Override

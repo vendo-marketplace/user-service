@@ -158,15 +158,21 @@ public class InternalUserControllerTest {
     void update_shouldSuccessfullyUpdate() throws Exception {
         String id = String.valueOf(UUID.randomUUID());
         UpdateUserRequest request = UpdateUserRequestDataBuilder.withAllFields().build();
+        User updatedUser = UserDataBuilder.withAllFields().build();
 
-        doNothing().when(userCommandPort).update(id, request);
+        when(userCommandPort.update(id, request)).thenReturn(updatedUser);
 
-        mockMvc.perform(put("/internal/users")
+        String content = mockMvc.perform(put("/internal/users")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request))
                         .param("id", id)
                         .with(authentication(initAuth(null, null))))
-                .andExpect(status().isOk());
+                .andExpect(status().isOk())
+                .andReturn().getResponse().getContentAsString();
+
+        assertThat(content).isNotBlank();
+        User userResponse = objectMapper.readValue(content, User.class);
+        AssertionUtils.assertFrom(updatedUser, userResponse);
     }
 
     @Test
