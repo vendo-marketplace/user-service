@@ -2,7 +2,7 @@ package com.vendo.user_service.adapter.in.user;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.vendo.core_lib.utils.AssertionUtils;
-import com.vendo.security_lib.exception.response.ExceptionResponse;
+import com.vendo.security_lib.exception.ExceptionResponse;
 import com.vendo.user_lib.exception.UserNotFoundException;
 import com.vendo.user_service.adapter.user.in.dto.SaveUserRequest;
 import com.vendo.user_service.adapter.user.in.dto.UpdateUserRequest;

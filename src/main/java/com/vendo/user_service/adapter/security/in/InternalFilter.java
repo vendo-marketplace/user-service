@@ -1,7 +1,7 @@
 package com.vendo.user_service.adapter.security.in;
 
-import com.vendo.core_lib.type.ServiceName;
-import com.vendo.core_lib.type.ServiceRole;
+import com.vendo.core_lib.types.ServiceName;
+import com.vendo.core_lib.types.ServiceRole;
 import com.vendo.core_lib.utils.StringUtils;
 import com.vendo.security_lib.http.HttpUtils;
 import com.vendo.security_lib.resolver.AntPathResolver;

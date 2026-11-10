@@ -1,7 +1,7 @@
 package com.vendo.user_service.adapter.in.security.builder;
 
-import com.vendo.core_lib.type.ServiceName;
-import com.vendo.core_lib.type.ServiceRole;
+import com.vendo.core_lib.types.ServiceName;
+import com.vendo.core_lib.types.ServiceRole;
 import com.vendo.security_starter.jwt.parser.TokenClaims;
 
 import java.util.Set;
